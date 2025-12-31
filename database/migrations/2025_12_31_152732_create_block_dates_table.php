@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('block_dates', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('room_id')->constrained()->onDelete('cascade');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->string('reason');
+            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
