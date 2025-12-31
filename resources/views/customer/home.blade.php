@@ -123,7 +123,10 @@
         }
 
         .hero-content {
-            position: relative;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             z-index: 10;
             text-align: center;
             color: white;
@@ -147,18 +150,132 @@
             font-family: 'Georgia', serif;
         }
 
+        /* Content Sections */
+        .content-section {
+            padding: 5rem 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            color: #2c2c2c;
+            font-family: 'Georgia', serif;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            color: #d4af37;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .section-description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #666;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+        }
+
+        .about-section {
+            background: #f9f9f9;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .service-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .service-icon {
+            font-size: 3rem;
+            color: #d4af37;
+            margin-bottom: 1.5rem;
+        }
+
+        .service-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #2c2c2c;
+        }
+
+        .service-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .contact-section {
+            background: #2c2c2c;
+            color: white;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .contact-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .contact-icon {
+            font-size: 2rem;
+            color: #d4af37;
+        }
+
+        .contact-details h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #d4af37;
+        }
+
+        .contact-details p {
+            color: #ccc;
+            line-height: 1.6;
+        }
+
         /* Booking Form */
         .booking-form {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
             background: white;
-            padding: 2rem;
+            padding: 1.5rem 2.5rem;
             border-radius: 10px;
-            margin-top: 3rem;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 1200px;
+            z-index: 20;
         }
 
         .booking-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: 1fr 1fr 0.8fr 0.8fr 1fr auto;
             gap: 1.5rem;
             align-items: end;
         }
@@ -278,6 +395,20 @@
             .booking-grid {
                 grid-template-columns: 1fr;
             }
+
+            .booking-form {
+                width: 95%;
+                padding: 1rem;
+                bottom: 1rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .content-section {
+                padding: 3rem 1.5rem;
+            }
         }
     </style>
 </head>
@@ -317,14 +448,12 @@
         <div class="hero-overlay"></div>
         
         <div class="hero-content">
-            <br>
-            <br>
             <div class="hero-label">BEZTOWER LUXURY HOTEL</div>
-            
-            {{-- <h1 class="hero-title">ENJOY A LUXURY<br>EXPERIENCE</h1> --}}
-            
-            <!-- Booking Form -->
-            <div class="booking-form">
+            <h1 class="hero-title">ENJOY A LUXURY<br>EXPERIENCE</h1>
+        </div>
+        
+        <!-- Booking Form -->
+        <div class="booking-form">
                 <form action="{{ route('rooms.index') }}" method="GET">
                     <div class="booking-grid">
                         <div class="form-group">
@@ -370,13 +499,97 @@
                         <button type="submit" class="check-btn">Check Now</button>
                     </div>
                 </form>
-            </div>
         </div>
         
         <!-- Play Button -->
         <div class="play-button" onclick="toggleVideo()">
             <div class="play-ring"></div>
             <i class="fas fa-play" id="playIcon"></i>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="content-section about-section" id="about">
+        <div class="section-subtitle">DISCOVER OUR HOTEL</div>
+        <h2 class="section-title">Bez Tower & Residences</h2>
+        <p class="section-description">
+            Experience comfort and convenience in the heart of San Juan City. Located at 205 F. Blumentritt Street, Brgy. Pedro Cruz, we offer safe, secure accommodation with modern amenities and exceptional service.
+        </p>
+    </section>
+
+    <!-- Services Section -->
+    <section class="content-section" id="services">
+        <div class="section-subtitle">OUR FACILITIES</div>
+        <h2 class="section-title">Premium Services</h2>
+        
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon"><i class="fas fa-concierge-bell"></i></div>
+                <h3>24/7 Concierge</h3>
+                <p>Our dedicated concierge team is available around the clock to assist with your every need.</p>
+            </div>
+            
+            <div class="service-card">
+                <div class="service-icon"><i class="fas fa-utensils"></i></div>
+                <h3>Fine Dining</h3>
+                <p>Experience culinary excellence at our signature restaurant with international and local cuisine.</p>
+            </div>
+            
+            <div class="service-card">
+                <div class="service-icon"><i class="fas fa-spa"></i></div>
+                <h3>Spa & Wellness</h3>
+                <p>Rejuvenate your body and mind with our premium spa treatments and wellness facilities.</p>
+            </div>
+            
+            <div class="service-card">
+                <div class="service-icon"><i class="fas fa-dumbbell"></i></div>
+                <h3>Fitness Center</h3>
+                <p>Stay active with our state-of-the-art gym equipment and personal training services.</p>
+            </div>
+            
+            <div class="service-card">
+                <div class="service-icon"><i class="fas fa-swimming-pool"></i></div>
+                <h3>Swimming Pool</h3>
+                <p>Relax and unwind at our infinity pool with stunning city views.</p>
+            </div>
+            
+            <div class="service-card">
+                <div class="service-icon"><i class="fas fa-wifi"></i></div>
+                <h3>High-Speed WiFi</h3>
+                <p>Stay connected with complimentary high-speed internet throughout the property.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="content-section contact-section" id="contact">
+        <div class="section-subtitle" style="color: #d4af37;">GET IN TOUCH</div>
+        <h2 class="section-title" style="color: white;">Contact Us</h2>
+        
+        <div class="contact-grid">
+            <div class="contact-info">
+                <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="contact-details">
+                    <h4>Address</h4>
+                    <p>205 F. Blumentritt Street<br>Brgy. Pedro Cruz<br>San Juan City, Philippines</p>
+                </div>
+            </div>
+            
+            <div class="contact-info">
+                <div class="contact-icon"><i class="fas fa-phone"></i></div>
+                <div class="contact-details">
+                    <h4>Phone</h4>
+                    <p>+1 234 567 8910<br>+1 234 567 8911</p>
+                </div>
+            </div>
+            
+            <div class="contact-info">
+                <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                <div class="contact-details">
+                    <h4>Email</h4>
+                    <p>info@beztower.com<br>reservations@beztower.com</p>
+                </div>
+            </div>
         </div>
     </section>
 
