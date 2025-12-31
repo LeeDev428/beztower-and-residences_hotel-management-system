@@ -317,9 +317,11 @@
         <div class="hero-overlay"></div>
         
         <div class="hero-content">
+            <br>
+            <br>
             <div class="hero-label">BEZTOWER LUXURY HOTEL</div>
             
-            <h1 class="hero-title">ENJOY A LUXURY<br>EXPERIENCE</h1>
+            {{-- <h1 class="hero-title">ENJOY A LUXURY<br>EXPERIENCE</h1> --}}
             
             <!-- Booking Form -->
             <div class="booking-form">
