@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('housekeeping', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('room_id')->constrained()->onDelete('cascade');
+            $table->enum('status', ['clean', 'dirty', 'in_progress'])->default('clean');
+            $table->string('assigned_to')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamp('last_cleaned_at')->nullable();
             $table->timestamps();
         });
     }
