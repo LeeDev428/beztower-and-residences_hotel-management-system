@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Housekeeping extends Model
 {
+    protected $table = 'housekeeping';
+    
     protected $fillable = [
         'room_id',
         'status',
