@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('booking_extras', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('booking_id')->constrained()->onDelete('cascade');
+            $table->foreignId('extra_id')->constrained()->onDelete('cascade');
+            $table->integer('quantity')->default(1);
+            $table->decimal('price_at_booking', 10, 2);
             $table->timestamps();
         });
     }
