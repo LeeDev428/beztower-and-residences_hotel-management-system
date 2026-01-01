@@ -10,64 +10,140 @@
         Discover our collection of elegantly designed rooms and suites, each offering the perfect blend of comfort and sophistication.
     </p>
 
-    @if($rooms->count() > 0)
-        <div class="rooms-grid">
-            @foreach($rooms as $room)
-                <div class="room-card">
-                    <div class="room-image">
-                        @if($room->photos->count() > 0)
-                            <img src="{{ asset('storage/' . $room->photos->first()->photo_path) }}" alt="{{ $room->roomType->name }}">
-                        @else
-                            <img src="https://via.placeholder.com/400x300/d4af37/2c2c2c?text={{ urlencode($room->roomType->name) }}" alt="{{ $room->roomType->name }}">
-                        @endif
-                        <div class="room-badge">{{ $room->status }}</div>
-                    </div>
-                    
-                    <div class="room-details">
-                        <h3>{{ $room->roomType->name }}</h3>
-                        <p class="room-number">Room {{ $room->room_number }}</p>
-                        
-                        <div class="room-info">
-                            <span><i class="fas fa-users"></i> Up to {{ $room->roomType->max_guests }} Guests</span>
-                            <span><i class="fas fa-bed"></i> {{ $room->roomType->bed_type }}</span>
-                        </div>
-                        
-                        <p class="room-description">{{ Str::limit($room->roomType->description, 100) }}</p>
-                        
-                        @if($room->amenities->count() > 0)
-                            <div class="room-amenities">
-                                @foreach($room->amenities->take(4) as $amenity)
-                                    <span class="amenity-tag">
-                                        <i class="{{ $amenity->icon }}"></i> {{ $amenity->name }}
-                                    </span>
-                                @endforeach
-                            </div>
-                        @endif
-                        
-                        <div class="room-footer">
-                            <div class="room-price">
-                                <span class="price-label">From</span>
-                                <span class="price-amount">₱{{ number_format($room->roomType->base_price, 2) }}</span>
-                                <span class="price-period">/night</span>
-                            </div>
-                            <a href="{{ route('rooms.show', $room) }}" class="book-btn">View Details</a>
-                        </div>
+    <!-- Filters Section -->
+    <div class="filters-container">
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search rooms by name, type, or description..." />
+        </div>
+
+        <div class="filters-grid">
+            <!-- Price Range -->
+            <div class="filter-group">
+                <label><i class="fas fa-dollar-sign"></i> Price Range</label>
+                <div class="price-inputs">
+                    <input type="number" id="minPrice" placeholder="Min" min="0" step="100">
+                    <span>-</span>
+                    <input type="number" id="maxPrice" placeholder="Max" min="0" step="100">
+                </div>
+            </div>
+
+            <!-- Room Type -->
+            <div class="filter-group">
+                <label><i class="fas fa-bed"></i> Room Type</label>
+                <select id="roomType">
+                    <option value="">All Types</option>
+                    @foreach($roomTypes as $type)
+                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Guests -->
+            <div class="filter-group">
+                <label><i class="fas fa-users"></i> Guests</label>
+                <select id="guests">
+                    <option value="">Any</option>
+                    <option value="1">1 Guest</option>
+                    <option value="2">2 Guests</option>
+                    <option value="3">3 Guests</option>
+                    <option value="4">4+ Guests</option>
+                </select>
+            </div>
+
+            <!-- Amenities -->
+            <div class="filter-group">
+                <label><i class="fas fa-star"></i> Amenities</label>
+                <div class="amenities-dropdown">
+                    <button type="button" class="amenities-btn" id="amenitiesBtn">
+                        <span id="amenitiesCount">Select Amenities</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="amenities-list" id="amenitiesList">
+                        @foreach($amenities as $amenity)
+                            <label class="amenity-checkbox">
+                                <input type="checkbox" name="amenities[]" value="{{ $amenity->id }}">
+                                <i class="{{ $amenity->icon }}"></i>
+                                <span>{{ $amenity->name }}</span>
+                            </label>
+                        @endforeach
                     </div>
                 </div>
-            @endforeach
+            </div>
+
+            <!-- Sorting -->
+            <div class="filter-group">
+                <label><i class="fas fa-sort"></i> Sort By</label>
+                <select id="sortBy">
+                    <option value="">Default</option>
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                    <option value="name">Name: A-Z</option>
+                </select>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="filter-group">
+                <button type="button" id="resetFilters" class="reset-btn">
+                    <i class="fas fa-redo"></i> Reset Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Counter -->
+    <div class="results-info">
+        <span id="resultsCount">Showing {{ $rooms->count() }} of {{ $rooms->total() }} rooms</span>
+        <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Loading...
+        </div>
+    </div>
+
+    @if($rooms->count() > 0)
+        <div class="rooms-grid" id="roomsGrid">
+            @include('customer.rooms.partials.room-cards')
         </div>
 
         <!-- Pagination -->
-        <div class="pagination-wrapper">
-            {{ $rooms->links() }}
+        <div class="pagination-wrapper" id="paginationWrapper">
+            @include('customer.rooms.partials.pagination')
         </div>
     @else
-        <div class="no-rooms">
+        <div class="no-rooms" id="noRoomsMessage">
             <i class="fas fa-bed"></i>
             <p>No rooms available for the selected criteria. Please try different dates or filters.</p>
         </div>
     @endif
 </section>
+
+<!-- Calendar Modal -->
+<div class="calendar-modal" id="calendarModal">
+    <div class="calendar-content">
+        <div class="calendar-header">
+            <h3><i class="fas fa-calendar-alt"></i> Room Availability Calendar</h3>
+            <button class="close-calendar" id="closeCalendar">&times;</button>
+        </div>
+        <div class="calendar-controls">
+            <button class="calendar-nav" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+            <h4 id="calendarMonthYear">Loading...</h4>
+            <button class="calendar-nav" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="calendar-legend">
+            <span class="legend-item"><span class="legend-dot available"></span> Available</span>
+            <span class="legend-item"><span class="legend-dot partial"></span> Partially Booked</span>
+            <span class="legend-item"><span class="legend-dot full"></span> Fully Booked</span>
+        </div>
+        <div id="calendarGrid" class="calendar-grid">
+            <!-- Calendar will be populated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Floating Calendar Button -->
+<button class="floating-calendar-btn" id="showCalendar">
+    <i class="fas fa-calendar-check"></i>
+    <span>Check Availability</span>
+</button>
 
 <style>
     .rooms-grid {
