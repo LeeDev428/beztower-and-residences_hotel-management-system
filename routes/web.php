@@ -33,29 +33,74 @@ Route::prefix('admin')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');
 
     // Protected Admin Routes
-    Route::middleware('auth')->group(function () {
+    Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
         
         // Room Management
-        Route::get('/rooms', [RoomManagementController::class, 'index'])->name('admin.rooms.index');
-        Route::get('/rooms/create', [RoomManagementController::class, 'create'])->name('admin.rooms.create');
-        Route::post('/rooms', [RoomManagementController::class, 'store'])->name('admin.rooms.store');
-        Route::get('/rooms/{room}/edit', [RoomManagementController::class, 'edit'])->name('admin.rooms.edit');
-        Route::put('/rooms/{room}', [RoomManagementController::class, 'update'])->name('admin.rooms.update');
-        Route::delete('/rooms/{room}', [RoomManagementController::class, 'destroy'])->name('admin.rooms.destroy');
+        Route::prefix('rooms')->group(function () {
+            Route::get('/', [RoomManagementController::class, 'index'])->name('admin.rooms.index');
+            Route::get('/create', [RoomManagementController::class, 'create'])->name('admin.rooms.create')->middleware('role:admin,manager');
+            Route::post('/', [RoomManagementController::class, 'store'])->name('admin.rooms.store')->middleware('role:admin,manager');
+            Route::get('/{room}/edit', [RoomManagementController::class, 'edit'])->name('admin.rooms.edit')->middleware('role:admin,manager');
+            Route::put('/{room}', [RoomManagementController::class, 'update'])->name('admin.rooms.update')->middleware('role:admin,manager');
+            Route::delete('/{room}', [RoomManagementController::class, 'destroy'])->name('admin.rooms.destroy')->middleware('role:admin');
+            Route::post('/{room}/upload-photo', [RoomManagementController::class, 'uploadPhoto'])->name('admin.rooms.uploadPhoto')->middleware('role:admin,manager');
+            Route::delete('/{room}/photos/{photo}', [RoomManagementController::class, 'deletePhoto'])->name('admin.rooms.deletePhoto')->middleware('role:admin,manager');
+            Route::post('/{room}/block-dates', [RoomManagementController::class, 'blockDates'])->name('admin.rooms.blockDates')->middleware('role:admin,manager');
+        });
         
         // Booking Management
-        Route::get('/bookings', [BookingManagementController::class, 'index'])->name('admin.bookings.index');
-        Route::get('/bookings/{booking}', [BookingManagementController::class, 'show'])->name('admin.bookings.show');
-        Route::put('/bookings/{booking}/status', [BookingManagementController::class, 'updateStatus'])->name('admin.bookings.updateStatus');
+        Route::prefix('bookings')->group(function () {
+            Route::get('/', [BookingManagementController::class, 'index'])->name('admin.bookings.index');
+            Route::get('/{booking}', [BookingManagementController::class, 'show'])->name('admin.bookings.show');
+            Route::put('/{booking}/status', [BookingManagementController::class, 'updateStatus'])->name('admin.bookings.updateStatus');
+        });
         
         // Guest Management
-        Route::get('/guests', [GuestManagementController::class, 'index'])->name('admin.guests.index');
-        Route::get('/guests/{guest}', [GuestManagementController::class, 'show'])->name('admin.guests.show');
+        Route::prefix('guests')->group(function () {
+            Route::get('/', [GuestManagementController::class, 'index'])->name('admin.guests.index');
+            Route::get('/{guest}', [GuestManagementController::class, 'show'])->name('admin.guests.show');
+            Route::put('/{guest}', [GuestManagementController::class, 'update'])->name('admin.guests.update')->middleware('role:admin,manager');
+        });
         
         // Housekeeping
-        Route::get('/housekeeping', [HousekeepingController::class, 'index'])->name('admin.housekeeping.index');
-        Route::put('/housekeeping/{housekeeping}', [HousekeepingController::class, 'update'])->name('admin.housekeeping.update');
+        Route::prefix('housekeeping')->group(function () {
+            Route::get('/', [HousekeepingController::class, 'index'])->name('admin.housekeeping.index');
+            Route::put('/{housekeeping}', [HousekeepingController::class, 'update'])->name('admin.housekeeping.update');
+            Route::post('/assign', [HousekeepingController::class, 'assign'])->name('admin.housekeeping.assign')->middleware('role:admin,manager');
+        });
+
+        // Payment Verification
+        Route::prefix('payments')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('admin.payments.index');
+            Route::get('/{payment}', [\App\Http\Controllers\Admin\PaymentController::class, 'show'])->name('admin.payments.show');
+            Route::post('/{payment}/verify', [\App\Http\Controllers\Admin\PaymentController::class, 'verify'])->name('admin.payments.verify')->middleware('role:admin,manager');
+            Route::post('/{payment}/reject', [\App\Http\Controllers\Admin\PaymentController::class, 'reject'])->name('admin.payments.reject')->middleware('role:admin,manager');
+        });
+
+        // Reports
+        Route::prefix('reports')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('admin.reports.index');
+            Route::get('/revenue', [\App\Http\Controllers\Admin\ReportController::class, 'revenue'])->name('admin.reports.revenue')->middleware('role:admin,manager');
+            Route::get('/occupancy', [\App\Http\Controllers\Admin\ReportController::class, 'occupancy'])->name('admin.reports.occupancy');
+            Route::get('/export/{type}', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('admin.reports.export')->middleware('role:admin,manager');
+        });
+
+        // Users & Roles (Admin Only)
+        Route::middleware('role:admin')->prefix('users')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('admin.users.index');
+            Route::get('/create', [\App\Http\Controllers\Admin\UserController::class, 'create'])->name('admin.users.create');
+            Route::post('/', [\App\Http\Controllers\Admin\UserController::class, 'store'])->name('admin.users.store');
+            Route::get('/{user}/edit', [\App\Http\Controllers\Admin\UserController::class, 'edit'])->name('admin.users.edit');
+            Route::put('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('admin.users.update');
+            Route::delete('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.users.destroy');
+        });
+
+        // Settings (Admin Only)
+        Route::middleware('role:admin')->prefix('settings')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings.index');
+            Route::put('/', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.settings.update');
+        });
     });
 });
 
