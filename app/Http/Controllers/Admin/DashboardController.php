@@ -75,6 +75,9 @@ class DashboardController extends Controller
 
         // Monthly Revenue Chart Data (Last 12 months)
         $monthlyRevenue = [];
+        $monthlyBookings = [];
+        $monthlyOccupancy = [];
+        
         for ($i = 11; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
             $revenue = Payment::whereMonth('created_at', $date->month)
@@ -82,9 +85,41 @@ class DashboardController extends Controller
                 ->whereIn('payment_status', ['verified', 'completed'])
                 ->sum('amount');
             
+            $bookingsCount = Booking::whereMonth('created_at', $date->month)
+                ->whereYear('created_at', $date->year)
+                ->count();
+            
+            // Calculate average occupancy for the month
+            $daysInMonth = $date->daysInMonth;
+            $totalPossibleRoomNights = $totalRooms * $daysInMonth;
+            $occupiedRoomNights = Booking::where(function($query) use ($date) {
+                    $query->where('check_in_date', '<=', $date->endOfMonth())
+                          ->where('check_out_date', '>=', $date->startOfMonth());
+                })
+                ->whereIn('status', ['confirmed', 'checked_in', 'checked_out'])
+                ->get()
+                ->sum(function($booking) use ($date) {
+                    $start = max($booking->check_in_date, $date->copy()->startOfMonth());
+                    $end = min($booking->check_out_date, $date->copy()->endOfMonth());
+                    return $start->diffInDays($end);
+                });
+            
+            $occupancyPercent = $totalPossibleRoomNights > 0 ? 
+                round(($occupiedRoomNights / $totalPossibleRoomNights) * 100, 1) : 0;
+            
             $monthlyRevenue[] = [
                 'month' => $date->format('M Y'),
                 'revenue' => $revenue,
+            ];
+            
+            $monthlyBookings[] = [
+                'month' => $date->format('M Y'),
+                'count' => $bookingsCount,
+            ];
+            
+            $monthlyOccupancy[] = [
+                'month' => $date->format('M Y'),
+                'occupancy' => $occupancyPercent,
             ];
         }
 
@@ -106,7 +141,9 @@ class DashboardController extends Controller
             'cleanRooms',
             'inProgressRooms',
             'recentBookings',
-            'monthlyRevenue'
+            'monthlyRevenue',
+            'monthlyBookings',
+            'monthlyOccupancy'
         ));
     }
 }
