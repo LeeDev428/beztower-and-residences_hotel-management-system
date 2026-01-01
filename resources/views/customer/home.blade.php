@@ -864,18 +864,22 @@
     </section>
 
     <script>
-        // Date validation
-        document.getElementById('checkIn').addEventListener('change', function() {
-            const checkIn = new Date(this.value);
-            const checkOut = document.getElementById('checkOut');
-            const minCheckOut = new Date(checkIn);
-            minCheckOut.setDate(minCheckOut.getDate() + 1);
-            checkOut.min = minCheckOut.toISOString().split('T')[0];
-            
-            if (checkOut.value && new Date(checkOut.value) <= checkIn) {
-                checkOut.value = '';
-            }
-        });
+        // Date validation - only run if elements exist
+        const checkInElement = document.getElementById('checkIn');
+        const checkOutElement = document.getElementById('checkOut');
+        
+        if (checkInElement && checkOutElement) {
+            checkInElement.addEventListener('change', function() {
+                const checkIn = new Date(this.value);
+                const minCheckOut = new Date(checkIn);
+                minCheckOut.setDate(minCheckOut.getDate() + 1);
+                checkOutElement.min = minCheckOut.toISOString().split('T')[0];
+                
+                if (checkOutElement.value && new Date(checkOutElement.value) <= checkIn) {
+                    checkOutElement.value = '';
+                }
+            });
+        }
     </script>
 </body>
 </html>
