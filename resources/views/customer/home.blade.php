@@ -21,82 +21,7 @@
             overflow-x: hidden;
         }
 
-        /* Navigation */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            padding: 1rem 3rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 600;
-            letter-spacing: 2px;
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #d4af37, #f4e4c1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #2c2c2c;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            font-size: 0.95rem;
-            transition: color 0.3s;
-            position: relative;
-        }
-
-        .nav-links a:hover {
-            color: #d4af37;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-            color: white;
-        }
-
-        .contact-number {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(212, 175, 55, 0.2);
-            padding: 0.5rem 1.2rem;
-            border-radius: 25px;
-            font-size: 0.9rem;
-        }
-
-        .cart-icon {
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
+        /* Navigation - moved to component */
 
         /* Hero Section */
         .hero {
@@ -645,31 +570,7 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="logo">
-            <div class="logo-icon">
-                <i class="fas fa-gem"></i>
-            </div>
-            BEZTOWER
-        </div>
-        
-        <ul class="nav-links">
-            <li><a href="/">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#rooms">Rooms</a></li>
-            <li><a href="#services">Services</a></li>
-            <li><a href="#contact">Contact</a></li>
-        </ul>
-        
-        <div class="nav-right">
-            <div class="contact-number">
-                <i class="fas fa-phone"></i>
-                +1 234 567 8910
-            </div>
-            <i class="fas fa-shopping-cart cart-icon"></i>
-        </div>
-    </nav>
+    @include('components.navbar')
 
     <!-- Hero Section -->
     <section class="hero">
@@ -685,7 +586,7 @@
         </div>
         
         <!-- Booking Form -->
-        <div class="booking-form">
+        {{-- <div class="booking-form">
             <form action="{{ route('rooms.index') }}" method="GET">
                 <div class="booking-grid">
                     <div class="form-group">
@@ -731,7 +632,7 @@
                     <button type="submit" class="check-btn">Check Now</button>
                 </div>
             </form>
-        </div>
+        </div> --}}
     </section>
 
     <!-- Map Section -->
