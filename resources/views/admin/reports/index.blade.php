@@ -44,7 +44,7 @@
             <form method="GET" action="{{ route('admin.reports.export', 'bookings') }}">
                 <input type="date" name="start_date" value="{{ now()->startOfMonth()->format('Y-m-d') }}" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid var(--border-gray); border-radius: 6px;">
                 <input type="date" name="end_date" value="{{ now()->format('Y-m-d') }}" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid var(--border-gray); border-radius: 6px;">
-                <x-admin.button type="info" style="width: 100%;">
+                <x-admin.button type="info">
                     Export CSV
                 </x-admin.button>
             </form>
