@@ -90,8 +90,8 @@
                 <div>
                     <div style="font-weight: 600; margin-bottom: 0.5rem;">Payment Proof</div>
                     @if($payment->proof_of_payment)
-                    <a href="{{ Storage::url($payment->proof_of_payment) }}" target="_blank">
-                        <img src="{{ Storage::url($payment->proof_of_payment) }}" alt="Payment Proof" style="width: 100%; border-radius: 8px; border: 2px solid var(--border-gray); cursor: pointer; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <a href="{{ asset('storage/' . $payment->proof_of_payment) }}" target="_blank">
+                        <img src="{{ asset('storage/' . $payment->proof_of_payment) }}" alt="Payment Proof" style="width: 100%; border-radius: 8px; border: 2px solid var(--border-gray); cursor: pointer; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                     </a>
                     <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">Click to enlarge</p>
                     @else
