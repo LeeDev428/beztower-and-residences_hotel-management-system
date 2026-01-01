@@ -109,7 +109,7 @@
                 <textarea name="notes" id="notesTextarea" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px; min-height: 100px;"></textarea>
             </div>
             <div style="display: flex; gap: 1rem;">
-                <x-admin.button type="primary" style="flex: 1;">Update Status</x-admin.button>
+                <x-admin.button type="primary">Update Status</x-admin.button>
                 <button type="button" onclick="closeStatusModal()" style="flex: 1; padding: 0.75rem; background: var(--text-muted); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancel</button>
             </div>
         </form>
