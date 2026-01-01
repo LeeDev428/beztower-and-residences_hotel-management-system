@@ -139,6 +139,8 @@
             letter-spacing: 3px;
             margin-bottom: 1rem;
             color: #d4af37;
+            position: relative;
+            top: -250px;
         }
 
         .hero-title {
