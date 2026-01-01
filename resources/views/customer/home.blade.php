@@ -139,6 +139,8 @@
             letter-spacing: 3px;
             margin-bottom: 1rem;
             color: #d4af37;
+            position: relative;
+            top: -200px;
         }
 
         .hero-title {
@@ -449,7 +451,7 @@
         
         <div class="hero-content">
             <div class="hero-label">BEZTOWER LUXURY HOTEL</div>
-            <h1 class="hero-title">ENJOY A LUXURY<br>EXPERIENCE</h1>
+            {{-- <h1 class="hero-title">ENJOY A LUXURY<br>EXPERIENCE</h1> --}}
         </div>
         
         <!-- Booking Form -->
