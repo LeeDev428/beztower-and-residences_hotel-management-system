@@ -7,8 +7,11 @@ use App\Models\Booking;
 use App\Models\Guest;
 use App\Models\Room;
 use App\Models\Extra;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class BookingController extends Controller
@@ -111,9 +114,12 @@ class BookingController extends Controller
 
             DB::commit();
 
-            // Redirect to payment or confirmation page
-            return redirect()->route('booking.confirmation', ['reference' => $bookingReference])
-                ->with('success', 'Your booking has been created successfully!');
+            // Send booking acknowledgement email
+            // Mail::to($guest->email)->send(new BookingAcknowledgement($booking));
+
+            // Redirect to payment page instead of confirmation
+            return redirect()->route('booking.payment', ['reference' => $bookingReference])
+                ->with('success', 'Booking created! Please complete the down payment to confirm your reservation.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -124,9 +130,73 @@ class BookingController extends Controller
         }
     }
 
-    public function confirmation($reference)
+    public function payment($reference)
     {
         $booking = Booking::with(['guest', 'room.roomType', 'extras'])
+            ->where('booking_reference', $reference)
+            ->firstOrFail();
+
+        // Calculate 30% down payment
+        $downPaymentAmount = $booking->total_amount * 0.30;
+
+        return view('customer.booking.payment', compact('booking', 'downPaymentAmount'));
+    }
+
+    public function processPayment(Request $request, $reference)
+    {
+        $validated = $request->validate([
+            'payment_method' => 'required|in:gcash,paymaya,bank_transfer',
+            'payment_reference' => 'required|string|max:255',
+            'proof_of_payment' => 'required|image|mimes:jpeg,png,jpg|max:5120', // 5MB max
+        ]);
+
+        $booking = Booking::where('booking_reference', $reference)->firstOrFail();
+
+        try {
+            DB::beginTransaction();
+
+            // Store proof of payment
+            $proofPath = $request->file('proof_of_payment')->store('payments/proofs', 'public');
+
+            // Calculate 30% down payment
+            $downPaymentAmount = $booking->total_amount * 0.30;
+
+            // Create payment record
+            $payment = Payment::create([
+                'booking_id' => $booking->id,
+                'payment_type' => 'down_payment',
+                'payment_method' => $validated['payment_method'],
+                'payment_reference' => $validated['payment_reference'],
+                'amount' => $downPaymentAmount,
+                'percentage' => 30.00,
+                'payment_status' => 'pending', // Will be verified by admin
+                'proof_of_payment' => $proofPath,
+                'payment_date' => now(),
+            ]);
+
+            // Update booking status to pending (waiting for payment verification)
+            $booking->update(['status' => 'pending']);
+
+            DB::commit();
+
+            // Send booking acknowledgement email with payment details
+            // Mail::to($booking->guest->email)->send(new BookingAcknowledgement($booking, $payment));
+
+            return redirect()->route('booking.confirmation', ['reference' => $reference])
+                ->with('success', 'Payment proof submitted successfully! We will verify your payment within 24-48 hours.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return back()->withErrors([
+                'error' => 'Failed to process payment. Please try again.'
+            ])->withInput();
+        }
+    }
+
+    public function confirmation($reference)
+    {
+        $booking = Booking::with(['guest', 'room.roomType', 'extras', 'payments'])
             ->where('booking_reference', $reference)
             ->firstOrFail();
 
