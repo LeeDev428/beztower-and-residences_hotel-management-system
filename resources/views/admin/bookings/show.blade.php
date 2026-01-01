@@ -106,7 +106,9 @@
                     <option value="checked_out" {{ $booking->status === 'checked_out' ? 'selected' : '' }}>Checked Out</option>
                     <option value="cancelled" {{ $booking->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
-                <x-admin.button type="primary" style="width: 100%;">Update Status</x-admin.button>
+                <div style="width: 100%;">
+                    <x-admin.button type="primary" style="width: 100%;">Update Status</x-admin.button>
+                </div>
             </form>
         </x-admin.card>
     </div>
