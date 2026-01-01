@@ -22,11 +22,6 @@
         </select>
         <x-admin.button type="primary">Filter</x-admin.button>
     </form>
-    @can('create', App\Models\Room::class)
-    <x-admin.button type="primary" href="{{ route('admin.rooms.create') }}">
-        + Add Room
-    </x-admin.button>
-    @endcan
 </div>
 
 <x-admin.card title="All Rooms ({{ $rooms->total() }})">
@@ -83,4 +78,13 @@
         {{ $rooms->links() }}
     </div>
 </x-admin.card>
+
+<!-- Floating Add Button -->
+<a href="{{ route('admin.rooms.create') }}" 
+   style="position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; text-decoration: none; box-shadow: 0 4px 20px rgba(201, 169, 97, 0.4); transition: all 0.3s ease; z-index: 999;"
+   onmouseover="this.style.transform='scale(1.1) rotate(90deg)'; this.style.boxShadow='0 6px 25px rgba(201, 169, 97, 0.6)';"
+   onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='0 4px 20px rgba(201, 169, 97, 0.4)';"
+   title="Add New Room">
+    +
+</a>
 @endsection
