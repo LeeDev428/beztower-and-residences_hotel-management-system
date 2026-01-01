@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\Amenity;
+use App\Models\BlockDate;
 use Illuminate\Http\Request;
 
 class RoomController extends Controller
@@ -14,6 +15,21 @@ class RoomController extends Controller
     {
         $query = Room::with(['roomType', 'amenities', 'photos'])
             ->where('status', 'available');
+        
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('room_number', 'LIKE', "%{$search}%")
+                  ->orWhereHas('roomType', function($q) use ($search) {
+                      $q->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('description', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('amenities', function($q) use ($search) {
+                      $q->where('name', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
         
         // Filter by room type
         if ($request->filled('room_type')) {
@@ -172,7 +188,7 @@ class RoomController extends Controller
         ->values();
         
         // Get block dates
-        $blockDates = \App\Models\RoomBlockDate::where(function($q) use ($startDate, $endDate) {
+        $blockDates = BlockDate::where(function($q) use ($startDate, $endDate) {
             $q->whereBetween('start_date', [$startDate, $endDate])
               ->orWhereBetween('end_date', [$startDate, $endDate])
               ->orWhere(function($q) use ($startDate, $endDate) {
