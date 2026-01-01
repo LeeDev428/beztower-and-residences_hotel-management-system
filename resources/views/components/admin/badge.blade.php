@@ -11,6 +11,11 @@ $statusConfig = [
     'clean' => ['color' => 'var(--success)', 'bg' => 'rgba(40, 167, 69, 0.1)', 'text' => 'Clean'],
     'dirty' => ['color' => 'var(--danger)', 'bg' => 'rgba(220, 53, 69, 0.1)', 'text' => 'Dirty'],
     'in_progress' => ['color' => 'var(--info)', 'bg' => 'rgba(23, 162, 184, 0.1)', 'text' => 'In Progress'],
+    // Room statuses
+    'available' => ['color' => 'var(--success)', 'bg' => 'rgba(40, 167, 69, 0.1)', 'text' => 'Available'],
+    'occupied' => ['color' => 'var(--info)', 'bg' => 'rgba(23, 162, 184, 0.1)', 'text' => 'Occupied'],
+    'maintenance' => ['color' => 'var(--warning)', 'bg' => 'rgba(255, 193, 7, 0.1)', 'text' => 'Maintenance'],
+    'blocked' => ['color' => 'var(--danger)', 'bg' => 'rgba(220, 53, 69, 0.1)', 'text' => 'Blocked'],
 ];
 
 $config = $statusConfig[$status] ?? ['color' => 'var(--text-muted)', 'bg' => 'rgba(108, 117, 125, 0.1)', 'text' => ucfirst($status)];
