@@ -1,233 +1,261 @@
-@extends('layouts.customer')
+@extends('customer.layout')
 
-@section('title', 'Our Rooms - Beztower & Residences Hotel')
+@section('title', 'Our Rooms - Beztower & Residences')
 
 @section('content')
-<!-- Page Header -->
-<section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 class="text-5xl font-bold mb-4">Our Luxury Rooms</h1>
-        <p class="text-xl">Find your perfect accommodation</p>
-    </div>
-</section>
+<section class="content-section">
+    <div class="section-subtitle">ACCOMMODATION</div>
+    <h2 class="section-title">Our Luxury Rooms</h2>
+    <p class="section-description">
+        Discover our collection of elegantly designed rooms and suites, each offering the perfect blend of comfort and sophistication.
+    </p>
 
-<!-- Filters Section -->
-<section class="bg-white shadow-md sticky top-20 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <form id="filterForm" method="GET" action="{{ route('rooms.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <!-- Check In -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Check In</label>
-                <input type="date" name="check_in" value="{{ request('check_in') }}" 
-                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" 
-                       min="{{ date('Y-m-d') }}">
-            </div>
-            
-            <!-- Check Out -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Check Out</label>
-                <input type="date" name="check_out" value="{{ request('check_out') }}" 
-                       class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500" 
-                       min="{{ date('Y-m-d', strtotime('+1 day')) }}">
-            </div>
-            
-            <!-- Guests -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Guests</label>
-                <select name="guests" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
-                    <option value="">Any</option>
-                    <option value="1" {{ request('guests') == '1' ? 'selected' : '' }}>1 Guest</option>
-                    <option value="2" {{ request('guests') == '2' ? 'selected' : '' }}>2 Guests</option>
-                    <option value="3" {{ request('guests') == '3' ? 'selected' : '' }}>3 Guests</option>
-                    <option value="4" {{ request('guests') == '4' ? 'selected' : '' }}>4+ Guests</option>
-                </select>
-            </div>
-            
-            <!-- Room Type -->
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Room Type</label>
-                <select name="room_type" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Types</option>
-                    @foreach($roomTypes as $type)
-                        <option value="{{ $type->id }}" {{ request('room_type') == $type->id ? 'selected' : '' }}>
-                            {{ $type->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            
-            <!-- Filter Button -->
-            <div class="flex items-end">
-                <button type="button" onclick="toggleAdvancedFilters()" 
-                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg">
-                    <i class="fas fa-filter mr-2"></i>More Filters
-                </button>
-            </div>
-        </form>
-        
-        <!-- Advanced Filters (Hidden by default) -->
-        <div id="advancedFilters" class="hidden mt-6 p-6 bg-gray-50 rounded-lg">
-            <form method="GET" action="{{ route('rooms.index') }}" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Price Range -->
-                <div class="md:col-span-1">
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">Price Range (per night)</label>
-                    <div class="flex items-center space-x-4">
-                        <input type="number" name="min_price" placeholder="Min" value="{{ request('min_price') }}" 
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                        <span class="text-gray-500">to</span>
-                        <input type="number" name="max_price" placeholder="Max" value="{{ request('max_price') }}" 
-                               class="w-full border border-gray-300 rounded-lg px-4 py-2">
-                    </div>
-                </div>
-                
-                <!-- Amenities -->
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">Amenities</label>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        @foreach($amenities as $amenity)
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="amenities[]" value="{{ $amenity->id }}" 
-                                       {{ in_array($amenity->id, request('amenities', [])) ? 'checked' : '' }}
-                                       class="rounded text-blue-600 focus:ring-2 focus:ring-blue-500">
-                                <span class="text-sm text-gray-700">{{ $amenity->name }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-                
-                <!-- Apply Filters -->
-                <div class="md:col-span-3 flex justify-end space-x-4">
-                    <a href="{{ route('rooms.index') }}" 
-                       class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">
-                        Clear All
-                    </a>
-                    <button type="submit" 
-                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">
-                        Apply Filters
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</section>
-
-<!-- Results Section -->
-<section class="py-12 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Results Header -->
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800">Available Rooms</h2>
-                <p class="text-gray-600 mt-1">{{ $rooms->total() }} rooms found</p>
-            </div>
-            
-            <div>
-                <select name="sort" onchange="this.form.submit()" 
-                        class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500">
-                    <option value="">Sort By</option>
-                    <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
-                    <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>Price: High to Low</option>
-                    <option value="name" {{ request('sort') == 'name' ? 'selected' : '' }}>Name</option>
-                </select>
-            </div>
-        </div>
-        
-        <!-- Room Cards -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            @forelse($rooms as $room)
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition duration-300">
-                    <div class="relative h-64">
+    @if($rooms->count() > 0)
+        <div class="rooms-grid">
+            @foreach($rooms as $room)
+                <div class="room-card">
+                    <div class="room-image">
                         @if($room->photos->count() > 0)
-                            <img src="{{ asset('storage/' . $room->photos->first()->photo_path) }}" 
-                                 alt="{{ $room->roomType->name }}" 
-                                 class="w-full h-full object-cover">
+                            <img src="{{ asset('storage/' . $room->photos->first()->photo_path) }}" alt="{{ $room->roomType->name }}">
                         @else
-                            <div class="w-full h-full bg-gray-200 flex items-center justify-center">
-                                <i class="fas fa-bed text-6xl text-gray-400"></i>
-                            </div>
+                            <img src="https://via.placeholder.com/400x300/d4af37/2c2c2c?text={{ urlencode($room->roomType->name) }}" alt="{{ $room->roomType->name }}">
                         @endif
-                        
-                        <div class="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">
-                            ₱{{ number_format($room->roomType->base_price, 2) }}/night
-                        </div>
+                        <div class="room-badge">{{ $room->status }}</div>
                     </div>
                     
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="text-2xl font-bold text-gray-800">{{ $room->roomType->name }}</h3>
-                                <p class="text-gray-600 text-sm mt-1">Room {{ $room->room_number }} • Floor {{ $room->floor }}</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-sm text-gray-600">
-                                    <i class="fas fa-user mr-1"></i>Up to {{ $room->roomType->max_guests }} guests
-                                </span>
-                            </div>
+                    <div class="room-details">
+                        <h3>{{ $room->roomType->name }}</h3>
+                        <p class="room-number">Room {{ $room->room_number }}</p>
+                        
+                        <div class="room-info">
+                            <span><i class="fas fa-users"></i> Up to {{ $room->roomType->max_guests }} Guests</span>
+                            <span><i class="fas fa-bed"></i> {{ $room->roomType->bed_type }}</span>
                         </div>
                         
-                        <p class="text-gray-700 mb-4 line-clamp-2">{{ $room->roomType->description }}</p>
+                        <p class="room-description">{{ Str::limit($room->roomType->description, 100) }}</p>
                         
-                        <!-- Amenities -->
                         @if($room->amenities->count() > 0)
-                            <div class="flex flex-wrap gap-2 mb-4">
+                            <div class="room-amenities">
                                 @foreach($room->amenities->take(4) as $amenity)
-                                    <span class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">
-                                        {{ $amenity->name }}
+                                    <span class="amenity-tag">
+                                        <i class="{{ $amenity->icon }}"></i> {{ $amenity->name }}
                                     </span>
                                 @endforeach
-                                @if($room->amenities->count() > 4)
-                                    <span class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">
-                                        +{{ $room->amenities->count() - 4 }} more
-                                    </span>
-                                @endif
                             </div>
                         @endif
                         
-                        <div class="flex space-x-4">
-                            <a href="{{ route('rooms.show', $room->id) }}" 
-                               class="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg transition">
-                                View Details
-                            </a>
-                            <a href="{{ route('rooms.show', $room->id) }}#book" 
-                               class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition">
-                                Book Now
-                            </a>
+                        <div class="room-footer">
+                            <div class="room-price">
+                                <span class="price-label">From</span>
+                                <span class="price-amount">₱{{ number_format($room->roomType->base_price, 2) }}</span>
+                                <span class="price-period">/night</span>
+                            </div>
+                            <a href="{{ route('rooms.show', $room) }}" class="book-btn">View Details</a>
                         </div>
                     </div>
                 </div>
-            @empty
-                <div class="col-span-2 text-center py-20">
-                    <i class="fas fa-bed text-6xl text-gray-300 mb-4"></i>
-                    <h3 class="text-2xl font-semibold text-gray-600 mb-2">No rooms found</h3>
-                    <p class="text-gray-500 mb-6">Try adjusting your filters or dates</p>
-                    <a href="{{ route('rooms.index') }}" 
-                       class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg">
-                        Clear Filters
-                    </a>
-                </div>
-            @endforelse
+            @endforeach
         </div>
-        
+
         <!-- Pagination -->
-        <div class="mt-12">
+        <div class="pagination-wrapper">
             {{ $rooms->links() }}
         </div>
-    </div>
+    @else
+        <div class="no-rooms">
+            <i class="fas fa-bed"></i>
+            <p>No rooms available for the selected criteria. Please try different dates or filters.</p>
+        </div>
+    @endif
 </section>
 
-@push('scripts')
-<script>
-    function toggleAdvancedFilters() {
-        const filters = document.getElementById('advancedFilters');
-        filters.classList.toggle('hidden');
+<style>
+    .rooms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 2.5rem;
+        margin-top: 3rem;
     }
     
-    // Auto-submit on basic filter change
-    document.querySelectorAll('#filterForm select, #filterForm input[type="date"]').forEach(input => {
-        input.addEventListener('change', function() {
-            this.form.submit();
-        });
-    });
-</script>
-@endpush
+    .room-card {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .room-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .room-image {
+        position: relative;
+        height: 250px;
+        overflow: hidden;
+    }
+    
+    .room-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s;
+    }
+    
+    .room-card:hover .room-image img {
+        transform: scale(1.1);
+    }
+    
+    .room-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: linear-gradient(135deg, #d4af37, #f4e4c1);
+        color: #2c2c2c;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    
+    .room-details {
+        padding: 1.5rem;
+    }
+    
+    .room-details h3 {
+        font-size: 1.5rem;
+        color: #2c2c2c;
+        margin-bottom: 0.5rem;
+        font-family: 'Georgia', serif;
+    }
+    
+    .room-number {
+        color: #d4af37;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .room-info {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .room-info i {
+        color: #d4af37;
+        margin-right: 0.3rem;
+    }
+    
+    .room-description {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+    
+    .room-amenities {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .amenity-tag {
+        background: #f9f9f9;
+        padding: 0.4rem 0.8rem;
+        border-radius: 5px;
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .amenity-tag i {
+        color: #d4af37;
+        margin-right: 0.3rem;
+    }
+    
+    .room-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1.5rem;
+        border-top: 1px solid #eee;
+    }
+    
+    .room-price {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .price-label {
+        font-size: 0.85rem;
+        color: #999;
+    }
+    
+    .price-amount {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #d4af37;
+    }
+    
+    .price-period {
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .book-btn {
+        background: linear-gradient(135deg, #d4af37, #f4e4c1);
+        color: #2c2c2c;
+        padding: 0.8rem 1.5rem;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: transform 0.3s;
+    }
+    
+    .book-btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .no-rooms {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #999;
+    }
+    
+    .no-rooms i {
+        font-size: 4rem;
+        color: #d4af37;
+        margin-bottom: 1rem;
+    }
+    
+    .no-rooms p {
+        font-size: 1.1rem;
+    }
+    
+    .pagination-wrapper {
+        margin-top: 3rem;
+        display: flex;
+        justify-content: center;
+    }
+    
+    @media (max-width: 768px) {
+        .rooms-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .room-footer {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .book-btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
 @endsection
