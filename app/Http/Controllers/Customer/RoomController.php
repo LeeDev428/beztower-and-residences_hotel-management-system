@@ -100,9 +100,18 @@ class RoomController extends Controller
             }
         }
         
-        $rooms = $query->paginate(10)->withQueryString();
+        $rooms = $query->paginate(6)->withQueryString();
         $roomTypes = RoomType::all();
         $amenities = Amenity::all();
+        
+        // If AJAX request, return JSON
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('customer.rooms.partials.room-cards', compact('rooms'))->render(),
+                'pagination' => view('customer.rooms.partials.pagination', compact('rooms'))->render(),
+                'total' => $rooms->total()
+            ]);
+        }
         
         return view('customer.rooms.index', compact('rooms', 'roomTypes', 'amenities'));
     }
@@ -112,6 +121,100 @@ class RoomController extends Controller
         $room->load(['roomType', 'amenities', 'photos', 'housekeeping']);
         
         return view('customer.rooms.show', compact('room'));
+    }
+    
+    /**
+     * Get calendar availability for a specific month
+     */
+    public function getAvailability(Request $request)
+    {
+        $year = $request->input('year', date('Y'));
+        $month = $request->input('month', date('m'));
+        
+        $startDate = "$year-$month-01";
+        $endDate = date('Y-m-t', strtotime($startDate));
+        
+        // Get all booked dates in this month
+        $bookedDates = \App\Models\Booking::where(function($q) use ($startDate, $endDate) {
+            $q->whereBetween('check_in_date', [$startDate, $endDate])
+              ->orWhereBetween('check_out_date', [$startDate, $endDate])
+              ->orWhere(function($q) use ($startDate, $endDate) {
+                  $q->where('check_in_date', '<=', $startDate)
+                    ->where('check_out_date', '>=', $endDate);
+              });
+        })
+        ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
+        ->with('room')
+        ->get()
+        ->flatMap(function($booking) {
+            $dates = [];
+            $current = new \DateTime($booking->check_in_date);
+            $end = new \DateTime($booking->check_out_date);
+            
+            while ($current <= $end) {
+                $dates[] = [
+                    'date' => $current->format('Y-m-d'),
+                    'room_id' => $booking->room_id
+                ];
+                $current->modify('+1 day');
+            }
+            
+            return $dates;
+        })
+        ->groupBy('date')
+        ->map(function($group) {
+            return [
+                'date' => $group->first()['date'],
+                'booked_rooms' => $group->count(),
+                'room_ids' => $group->pluck('room_id')->toArray()
+            ];
+        })
+        ->values();
+        
+        // Get block dates
+        $blockDates = \App\Models\RoomBlockDate::where(function($q) use ($startDate, $endDate) {
+            $q->whereBetween('start_date', [$startDate, $endDate])
+              ->orWhereBetween('end_date', [$startDate, $endDate])
+              ->orWhere(function($q) use ($startDate, $endDate) {
+                  $q->where('start_date', '<=', $startDate)
+                    ->where('end_date', '>=', $endDate);
+              });
+        })
+        ->get()
+        ->flatMap(function($block) {
+            $dates = [];
+            $current = new \DateTime($block->start_date);
+            $end = new \DateTime($block->end_date);
+            
+            while ($current <= $end) {
+                $dates[] = [
+                    'date' => $current->format('Y-m-d'),
+                    'room_id' => $block->room_id
+                ];
+                $current->modify('+1 day');
+            }
+            
+            return $dates;
+        })
+        ->groupBy('date')
+        ->map(function($group) {
+            return [
+                'date' => $group->first()['date'],
+                'blocked_rooms' => $group->count(),
+                'room_ids' => $group->pluck('room_id')->toArray()
+            ];
+        })
+        ->values();
+        
+        $totalRooms = Room::where('status', 'available')->count();
+        
+        return response()->json([
+            'booked_dates' => $bookedDates,
+            'block_dates' => $blockDates,
+            'total_rooms' => $totalRooms,
+            'month' => $month,
+            'year' => $year
+        ]);
     }
 }
 
