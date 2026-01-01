@@ -8,8 +8,11 @@ use App\Models\Guest;
 use App\Models\Room;
 use App\Models\Extra;
 use App\Models\Payment;
+use App\Mail\BookingAcknowledgement;
+use App\Mail\PaymentConfirmation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -115,7 +118,12 @@ class BookingController extends Controller
             DB::commit();
 
             // Send booking acknowledgement email
-            // Mail::to($guest->email)->send(new BookingAcknowledgement($booking));
+            try {
+                Mail::to($guest->email)->send(new BookingAcknowledgement($booking));
+            } catch (\Exception $e) {
+                // Log email error but don't fail the booking
+                Log::error('Failed to send booking acknowledgement email: ' . $e->getMessage());
+            }
 
             // Redirect to payment page instead of confirmation
             return redirect()->route('booking.payment', ['reference' => $bookingReference])
