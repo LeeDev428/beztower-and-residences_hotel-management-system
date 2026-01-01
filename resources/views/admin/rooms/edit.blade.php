@@ -51,7 +51,6 @@
                     <option value="available" {{ old('status', $room->status) == 'available' ? 'selected' : '' }}>Available</option>
                     <option value="occupied" {{ old('status', $room->status) == 'occupied' ? 'selected' : '' }}>Occupied</option>
                     <option value="maintenance" {{ old('status', $room->status) == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                    <option value="blocked" {{ old('status', $room->status) == 'blocked' ? 'selected' : '' }}>Blocked</option>
                 </select>
                 @error('status')
                 <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
