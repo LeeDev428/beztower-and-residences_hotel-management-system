@@ -848,6 +848,18 @@
     }
     
     @media (max-width: 768px) {
+        .content-section {
+            padding: 3rem 1.5rem;
+        }
+
+        .filters-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .price-inputs {
+            grid-template-columns: 1fr auto 1fr;
+        }
+
         .rooms-grid {
             grid-template-columns: 1fr;
         }
