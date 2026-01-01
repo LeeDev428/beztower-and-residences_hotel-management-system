@@ -220,56 +220,41 @@
             transform: translateY(-2px);
         }
 
-        /* Play Button */
-        .play-button {
-            position: absolute;
-            bottom: 3rem;
-            right: 3rem;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 2px solid white;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            animation: pulse 2s infinite;
+        /* Map Section */
+        .map-section {
+            padding: 5rem 3rem;
+            background: #f9f9f9;
         }
 
-        .play-button:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
+        .map-container {
+            max-width: 1200px;
+            margin: 3rem auto 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
         }
 
-        .play-button i {
-            color: white;
-            font-size: 1.5rem;
-            margin-left: 5px;
+        .map-container iframe {
+            width: 100%;
+            height: 500px;
+            border: 0;
         }
 
-        .play-ring {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100px;
-            height: 100px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            animation: ringPulse 2s infinite;
+        .section-title {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            color: #2c2c2c;
+            font-family: 'Georgia', serif;
+            text-align: center;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes ringPulse {
-            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+        .section-subtitle {
+            color: #d4af37;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+            text-align: center;
         }
 
         /* Responsive */
@@ -386,11 +371,20 @@
                 </div>
             </form>
         </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="section-subtitle">FIND US</div>
+        <h2 class="section-title">Our Location</h2>
         
-        <!-- Play Button -->
-        <div class="play-button" onclick="toggleVideo()">
-            <div class="play-ring"></div>
-            <i class="fas fa-play" id="playIcon"></i>
+        <div class="map-container">
+            <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3860.3836567891644!2d121.03553631484284!3d14.603754389788835!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397b7c3e0e0e0e1%3A0x0!2zMTTCsDM2JzEzLjUiTiAxMjHCsDAyJzE4LjMiRQ!5e0!3m2!1sen!2sph!4v1704067200000!5m2!1sen!2sph" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
         </div>
     </section>
 
@@ -407,22 +401,6 @@
                 checkOut.value = '';
             }
         });
-
-        // Video toggle
-        function toggleVideo() {
-            const video = document.getElementById('heroVideo');
-            const icon = document.getElementById('playIcon');
-            
-            if (video.paused) {
-                video.play();
-                icon.classList.remove('fa-play');
-                icon.classList.add('fa-pause');
-            } else {
-                video.pause();
-                icon.classList.remove('fa-pause');
-                icon.classList.add('fa-play');
-            }
-        }
     </script>
 </body>
 </html>
