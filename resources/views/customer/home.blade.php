@@ -140,7 +140,7 @@
             margin-bottom: 1rem;
             color: #d4af37;
             position: relative;
-            top: -200px;
+            top: -220px;
         }
 
         .hero-title {
