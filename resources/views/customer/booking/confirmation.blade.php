@@ -253,6 +253,72 @@
             border: 1px solid #c3e6cb;
         }
 
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .payment-status-card {
+            background: linear-gradient(135deg, #fff9e6, #ffffff);
+            border: 2px solid #d4af37;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .payment-status-card h3 {
+            color: #2c2c2c;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .payment-status-card h3 i {
+            color: #d4af37;
+        }
+
+        .payment-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .payment-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .payment-label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .payment-value {
+            font-size: 1.1rem;
+            color: #2c2c2c;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-verified {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -305,6 +371,92 @@
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle"></i>
                         <span>{{ session('success') }}</span>
+                    </div>
+                @endif
+
+                <!-- Payment Status Card -->
+                @if($booking->payments->count() > 0)
+                    @php
+                        $latestPayment = $booking->payments->last();
+                    @endphp
+                    <div class="payment-status-card">
+                        <h3><i class="fas fa-credit-card"></i> Payment Status</h3>
+                        
+                        <div class="payment-info-grid">
+                            <div class="payment-info-item">
+                                <span class="payment-label">Payment Type</span>
+                                <span class="payment-value">{{ ucwords(str_replace('_', ' ', $latestPayment->payment_type)) }}</span>
+                            </div>
+                            <div class="payment-info-item">
+                                <span class="payment-label">Amount Paid</span>
+                                <span class="payment-value">₱{{ number_format($latestPayment->amount, 2) }}</span>
+                            </div>
+                            <div class="payment-info-item">
+                                <span class="payment-label">Payment Method</span>
+                                <span class="payment-value">{{ strtoupper($latestPayment->payment_method) }}</span>
+                            </div>
+                            <div class="payment-info-item">
+                                <span class="payment-label">Reference Number</span>
+                                <span class="payment-value">{{ $latestPayment->payment_reference }}</span>
+                            </div>
+                            <div class="payment-info-item">
+                                <span class="payment-label">Payment Date</span>
+                                <span class="payment-value">{{ $latestPayment->payment_date->format('F d, Y g:i A') }}</span>
+                            </div>
+                            <div class="payment-info-item">
+                                <span class="payment-label">Status</span>
+                                <span class="payment-value">
+                                    <span class="status-badge status-{{ $latestPayment->payment_status }}">
+                                        {{ ucfirst($latestPayment->payment_status) }}
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+
+                        @if($latestPayment->payment_status == 'pending')
+                            <div class="alert alert-warning" style="margin-top: 1.5rem; margin-bottom: 0;">
+                                <i class="fas fa-clock"></i>
+                                <div>
+                                    <strong>Payment Verification Pending</strong>
+                                    <p style="margin: 0.5rem 0 0 0;">Your payment proof has been submitted and is being verified by our team. You will receive a confirmation email within 24-48 hours.</p>
+                                </div>
+                            </div>
+                        @elseif($latestPayment->payment_status == 'verified' || $latestPayment->payment_status == 'completed')
+                            <div class="alert alert-success" style="margin-top: 1.5rem; margin-bottom: 0;">
+                                <i class="fas fa-check-circle"></i>
+                                <div>
+                                    <strong>Payment Verified!</strong>
+                                    <p style="margin: 0.5rem 0 0 0;">Your booking is now confirmed. We are expecting you on {{ $booking->check_in_date->format('F d, Y') }}!</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        @php
+                            $remainingAmount = $booking->total_amount - $latestPayment->amount;
+                        @endphp
+
+                        @if($remainingAmount > 0 && $latestPayment->payment_type == 'down_payment')
+                            <div style="margin-top: 1.5rem; padding: 1.2rem; background: #fff; border-radius: 8px; border: 2px solid #e5e5e5;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <span style="font-size: 0.9rem; color: #666;">Remaining Balance</span>
+                                        <p style="font-size: 1.5rem; font-weight: 700; color: #d4af37; margin: 0.3rem 0 0 0;">
+                                            ₱{{ number_format($remainingAmount, 2) }}
+                                        </p>
+                                        <small style="color: #999;">To be paid upon check-in or before</small>
+                                    </div>
+                                    <i class="fas fa-wallet" style="font-size: 2.5rem; color: #d4af37; opacity: 0.3;"></i>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <strong>Payment Required</strong>
+                            <p style="margin: 0.5rem 0 0 0;">Please complete your down payment to confirm this booking. Payment deadline is within 48 hours from booking creation.</p>
+                        </div>
                     </div>
                 @endif
 
