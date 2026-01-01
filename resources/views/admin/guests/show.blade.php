@@ -17,8 +17,12 @@
                 @method('PUT')
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
                     <div>
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Name</label>
-                        <input type="text" name="name" value="{{ $guest->name }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" required>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">First Name</label>
+                        <input type="text" name="first_name" value="{{ $guest->first_name }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" required>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Last Name</label>
+                        <input type="text" name="last_name" value="{{ $guest->last_name }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" required>
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Email</label>
@@ -33,7 +37,7 @@
                         <textarea name="address" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px; min-height: 100px;">{{ $guest->address }}</textarea>
                     </div>
                     @if(auth()->user()->role === 'admin' || auth()->user()->role === 'manager')
-                    <x-admin.button type="primary" style="width: 100%;">Update Information</x-admin.button>
+                    <x-admin.button type="primary">Update Information</x-admin.button>
                     @endif
                 </div>
             </form>
