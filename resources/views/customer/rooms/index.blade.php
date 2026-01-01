@@ -1,8 +1,59 @@
-@extends('customer.layout')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Rooms - Beztower & Residences</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-@section('title', 'Our Rooms - Beztower & Residences')
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            overflow-x: hidden;
+            padding-top: 80px;
+        }
 
-@section('content')
+        .content-section {
+            padding: 5rem 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            color: #2c2c2c;
+            font-family: 'Georgia', serif;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            color: #d4af37;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .section-description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #666;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+        }
+    </style>
+</head>
+<body>
+    @include('components.navbar')
+
 <section class="content-section">
     <div class="section-subtitle">ACCOMMODATION</div>
     <h2 class="section-title">Our Luxury Rooms</h2>
@@ -185,7 +236,7 @@
 
     .filters-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 1.5rem;
     }
 
@@ -193,6 +244,8 @@
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+        position: relative;
+        z-index: 1;
     }
 
     .filter-group label {
@@ -215,22 +268,29 @@
         border-radius: 8px;
         font-size: 0.95rem;
         transition: border-color 0.3s;
+        background: white;
+        position: relative;
+        z-index: 1;
     }
 
     .filter-group select:focus,
     .filter-group input[type="number"]:focus {
         outline: none;
         border-color: #d4af37;
+        z-index: 2;
     }
 
     .price-inputs {
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
         align-items: center;
         gap: 0.5rem;
     }
 
     .price-inputs input {
-        flex: 1;
+        flex: none;
+        width: 100%;
+        min-width: 0;
     }
 
     .price-inputs span {
@@ -716,10 +776,75 @@
         font-size: 1.1rem;
     }
     
+    /* Pagination Styles */
     .pagination-wrapper {
         margin-top: 3rem;
         display: flex;
         justify-content: center;
+    }
+
+    .pagination-wrapper nav {
+        display: inline-block;
+    }
+
+    .pagination-wrapper ul {
+        display: flex;
+        list-style: none;
+        gap: 0.5rem;
+        margin: 0;
+        padding: 0;
+    }
+
+    .pagination-wrapper li {
+        display: inline-block;
+    }
+
+    .pagination-wrapper a,
+    .pagination-wrapper span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 45px;
+        height: 45px;
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 2px solid #ddd;
+        color: #2c2c2c;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .pagination-wrapper a:hover {
+        background: #f9f9f9;
+        border-color: #d4af37;
+        color: #d4af37;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    }
+
+    .pagination-wrapper .active span {
+        background: linear-gradient(135deg, #d4af37, #f4e4c1);
+        border-color: #d4af37;
+        color: #2c2c2c;
+        cursor: default;
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+    }
+
+    .pagination-wrapper .disabled span {
+        background: #f5f5f5;
+        border-color: #e0e0e0;
+        color: #999;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .pagination-wrapper .disabled span:hover {
+        transform: none;
+        background: #f5f5f5;
+        border-color: #e0e0e0;
     }
     
     @media (max-width: 768px) {
@@ -737,6 +862,302 @@
             width: 100%;
             text-align: center;
         }
+
+        .filters-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .floating-calendar-btn {
+            bottom: 1rem;
+            right: 1rem;
+            padding: 0.8rem 1.2rem;
+        }
+
+        .calendar-content {
+            padding: 1rem;
+        }
+
+        .calendar-grid {
+            gap: 0.3rem;
+        }
     }
 </style>
-@endsection
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let filterTimeout = null;
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    let calendarData = null;
+
+    // Elements
+    const searchInput = document.getElementById('searchInput');
+    const minPriceInput = document.getElementById('minPrice');
+    const maxPriceInput = document.getElementById('maxPrice');
+    const roomTypeSelect = document.getElementById('roomType');
+    const guestsSelect = document.getElementById('guests');
+    const sortBySelect = document.getElementById('sortBy');
+    const resetBtn = document.getElementById('resetFilters');
+    const amenitiesBtn = document.getElementById('amenitiesBtn');
+    const amenitiesList = document.getElementById('amenitiesList');
+    const amenityCheckboxes = document.querySelectorAll('input[name="amenities[]"]');
+    const roomsGrid = document.getElementById('roomsGrid');
+    const paginationWrapper = document.getElementById('paginationWrapper');
+    const resultsCount = document.getElementById('resultsCount');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const calendarModal = document.getElementById('calendarModal');
+    const showCalendarBtn = document.getElementById('showCalendar');
+    const closeCalendarBtn = document.getElementById('closeCalendar');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const calendarGrid = document.getElementById('calendarGrid');
+    const calendarMonthYear = document.getElementById('calendarMonthYear');
+
+    // Filter function with debounce
+    function applyFilters(page = 1) {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+            loadingSpinner.style.display = 'inline-block';
+
+            const params = new URLSearchParams();
+            
+            const searchValue = searchInput.value.trim();
+            if (searchValue) params.append('search', searchValue);
+            
+            const minPrice = minPriceInput.value;
+            if (minPrice) params.append('min_price', minPrice);
+            
+            const maxPrice = maxPriceInput.value;
+            if (maxPrice) params.append('max_price', maxPrice);
+            
+            const roomType = roomTypeSelect.value;
+            if (roomType) params.append('room_type', roomType);
+            
+            const guests = guestsSelect.value;
+            if (guests) params.append('guests', guests);
+            
+            const sortBy = sortBySelect.value;
+            if (sortBy) params.append('sort', sortBy);
+            
+            const selectedAmenities = Array.from(amenityCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+            selectedAmenities.forEach(amenity => params.append('amenities[]', amenity));
+            
+            params.append('page', page);
+
+            fetch(`{{ route('rooms.index') }}?${params.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                roomsGrid.innerHTML = data.html;
+                paginationWrapper.innerHTML = data.pagination;
+                resultsCount.textContent = `Showing ${data.total > 0 ? '1-' + Math.min(6, data.total) : 0} of ${data.total} rooms`;
+                loadingSpinner.style.display = 'none';
+                
+                // Reattach pagination click handlers
+                attachPaginationHandlers();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingSpinner.style.display = 'none';
+            });
+        }, 500);
+    }
+
+    // Attach pagination handlers
+    function attachPaginationHandlers() {
+        const paginationLinks = paginationWrapper.querySelectorAll('a');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = new URL(this.href);
+                const page = url.searchParams.get('page');
+                if (page) {
+                    applyFilters(page);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        });
+    }
+
+    // Event listeners
+    searchInput.addEventListener('input', () => applyFilters());
+    minPriceInput.addEventListener('input', () => applyFilters());
+    maxPriceInput.addEventListener('input', () => applyFilters());
+    roomTypeSelect.addEventListener('change', () => applyFilters());
+    guestsSelect.addEventListener('change', () => applyFilters());
+    sortBySelect.addEventListener('change', () => applyFilters());
+    
+    amenityCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            updateAmenitiesCount();
+            applyFilters();
+        });
+    });
+
+    // Amenities dropdown toggle
+    amenitiesBtn.addEventListener('click', () => {
+        amenitiesList.classList.toggle('active');
+        amenitiesBtn.classList.toggle('active');
+    });
+
+    // Close amenities dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!amenitiesBtn.contains(e.target) && !amenitiesList.contains(e.target)) {
+            amenitiesList.classList.remove('active');
+            amenitiesBtn.classList.remove('active');
+        }
+    });
+
+    // Update amenities count
+    function updateAmenitiesCount() {
+        const count = Array.from(amenityCheckboxes).filter(cb => cb.checked).length;
+        const countSpan = document.getElementById('amenitiesCount');
+        countSpan.textContent = count > 0 ? `${count} Selected` : 'Select Amenities';
+    }
+
+    // Reset filters
+    resetBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        minPriceInput.value = '';
+        maxPriceInput.value = '';
+        roomTypeSelect.value = '';
+        guestsSelect.value = '';
+        sortBySelect.value = '';
+        amenityCheckboxes.forEach(cb => cb.checked = false);
+        updateAmenitiesCount();
+        applyFilters();
+    });
+
+    // Calendar functionality
+    showCalendarBtn.addEventListener('click', () => {
+        calendarModal.classList.add('active');
+        loadCalendar(currentMonth, currentYear);
+    });
+
+    closeCalendarBtn.addEventListener('click', () => {
+        calendarModal.classList.remove('active');
+    });
+
+    calendarModal.addEventListener('click', (e) => {
+        if (e.target === calendarModal) {
+            calendarModal.classList.remove('active');
+        }
+    });
+
+    prevMonthBtn.addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        loadCalendar(currentMonth, currentYear);
+    });
+
+    nextMonthBtn.addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        loadCalendar(currentMonth, currentYear);
+    });
+
+    function loadCalendar(month, year) {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        calendarMonthYear.textContent = `${monthNames[month]} ${year}`;
+        calendarGrid.innerHTML = '<div style="text-align:center;padding:2rem;grid-column:1/-1;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+        fetch(`{{ route('calendar.availability') }}?month=${month + 1}&year=${year}`)
+            .then(response => response.json())
+            .then(data => {
+                calendarData = data;
+                renderCalendar(month, year, data);
+            })
+            .catch(error => {
+                console.error('Error loading calendar:', error);
+                calendarGrid.innerHTML = '<div style="text-align:center;padding:2rem;grid-column:1/-1;color:#f44336;">Error loading calendar</div>';
+            });
+    }
+
+    function renderCalendar(month, year, data) {
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let html = '';
+        
+        // Day headers
+        const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        dayHeaders.forEach(day => {
+            html += `<div class="calendar-day-header">${day}</div>`;
+        });
+
+        // Empty cells before first day
+        for (let i = 0; i < firstDay; i++) {
+            html += '<div class="calendar-day empty"></div>';
+        }
+
+        // Days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const currentDate = new Date(year, month, day);
+            const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            const bookedInfo = data.booked_dates.find(d => d.date === dateString);
+            const blockedInfo = data.block_dates.find(d => d.date === dateString);
+            
+            let className = 'calendar-day';
+            let statusText = 'Available';
+            
+            if (currentDate < today) {
+                className += ' past';
+                statusText = 'Past';
+            } else if (blockedInfo) {
+                className += ' full';
+                statusText = 'Blocked';
+            } else if (bookedInfo) {
+                const bookedCount = bookedInfo.booked_rooms;
+                if (bookedCount >= data.total_rooms) {
+                    className += ' full';
+                    statusText = 'Full';
+                } else {
+                    className += ' partial';
+                    statusText = `${data.total_rooms - bookedCount} available`;
+                }
+            } else {
+                className += ' available';
+                statusText = 'Available';
+            }
+
+            html += `
+                <div class="${className}" data-date="${dateString}">
+                    <div class="calendar-day-number">${day}</div>
+                    <div class="calendar-day-info">${statusText}</div>
+                </div>
+            `;
+        }
+
+        calendarGrid.innerHTML = html;
+    }
+
+    // Initialize pagination handlers on page load
+    attachPaginationHandlers();
+
+    // Auto-refresh calendar every 30 seconds if modal is open
+    setInterval(() => {
+        if (calendarModal.classList.contains('active')) {
+            loadCalendar(currentMonth, currentYear);
+        }
+    }, 30000);
+});
+</script>
+</body>
+</html>
