@@ -18,7 +18,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #fff;
+            background: #ffffff;
             color: #2c2c2c;
         }
 
@@ -63,20 +63,21 @@
             color: #d4af37;
         }
 
-        /* Room Detail Section */
-        .room-detail-container {
+        /* Container */
+        .container {
             max-width: 1400px;
-            margin: 100px auto 0;
-            padding: 3rem 3rem;
+            margin: 100px auto 50px;
+            padding: 0 3rem;
         }
 
+        /* Breadcrumb */
         .breadcrumb {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             margin-bottom: 2rem;
             color: #666;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .breadcrumb a {
@@ -90,37 +91,43 @@
         }
 
         .breadcrumb i {
-            font-size: 0.7rem;
+            font-size: 0.6rem;
+            color: #999;
         }
 
-        /* Main Product Layout */
+        /* Product Layout - Two Columns */
         .product-layout {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 5rem;
             margin-bottom: 4rem;
         }
 
-        /* Image Gallery */
+        /* Left Column - Image Gallery */
         .image-section {
             position: sticky;
-            top: 100px;
+            top: 120px;
             height: fit-content;
         }
 
-        .main-image-container {
-            background: #f9f9f9;
-            border-radius: 15px;
+        .main-image-wrapper {
+            width: 100%;
+            height: 500px;
+            background: #f8f8f8;
+            border-radius: 12px;
             overflow: hidden;
             margin-bottom: 1.5rem;
-            border: 1px solid #eee;
-            aspect-ratio: 4/3;
+            border: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .main-image-container img {
+        .main-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            cursor: zoom-in;
         }
 
         .thumbnail-gallery {
@@ -130,20 +137,17 @@
         }
 
         .thumbnail {
-            background: #f9f9f9;
-            border-radius: 10px;
+            width: 100%;
+            height: 100px;
+            background: #f8f8f8;
+            border-radius: 8px;
             overflow: hidden;
             cursor: pointer;
             border: 2px solid transparent;
             transition: all 0.3s;
-            aspect-ratio: 4/3;
         }
 
-        .thumbnail:hover {
-            border-color: #d4af37;
-            transform: scale(1.05);
-        }
-
+        .thumbnail:hover,
         .thumbnail.active {
             border-color: #d4af37;
         }
@@ -154,40 +158,83 @@
             object-fit: cover;
         }
 
-        /* Details Section */
+        /* Right Column - Room Details */
         .details-section {
             padding-top: 1rem;
         }
 
-        .room-category {
-            color: #d4af37;
-            font-size: 0.9rem;
+        .room-type-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #d4af37, #f4e4c1);
+            color: #2c2c2c;
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 600;
-            letter-spacing: 2px;
+            margin-bottom: 1rem;
             text-transform: uppercase;
-            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
         }
 
         .room-title {
-            font-size: 2.8rem;
-            font-family: 'Georgia', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
             color: #2c2c2c;
             margin-bottom: 1rem;
+            font-family: 'Georgia', serif;
             line-height: 1.2;
         }
 
         .room-number {
-            color: #666;
+            color: #999;
             font-size: 1rem;
             margin-bottom: 1.5rem;
         }
 
+        /* Rating Section */
+        .rating-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .stars {
+            color: #d4af37;
+            font-size: 1.1rem;
+        }
+
+        .rating-text {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .status-badge {
+            margin-left: auto;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .status-badge.available {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-badge.occupied {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* Price Section */
         .price-section {
-            background: linear-gradient(135deg, #f9f5eb, #fff);
-            border: 2px solid #d4af37;
-            border-radius: 10px;
-            padding: 2rem;
             margin-bottom: 2rem;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid #e5e5e5;
         }
 
         .price-label {
@@ -196,66 +243,40 @@
             margin-bottom: 0.5rem;
         }
 
+        .price-wrapper {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+
         .price-amount {
-            font-size: 3.5rem;
+            font-size: 2.5rem;
             font-weight: 700;
             color: #d4af37;
-            line-height: 1;
         }
 
         .price-period {
-            color: #666;
             font-size: 1.1rem;
-            margin-top: 0.3rem;
+            color: #666;
         }
 
-        .price-note {
-            color: #28a745;
-            font-size: 0.85rem;
-            margin-top: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .price-note i {
-            font-size: 1rem;
-        }
-
-        .stock-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: #d4f4dd;
-            color: #28a745;
-            padding: 0.6rem 1.2rem;
-            border-radius: 25px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 2rem;
-        }
-
-        .stock-status i {
-            font-size: 0.7rem;
-        }
-
-        .room-meta-grid {
+        /* Room Specs */
+        .room-specs {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 1.5rem;
             margin-bottom: 2rem;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid #e5e5e5;
         }
 
-        .meta-item {
+        .spec-item {
             display: flex;
             align-items: center;
             gap: 1rem;
-            padding: 1rem;
-            background: #f9f9f9;
-            border-radius: 8px;
         }
 
-        .meta-icon {
+        .spec-icon {
             width: 45px;
             height: 45px;
             background: linear-gradient(135deg, #d4af37, #f4e4c1);
@@ -266,25 +287,30 @@
             flex-shrink: 0;
         }
 
-        .meta-icon i {
+        .spec-icon i {
             color: #2c2c2c;
             font-size: 1.2rem;
         }
 
-        .meta-content {
-            flex: 1;
+        .spec-details span {
+            display: block;
         }
 
-        .meta-label {
+        .spec-label {
             font-size: 0.85rem;
             color: #999;
             margin-bottom: 0.2rem;
         }
 
-        .meta-value {
-            font-size: 1.1rem;
+        .spec-value {
+            font-size: 1rem;
             font-weight: 600;
             color: #2c2c2c;
+        }
+
+        /* Action Buttons */
+        .action-section {
+            margin-bottom: 2rem;
         }
 
         .check-now-btn {
@@ -292,50 +318,48 @@
             background: linear-gradient(135deg, #d4af37, #f4e4c1);
             color: #2c2c2c;
             border: none;
-            padding: 1.5rem 2rem;
+            padding: 1.2rem 2rem;
             border-radius: 8px;
-            font-size: 1.2rem;
-            font-weight: 700;
+            font-size: 1.1rem;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+            display: inline-block;
+            text-align: center;
         }
 
         .check-now-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
         }
 
         .check-now-btn i {
-            font-size: 1.3rem;
+            margin-right: 0.5rem;
         }
 
-        .guarantee-info {
-            background: #f9f9f9;
+        /* Additional Info */
+        .additional-info {
+            background: #f8f8f8;
             padding: 1.5rem;
             border-radius: 8px;
             margin-bottom: 2rem;
         }
 
-        .guarantee-item {
+        .info-item {
             display: flex;
             align-items: center;
             gap: 0.8rem;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
             color: #666;
-            margin-bottom: 0.8rem;
         }
 
-        .guarantee-item:last-child {
+        .info-item:last-child {
             margin-bottom: 0;
         }
 
-        .guarantee-item i {
+        .info-item i {
             color: #d4af37;
             font-size: 1.1rem;
         }
@@ -343,19 +367,17 @@
         /* Description Tabs */
         .description-section {
             margin-top: 4rem;
-            padding-top: 3rem;
-            border-top: 2px solid #eee;
         }
 
         .tabs {
             display: flex;
             gap: 2rem;
+            border-bottom: 2px solid #e5e5e5;
             margin-bottom: 2rem;
-            border-bottom: 2px solid #eee;
         }
 
-        .tab {
-            padding: 1rem 2rem;
+        .tab-button {
+            padding: 1rem 0;
             background: none;
             border: none;
             font-size: 1.1rem;
@@ -366,15 +388,11 @@
             transition: color 0.3s;
         }
 
-        .tab:hover {
+        .tab-button.active {
             color: #d4af37;
         }
 
-        .tab.active {
-            color: #d4af37;
-        }
-
-        .tab.active::after {
+        .tab-button.active::after {
             content: '';
             position: absolute;
             bottom: -2px;
@@ -386,145 +404,173 @@
 
         .tab-content {
             display: none;
-            padding: 2rem 0;
         }
 
         .tab-content.active {
             display: block;
         }
 
-        .description-text {
-            color: #666;
+        /* Description Content */
+        .description-content {
             line-height: 1.8;
-            font-size: 1.05rem;
-            margin-bottom: 2rem;
+            color: #555;
+            font-size: 1rem;
         }
 
-        .amenities-list {
+        .description-content p {
+            margin-bottom: 1rem;
+        }
+
+        /* Amenities Grid */
+        .amenities-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1rem;
-        }
-
-        .amenity-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            background: #f9f9f9;
-            border-radius: 8px;
-            transition: transform 0.3s;
-        }
-
-        .amenity-item:hover {
-            transform: translateX(5px);
-        }
-
-        .amenity-item i {
-            color: #d4af37;
-            font-size: 1.3rem;
-        }
-
-        .amenity-item span {
-            color: #2c2c2c;
-            font-weight: 500;
-        }
-
-        .specs-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
             gap: 1.5rem;
         }
 
-        .spec-row {
+        .amenity-card {
             display: flex;
-            justify-content: space-between;
-            padding: 1rem;
-            background: #f9f9f9;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.2rem;
+            background: #f8f8f8;
             border-radius: 8px;
+            transition: all 0.3s;
         }
 
-        .spec-label {
-            color: #666;
-            font-weight: 500;
+        .amenity-card:hover {
+            background: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .spec-value {
+        .amenity-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #d4af37, #f4e4c1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .amenity-icon i {
             color: #2c2c2c;
-            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .amenity-name {
+            font-weight: 500;
+            color: #2c2c2c;
+        }
+
+        /* Features Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .feature-card {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #d4af37, #f4e4c1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .feature-icon i {
+            color: #2c2c2c;
+            font-size: 1.5rem;
+        }
+
+        .feature-content h4 {
+            font-size: 1.2rem;
+            color: #2c2c2c;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-content p {
+            color: #666;
+            line-height: 1.6;
         }
 
         /* Footer */
         .footer {
             background: #2c2c2c;
             color: white;
-            padding: 3rem;
+            text-align: center;
+            padding: 3rem 2rem;
             margin-top: 5rem;
         }
 
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .footer-content p {
-            color: #ccc;
+        .footer p {
             margin-bottom: 0.5rem;
+            color: #ccc;
         }
 
         /* Responsive */
+        @media (max-width: 1024px) {
+            .product-layout {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .image-section {
+                position: static;
+            }
+        }
+
         @media (max-width: 768px) {
             .navbar {
-                padding: 1rem;
+                padding: 1rem 1.5rem;
             }
 
             .nav-links {
                 display: none;
             }
 
-            .room-detail-container {
+            .container {
+                padding: 0 1.5rem;
                 margin-top: 80px;
-                padding: 0 1rem;
-            }
-
-            .image-gallery {
-                grid-template-columns: 1fr;
-                grid-template-rows: 300px;
-            }
-
-            .main-image {
-                grid-row: span 1;
-            }
-
-            .thumbnail {
-                display: none;
-            }
-
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .booking-card {
-                position: static;
             }
 
             .room-title {
                 font-size: 1.8rem;
             }
 
-            .room-title-section {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
+            .main-image-wrapper {
+                height: 350px;
             }
 
-            .amenities-grid {
+            .thumbnail-gallery {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .room-specs {
                 grid-template-columns: 1fr;
             }
 
             .features-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                gap: 1rem;
+                overflow-x: auto;
+            }
+
+            .tab-button {
+                font-size: 1rem;
+                white-space: nowrap;
             }
         }
     </style>
@@ -542,161 +588,231 @@
         </ul>
     </nav>
 
-    <!-- Room Detail -->
-    <div class="room-detail-container">
-        <a href="{{ route('home') }}#rooms" class="back-button">
-            <i class="fas fa-arrow-left"></i> Back to Rooms
-        </a>
-
-        <!-- Room Header -->
-        <div class="room-header">
-            <div class="room-title-section">
-                <div>
-                    <h1 class="room-title">{{ $room->roomType->name }}</h1>
-                    <p class="room-subtitle">Room {{ $room->room_number }}</p>
-                </div>
-                <div class="room-status-badge">{{ $room->status }}</div>
-            </div>
-            <div class="room-meta">
-                <span><i class="fas fa-bed"></i> {{ $room->roomType->bed_type }}</span>
-                <span><i class="fas fa-users"></i> Up to {{ $room->roomType->max_guests }} Guests</span>
-                <span><i class="fas fa-ruler-combined"></i> {{ $room->roomType->size_sqm }} m²</span>
-            </div>
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="{{ route('home') }}">Home</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="{{ route('home') }}#rooms">Rooms</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>{{ $room->roomType->name }}</span>
         </div>
 
-        <!-- Image Gallery -->
-        <div class="image-gallery">
-            <div class="main-image">
-                @if($room->photos->count() > 0)
-                    <img src="{{ asset('storage/' . $room->photos->first()->photo_path) }}" alt="{{ $room->roomType->name }}">
-                @else
-                    <img src="https://via.placeholder.com/800x600/d4af37/2c2c2c?text={{ urlencode($room->roomType->name) }}" alt="{{ $room->roomType->name }}">
-                @endif
+        <!-- Product Layout -->
+        <div class="product-layout">
+            <!-- Left Column - Image Gallery -->
+            <div class="image-section">
+                <div class="main-image-wrapper">
+                    @if($room->photos->count() > 0)
+                        <img src="{{ asset('storage/' . $room->photos->first()->photo_path) }}" alt="{{ $room->roomType->name }}" class="main-image" id="mainImage">
+                    @else
+                        <img src="https://via.placeholder.com/800x600/d4af37/2c2c2c?text={{ urlencode($room->roomType->name) }}" alt="{{ $room->roomType->name }}" class="main-image" id="mainImage">
+                    @endif
+                </div>
+
+                <div class="thumbnail-gallery">
+                    @if($room->photos->count() > 0)
+                        @foreach($room->photos->take(4) as $index => $photo)
+                            <div class="thumbnail {{ $index === 0 ? 'active' : '' }}" onclick="changeImage('{{ asset('storage/' . $photo->photo_path) }}', this)">
+                                <img src="{{ asset('storage/' . $photo->photo_path) }}" alt="{{ $room->roomType->name }}">
+                            </div>
+                        @endforeach
+                        @for($i = $room->photos->count(); $i < 4; $i++)
+                            <div class="thumbnail">
+                                <img src="https://via.placeholder.com/150x100/d4af37/2c2c2c?text=Room+{{ $i + 1 }}" alt="Room View {{ $i + 1 }}">
+                            </div>
+                        @endfor
+                    @else
+                        @for($i = 0; $i < 4; $i++)
+                            <div class="thumbnail {{ $i === 0 ? 'active' : '' }}">
+                                <img src="https://via.placeholder.com/150x100/d4af37/2c2c2c?text=View+{{ $i + 1 }}" alt="Room View {{ $i + 1 }}">
+                            </div>
+                        @endfor
+                    @endif
+                </div>
             </div>
-            @if($room->photos->count() > 1)
-                @foreach($room->photos->skip(1)->take(2) as $photo)
-                    <div class="thumbnail">
-                        <img src="{{ asset('storage/' . $photo->photo_path) }}" alt="{{ $room->roomType->name }}">
+
+            <!-- Right Column - Room Details -->
+            <div class="details-section">
+                <div class="room-type-badge">{{ $room->roomType->name }}</div>
+                
+                <h1 class="room-title">{{ $room->roomType->name }}</h1>
+                <p class="room-number">Room #{{ $room->room_number }}</p>
+
+                <!-- Rating Section -->
+                <div class="rating-section">
+                    <div class="stars">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
                     </div>
-                @endforeach
-            @else
-                <div class="thumbnail">
-                    <img src="https://via.placeholder.com/400x200/d4af37/2c2c2c?text=Gallery" alt="Gallery">
-                </div>
-                <div class="thumbnail">
-                    <img src="https://via.placeholder.com/400x200/d4af37/2c2c2c?text=View" alt="View">
-                </div>
-            @endif
-        </div>
-
-        <!-- Content Grid -->
-        <div class="content-grid">
-            <div>
-                <!-- Description -->
-                <div class="room-description-section">
-                    <h2 class="section-title">Room Description</h2>
-                    <p class="room-description">{{ $room->roomType->description }}</p>
+                    <span class="rating-text">4.8 (127 reviews)</span>
+                    <div class="status-badge {{ strtolower($room->status) }}">{{ $room->status }}</div>
                 </div>
 
-                <!-- Amenities -->
-                @if($room->amenities->count() > 0)
-                    <div class="amenities-section" style="margin-top: 2rem;">
-                        <h2 class="section-title">Room Amenities</h2>
-                        <div class="amenities-grid">
-                            @foreach($room->amenities as $amenity)
-                                <div class="amenity-item">
-                                    <i class="{{ $amenity->icon }}"></i>
-                                    <span>{{ $amenity->name }}</span>
-                                </div>
-                            @endforeach
+                <!-- Price Section -->
+                <div class="price-section">
+                    <div class="price-label">Price:</div>
+                    <div class="price-wrapper">
+                        <span class="price-amount">₱{{ number_format($room->roomType->base_price, 2) }}</span>
+                        <span class="price-period">/night</span>
+                    </div>
+                </div>
+
+                <!-- Room Specifications -->
+                <div class="room-specs">
+                    <div class="spec-item">
+                        <div class="spec-icon">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                        <div class="spec-details">
+                            <span class="spec-label">Bed Type</span>
+                            <span class="spec-value">{{ $room->roomType->bed_type }}</span>
                         </div>
                     </div>
-                @endif
-            </div>
 
-            <!-- Booking Card -->
-            <div class="booking-card">
-                <div class="price-section">
-                    <div class="price-from">From</div>
-                    <div class="price-amount">₱{{ number_format($room->roomType->base_price, 0) }}</div>
-                    <div class="price-period">/night</div>
+                    <div class="spec-item">
+                        <div class="spec-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="spec-details">
+                            <span class="spec-label">Max Guests</span>
+                            <span class="spec-value">{{ $room->roomType->max_guests }} Guests</span>
+                        </div>
+                    </div>
+
+                    <div class="spec-item">
+                        <div class="spec-icon">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <div class="spec-details">
+                            <span class="spec-label">Room Size</span>
+                            <span class="spec-value">{{ $room->roomType->size_sqm }} m²</span>
+                        </div>
+                    </div>
+
+                    <div class="spec-item">
+                        <div class="spec-icon">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                        <div class="spec-details">
+                            <span class="spec-label">Floor</span>
+                            <span class="spec-value">{{ $room->floor_number }}</span>
+                        </div>
+                    </div>
                 </div>
 
-                <form class="booking-form" action="{{ route('booking.create') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="room_id" value="{{ $room->id }}">
-                    
-                    <div class="form-group">
-                        <label>Check-in Date</label>
-                        <input type="date" name="check_in" required min="{{ date('Y-m-d') }}">
+                <!-- Action Buttons -->
+                <div class="action-section">
+                    <a href="{{ route('home') }}#rooms" class="check-now-btn">
+                        <i class="fas fa-calendar-check"></i> Check Availability
+                    </a>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="additional-info">
+                    <div class="info-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Free cancellation up to 24 hours before check-in</span>
                     </div>
-
-                    <div class="form-group">
-                        <label>Check-out Date</label>
-                        <input type="date" name="check_out" required min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                    <div class="info-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Secure and safe accommodation</span>
                     </div>
-
-                    <div class="form-group">
-                        <label>Number of Guests</label>
-                        <select name="number_of_guests" required>
-                            @for($i = 1; $i <= $room->roomType->max_guests; $i++)
-                                <option value="{{ $i }}">{{ $i }} {{ $i == 1 ? 'Guest' : 'Guests' }}</option>
-                            @endfor
-                        </select>
+                    <div class="info-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Check-in: 2:00 PM | Check-out: 12:00 PM</span>
                     </div>
-
-                    <button type="submit" class="book-now-btn">
-                        <i class="fas fa-calendar-check"></i> Book Now
-                    </button>
-
-                    <p class="booking-info">
-                        <i class="fas fa-info-circle"></i> Free cancellation up to 24 hours before check-in
-                    </p>
-                </form>
+                </div>
             </div>
         </div>
 
-        <!-- Features Section -->
-        <div class="features-section">
-            <h2 class="section-title">Room Features</h2>
-            <div class="features-grid">
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-wifi"></i>
-                    </div>
-                    <div class="feature-content">
-                        <h4>High-Speed WiFi</h4>
-                        <p>Complimentary high-speed internet access throughout your stay</p>
-                    </div>
-                </div>
+        <!-- Description Tabs Section -->
+        <div class="description-section">
+            <div class="tabs">
+                <button class="tab-button active" onclick="openTab(event, 'description')">Description</button>
+                <button class="tab-button" onclick="openTab(event, 'amenities')">Amenities</button>
+                <button class="tab-button" onclick="openTab(event, 'features')">Features</button>
+            </div>
 
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-tv"></i>
-                    </div>
-                    <div class="feature-content">
-                        <h4>Smart TV</h4>
-                        <p>Large flat-screen TV with premium channels and streaming services</p>
-                    </div>
+            <!-- Description Tab -->
+            <div id="description" class="tab-content active">
+                <div class="description-content">
+                    <p>{{ $room->roomType->description }}</p>
+                    <p>
+                        Experience luxury and comfort in our beautifully designed {{ $room->roomType->name }}. 
+                        Each room is thoughtfully crafted to provide you with a memorable stay, featuring modern amenities 
+                        and elegant furnishings that create a warm and inviting atmosphere.
+                    </p>
+                    <p>
+                        Located in the heart of San Juan City at 205 F. Blumentritt Street, Brgy. Pedro Cruz, 
+                        our hotel offers easy access to major attractions while providing a peaceful retreat from the bustling city.
+                    </p>
                 </div>
+            </div>
 
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-snowflake"></i>
+            <!-- Amenities Tab -->
+            <div id="amenities" class="tab-content">
+                @if($room->amenities->count() > 0)
+                    <div class="amenities-grid">
+                        @foreach($room->amenities as $amenity)
+                            <div class="amenity-card">
+                                <div class="amenity-icon">
+                                    <i class="{{ $amenity->icon }}"></i>
+                                </div>
+                                <span class="amenity-name">{{ $amenity->name }}</span>
+                            </div>
+                        @endforeach
                     </div>
-                    <div class="feature-content">
-                        <h4>Climate Control</h4>
-                        <p>Individual temperature control for your comfort</p>
-                    </div>
-                </div>
+                @else
+                    <p>No amenities listed for this room.</p>
+                @endif
+            </div>
 
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
+            <!-- Features Tab -->
+            <div id="features" class="tab-content">
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-wifi"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h4>High-Speed WiFi</h4>
+                            <p>Stay connected with complimentary high-speed internet access throughout your stay.</p>
+                        </div>
                     </div>
-                    <div class="feature-content">
-                        <h4>Safety & Security</h4>
-                        <p>Electronic safe and 24/7 security monitoring</p>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-tv"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h4>Smart Entertainment</h4>
+                            <p>Large flat-screen TV with premium channels and streaming services for your entertainment.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-snowflake"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h4>Climate Control</h4>
+                            <p>Individual temperature control to ensure your comfort at all times.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-concierge-bell"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h4>24/7 Room Service</h4>
+                            <p>Around-the-clock room service to cater to your every need at any time.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -708,5 +824,39 @@
         <p>&copy; 2026 Bez Tower & Residences. All rights reserved.</p>
         <p>205 F. Blumentritt Street, Brgy. Pedro Cruz, San Juan City, Philippines</p>
     </footer>
+
+    <script>
+        // Change main image when clicking thumbnails
+        function changeImage(src, element) {
+            document.getElementById('mainImage').src = src;
+            
+            // Remove active class from all thumbnails
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
+                thumb.classList.remove('active');
+            });
+            
+            // Add active class to clicked thumbnail
+            element.classList.add('active');
+        }
+
+        // Tab functionality
+        function openTab(evt, tabName) {
+            // Hide all tab contents
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+
+            // Remove active class from all tab buttons
+            const tabButtons = document.getElementsByClassName('tab-button');
+            for (let i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove('active');
+            }
+
+            // Show selected tab content and mark button as active
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+    </script>
 </body>
 </html>
