@@ -107,7 +107,7 @@
                     <option value="cancelled" {{ $booking->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
                 <div style="width: 100%;">
-                    <x-admin.button type="primary" style="width: 100%;">Update Status</x-admin.button>
+                    <x-admin.button type="primary">Update Status</x-admin.button>
                 </div>
             </form>
         </x-admin.card>
