@@ -50,7 +50,6 @@
                     <option value="available" {{ old('status') == 'available' ? 'selected' : '' }}>Available</option>
                     <option value="occupied" {{ old('status') == 'occupied' ? 'selected' : '' }}>Occupied</option>
                     <option value="maintenance" {{ old('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                    <option value="blocked" {{ old('status') == 'blocked' ? 'selected' : '' }}>Blocked</option>
                 </select>
                 @error('status')
                 <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
