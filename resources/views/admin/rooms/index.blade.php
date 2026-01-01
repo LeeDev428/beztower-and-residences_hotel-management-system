@@ -1,0 +1,86 @@
+@extends('layouts.admin')
+
+@section('title', 'Rooms Management')
+@section('page-title', 'Rooms Management')
+
+@section('content')
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+    <form method="GET" style="display: flex; gap: 1rem; flex: 1;">
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search rooms..." style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+        <select name="type" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+            <option value="">All Types</option>
+            @foreach($roomTypes as $type)
+            <option value="{{ $type->id }}" {{ request('type') == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
+            @endforeach
+        </select>
+        <select name="status" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+            <option value="">All Status</option>
+            <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
+            <option value="occupied" {{ request('status') == 'occupied' ? 'selected' : '' }}>Occupied</option>
+            <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+            <option value="blocked" {{ request('status') == 'blocked' ? 'selected' : '' }}>Blocked</option>
+        </select>
+        <x-admin.button type="primary">Filter</x-admin.button>
+    </form>
+    @can('create', App\Models\Room::class)
+    <x-admin.button type="primary" href="{{ route('admin.rooms.create') }}">
+        + Add Room
+    </x-admin.button>
+    @endcan
+</div>
+
+<x-admin.card title="All Rooms ({{ $rooms->total() }})">
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-gray);">
+                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Room #</th>
+                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Type</th>
+                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Floor</th>
+                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Status</th>
+                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Amenities</th>
+                    <th style="text-align: right; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($rooms as $room)
+                <tr style="border-bottom: 1px solid var(--border-gray);">
+                    <td style="padding: 1rem 0.75rem; font-weight: 600;">{{ $room->room_number }}</td>
+                    <td style="padding: 1rem 0.75rem;">{{ $room->roomType->name }}</td>
+                    <td style="padding: 1rem 0.75rem;">Floor {{ $room->floor }}</td>
+                    <td style="padding: 1rem 0.75rem;">
+                        <x-admin.badge :status="$room->status" />
+                    </td>
+                    <td style="padding: 1rem 0.75rem;">
+                        <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                            @foreach($room->amenities->take(3) as $amenity)
+                            <span style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background: var(--light-gray); border-radius: 4px;">{{ $amenity->name }}</span>
+                            @endforeach
+                            @if($room->amenities->count() > 3)
+                            <span style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background: var(--light-gray); border-radius: 4px;">+{{ $room->amenities->count() - 3 }}</span>
+                            @endif
+                        </div>
+                    </td>
+                    <td style="padding: 1rem 0.75rem; text-align: right;">
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                            <x-admin.button type="outline" size="sm" href="{{ route('admin.rooms.edit', $room) }}">Edit</x-admin.button>
+                            @if(auth()->user()->role === 'admin')
+                            <form method="POST" action="{{ route('admin.rooms.destroy', $room) }}" onsubmit="return confirm('Are you sure?');">
+                                @csrf
+                                @method('DELETE')
+                                <x-admin.button type="danger" size="sm">Delete</x-admin.button>
+                            </form>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+        {{ $rooms->links() }}
+    </div>
+</x-admin.card>
+@endsection
