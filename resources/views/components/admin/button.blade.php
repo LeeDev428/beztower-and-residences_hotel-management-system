@@ -24,7 +24,7 @@ $style = ($colors[$type] ?? $colors['primary']) . ' ' . ($sizes[$size] ?? $sizes
     {{ $slot }}
 </a>
 @else
-<button {{ $attributes->merge(['type' => 'button']) }} style="{{ $style }} border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+<button {{ $attributes->merge(['type' => 'submit']) }} style="{{ $style }} border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
     {{ $slot }}
 </button>
 @endif
