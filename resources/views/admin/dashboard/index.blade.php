@@ -159,15 +159,27 @@
     <x-admin.card title="Revenue Overview (Last 12 Months)">
         <canvas id="revenueChart" style="max-height: 300px;"></canvas>
     </x-admin.card>
+
+    <!-- Bookings & Occupancy Charts -->
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+        <x-admin.card title="Booking Trends (Last 12 Months)">
+            <canvas id="bookingsChart" style="max-height: 250px;"></canvas>
+        </x-admin.card>
+
+        <x-admin.card title="Occupancy Rate Trends (Last 12 Months)">
+            <canvas id="occupancyChart" style="max-height: 250px;"></canvas>
+        </x-admin.card>
+    </div>
 </div>
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctx = document.getElementById('revenueChart').getContext('2d');
+    // Revenue Chart
+    const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
     const monthlyData = @json($monthlyRevenue);
     
-    new Chart(ctx, {
+    new Chart(ctxRevenue, {
         type: 'line',
         data: {
             labels: monthlyData.map(item => item.month),
@@ -206,6 +218,100 @@
                     ticks: {
                         callback: function(value) {
                             return '₱' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Bookings Chart
+    const ctxBookings = document.getElementById('bookingsChart').getContext('2d');
+    const bookingsData = @json($monthlyBookings);
+    
+    new Chart(ctxBookings, {
+        type: 'bar',
+        data: {
+            labels: bookingsData.map(item => item.month),
+            datasets: [{
+                label: 'Bookings',
+                data: bookingsData.map(item => item.count),
+                backgroundColor: 'rgba(23, 162, 184, 0.8)',
+                borderColor: '#17a2b8',
+                borderWidth: 1,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + ' bookings';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
+    // Occupancy Chart
+    const ctxOccupancy = document.getElementById('occupancyChart').getContext('2d');
+    const occupancyData = @json($monthlyOccupancy);
+    
+    new Chart(ctxOccupancy, {
+        type: 'line',
+        data: {
+            labels: occupancyData.map(item => item.month),
+            datasets: [{
+                label: 'Occupancy Rate (%)',
+                data: occupancyData.map(item => item.occupancy),
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#28a745',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
                         }
                     }
                 }
