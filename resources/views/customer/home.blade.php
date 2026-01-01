@@ -426,10 +426,10 @@
         
         <ul class="nav-links">
             <li><a href="{{ route('home') }}">Home</a></li>
-            <li><a href="#about">About</a></li>
+            <li><a href="{{ route('about') }}">About</a></li>
             <li><a href="{{ route('rooms.index') }}">Rooms</a></li>
-            <li><a href="#services">Services</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="{{ route('services') }}">Services</a></li>
+            <li><a href="{{ route('contact') }}">Contact</a></li>
         </ul>
         
         <div class="nav-right">
@@ -507,91 +507,6 @@
         <div class="play-button" onclick="toggleVideo()">
             <div class="play-ring"></div>
             <i class="fas fa-play" id="playIcon"></i>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section class="content-section about-section" id="about">
-        <div class="section-subtitle">DISCOVER OUR HOTEL</div>
-        <h2 class="section-title">Bez Tower & Residences</h2>
-        <p class="section-description">
-            Experience comfort and convenience in the heart of San Juan City. Located at 205 F. Blumentritt Street, Brgy. Pedro Cruz, we offer safe, secure accommodation with modern amenities and exceptional service.
-        </p>
-    </section>
-
-    <!-- Services Section -->
-    <section class="content-section" id="services">
-        <div class="section-subtitle">OUR FACILITIES</div>
-        <h2 class="section-title">Premium Services</h2>
-        
-        <div class="services-grid">
-            <div class="service-card">
-                <div class="service-icon"><i class="fas fa-concierge-bell"></i></div>
-                <h3>24/7 Concierge</h3>
-                <p>Our dedicated concierge team is available around the clock to assist with your every need.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon"><i class="fas fa-utensils"></i></div>
-                <h3>Fine Dining</h3>
-                <p>Experience culinary excellence at our signature restaurant with international and local cuisine.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon"><i class="fas fa-spa"></i></div>
-                <h3>Spa & Wellness</h3>
-                <p>Rejuvenate your body and mind with our premium spa treatments and wellness facilities.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon"><i class="fas fa-dumbbell"></i></div>
-                <h3>Fitness Center</h3>
-                <p>Stay active with our state-of-the-art gym equipment and personal training services.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon"><i class="fas fa-swimming-pool"></i></div>
-                <h3>Swimming Pool</h3>
-                <p>Relax and unwind at our infinity pool with stunning city views.</p>
-            </div>
-            
-            <div class="service-card">
-                <div class="service-icon"><i class="fas fa-wifi"></i></div>
-                <h3>High-Speed WiFi</h3>
-                <p>Stay connected with complimentary high-speed internet throughout the property.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section class="content-section contact-section" id="contact">
-        <div class="section-subtitle" style="color: #d4af37;">GET IN TOUCH</div>
-        <h2 class="section-title" style="color: white;">Contact Us</h2>
-        
-        <div class="contact-grid">
-            <div class="contact-info">
-                <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
-                <div class="contact-details">
-                    <h4>Address</h4>
-                    <p>205 F. Blumentritt Street<br>Brgy. Pedro Cruz<br>San Juan City, Philippines</p>
-                </div>
-            </div>
-            
-            <div class="contact-info">
-                <div class="contact-icon"><i class="fas fa-phone"></i></div>
-                <div class="contact-details">
-                    <h4>Phone</h4>
-                    <p>+1 234 567 8910<br>+1 234 567 8911</p>
-                </div>
-            </div>
-            
-            <div class="contact-info">
-                <div class="contact-icon"><i class="fas fa-envelope"></i></div>
-                <div class="contact-details">
-                    <h4>Email</h4>
-                    <p>info@beztower.com<br>reservations@beztower.com</p>
-                </div>
-            </div>
         </div>
     </section>
 
