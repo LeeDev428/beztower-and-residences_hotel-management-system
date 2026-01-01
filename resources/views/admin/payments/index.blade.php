@@ -64,7 +64,7 @@
                     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                         <form method="POST" action="{{ route('admin.payments.verify', $payment) }}" style="flex: 1;" onsubmit="return confirm('Verify this payment?');">
                             @csrf
-                            <x-admin.button type="success" style="width: 100%;">✓ Verify Payment</x-admin.button>
+                            <x-admin.button type="success">✓ Verify Payment</x-admin.button>
                         </form>
                         <button type="button" onclick="showRejectForm({{ $payment->id }})" style="flex: 1; padding: 0.75rem; background: var(--danger); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✗ Reject</button>
                     </div>
