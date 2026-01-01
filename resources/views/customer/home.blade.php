@@ -139,8 +139,6 @@
             letter-spacing: 3px;
             margin-bottom: 1rem;
             color: #d4af37;
-            position: relative;
-            top: -220px;
         }
 
         .hero-title {
@@ -150,114 +148,6 @@
             line-height: 1.2;
             margin-bottom: 2rem;
             font-family: 'Georgia', serif;
-        }
-
-        /* Content Sections */
-        .content-section {
-            padding: 5rem 3rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            font-size: 3rem;
-            font-weight: 300;
-            margin-bottom: 2rem;
-            color: #2c2c2c;
-            font-family: 'Georgia', serif;
-            text-align: center;
-        }
-
-        .section-subtitle {
-            color: #d4af37;
-            font-size: 0.9rem;
-            letter-spacing: 3px;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        .section-description {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: #666;
-            text-align: center;
-            max-width: 800px;
-            margin: 0 auto 3rem;
-        }
-
-        .about-section {
-            background: #f9f9f9;
-        }
-
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .service-card {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 10px;
-            text-align: center;
-            transition: transform 0.3s;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .service-card:hover {
-            transform: translateY(-10px);
-        }
-
-        .service-icon {
-            font-size: 3rem;
-            color: #d4af37;
-            margin-bottom: 1.5rem;
-        }
-
-        .service-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: #2c2c2c;
-        }
-
-        .service-card p {
-            color: #666;
-            line-height: 1.6;
-        }
-
-        .contact-section {
-            background: #2c2c2c;
-            color: white;
-        }
-
-        .contact-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 3rem;
-            margin-top: 3rem;
-        }
-
-        .contact-info {
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-        }
-
-        .contact-icon {
-            font-size: 2rem;
-            color: #d4af37;
-        }
-
-        .contact-details h4 {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-            color: #d4af37;
-        }
-
-        .contact-details p {
-            color: #ccc;
-            line-height: 1.6;
         }
 
         /* Booking Form */
@@ -403,14 +293,6 @@
                 padding: 1rem;
                 bottom: 1rem;
             }
-
-            .section-title {
-                font-size: 2rem;
-            }
-
-            .content-section {
-                padding: 3rem 1.5rem;
-            }
         }
     </style>
 </head>
@@ -451,56 +333,56 @@
         
         <div class="hero-content">
             <div class="hero-label">BEZTOWER LUXURY HOTEL</div>
-            {{-- <h1 class="hero-title">ENJOY A LUXURY<br>EXPERIENCE</h1> --}}
+            <h1 class="hero-title">ENJOY A LUXURY<br>EXPERIENCE</h1>
         </div>
         
         <!-- Booking Form -->
         <div class="booking-form">
-                <form action="{{ route('rooms.index') }}" method="GET">
-                    <div class="booking-grid">
-                        <div class="form-group">
-                            <label><i class="far fa-calendar"></i> Check In</label>
-                            <input type="date" name="check_in" id="checkIn" min="{{ date('Y-m-d') }}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="far fa-calendar"></i> Check Out</label>
-                            <input type="date" name="check_out" id="checkOut" min="{{ date('Y-m-d', strtotime('+1 day')) }}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="fas fa-user"></i> Adult</label>
-                            <select name="adults">
-                                <option value="1">1</option>
-                                <option value="2" selected>2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="fas fa-child"></i> Children</label>
-                            <select name="children">
-                                <option value="0" selected>0</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="fas fa-bed"></i> Room</label>
-                            <select name="room_type">
-                                <option value="">All Rooms</option>
-                                <option value="1">Standard</option>
-                                <option value="2">Deluxe</option>
-                                <option value="3">Suite</option>
-                            </select>
-                        </div>
-                        
-                        <button type="submit" class="check-btn">Check Now</button>
+            <form action="{{ route('rooms.index') }}" method="GET">
+                <div class="booking-grid">
+                    <div class="form-group">
+                        <label><i class="far fa-calendar"></i> Check In</label>
+                        <input type="date" name="check_in" id="checkIn" min="{{ date('Y-m-d') }}" required>
                     </div>
-                </form>
+                    
+                    <div class="form-group">
+                        <label><i class="far fa-calendar"></i> Check Out</label>
+                        <input type="date" name="check_out" id="checkOut" min="{{ date('Y-m-d', strtotime('+1 day')) }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-user"></i> Adult</label>
+                        <select name="adults">
+                            <option value="1">1</option>
+                            <option value="2" selected>2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-child"></i> Children</label>
+                        <select name="children">
+                            <option value="0" selected>0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-bed"></i> Room</label>
+                        <select name="room_type">
+                            <option value="">All Rooms</option>
+                            <option value="1">Standard</option>
+                            <option value="2">Deluxe</option>
+                            <option value="3">Suite</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="check-btn">Check Now</button>
+                </div>
+            </form>
         </div>
         
         <!-- Play Button -->
