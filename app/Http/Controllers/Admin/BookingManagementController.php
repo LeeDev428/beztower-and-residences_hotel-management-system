@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Mail\CheckoutReminder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class BookingManagementController extends Controller
 {
@@ -82,10 +83,13 @@ class BookingManagementController extends Controller
             );
             
             // Send checkout confirmation email
+            Log::info('About to send checkout email to: ' . $booking->guest->email);
             try {
                 Mail::to($booking->guest->email)->send(new CheckoutReminder($booking));
+                Log::info('Checkout email sent successfully to: ' . $booking->guest->email);
             } catch (\Exception $e) {
-                \Log::error('Failed to send checkout email: ' . $e->getMessage());
+                Log::error('Failed to send checkout email: ' . $e->getMessage());
+                Log::error('Stack trace: ' . $e->getTraceAsString());
             }
         }
 
