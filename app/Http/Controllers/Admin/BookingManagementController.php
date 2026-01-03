@@ -64,6 +64,9 @@ class BookingManagementController extends Controller
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,cancelled',
         ]);
 
+        // Load guest relationship for emails
+        $booking->load('guest');
+
         $booking->update(['status' => $validated['status']]);
 
         // Update room status based on booking status
