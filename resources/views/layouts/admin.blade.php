@@ -315,7 +315,7 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-logo">Beztower & Residences</div>
+            <div class="sidebar-logo">Bez Tower & Residences</div>
             <div class="sidebar-subtitle">Admin Panel</div>
         </div>
 
