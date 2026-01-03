@@ -3,7 +3,7 @@
         <div class="logo-icon">
             <i class="fas fa-gem"></i>
         </div>
-        BEZTOWER
+        BEZ TOWER & RESIDENCES
     </div>
     
     <ul class="nav-links">
