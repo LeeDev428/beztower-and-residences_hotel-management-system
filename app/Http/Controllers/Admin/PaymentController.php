@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Mail\PaymentApproved;
 use App\Mail\PaymentRejected;
+use App\Mail\PaymentConfirmation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
@@ -51,6 +52,7 @@ class PaymentController extends Controller
         // Send confirmation email
         try {
             Mail::to($payment->booking->guest->email)->send(new PaymentApproved($payment));
+            Mail::to($payment->booking->guest->email)->send(new PaymentConfirmation($payment->booking, $payment));
         } catch (\Exception $e) {
             \Log::error('Failed to send payment approval email: ' . $e->getMessage());
         }
