@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Mail\CheckoutReminder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class BookingManagementController extends Controller
 {
@@ -75,6 +77,13 @@ class BookingManagementController extends Controller
                 ['room_id' => $booking->room_id],
                 ['status' => 'dirty', 'notes' => 'Room needs cleaning after checkout']
             );
+            
+            // Send checkout confirmation email
+            try {
+                Mail::to($booking->guest->email)->send(new CheckoutReminder($booking));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send checkout email: ' . $e->getMessage());
+            }
         }
 
         return back()->with('success', 'Booking status updated successfully!');
