@@ -485,7 +485,7 @@
                                 <select name="payment_method" class="form-select" required>
                                     <option value="gcash" selected>GCash</option>
                                     <option value="paymaya">PayMaya</option>
-                                    <option value="bank_transfer">Bank Transfer</option>
+                                    {{-- <option value="bank_transfer">Bank Transfer</option> --}}
                                 </select>
                             </div>
 
