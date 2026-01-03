@@ -439,7 +439,7 @@
                         <div class="qr-code-container">
                             <h3>Scan to Pay</h3>
                             <div class="qr-code-wrapper">
-                                <img src="{{ asset('images/gcash/gcash.jpg') }}" alt="GCash QR Code">
+                                <img src="{{ asset('images/gcash/gcash.png') }}" alt="GCash QR Code">
                             </div>
                             <div class="gcash-info">
                                 <p><strong>Account Name:</strong> Bez Tower & Residences</p>
