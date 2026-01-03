@@ -27,7 +27,7 @@ class PaymentRejected extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Payment Rejected - Booking #' . $payment->booking->booking_reference,
+            subject: 'Payment Rejected - Booking #' . $this->payment->booking->booking_reference,
         );
     }
 
