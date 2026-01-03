@@ -42,6 +42,9 @@ class PaymentController extends Controller
             'payment_notes' => 'nullable|string',
         ]);
 
+        // Load relationships for emails
+        $payment->load('booking.guest');
+
         $payment->update([
             'payment_status' => 'verified',
             'payment_notes' => $request->payment_notes,
@@ -65,6 +68,9 @@ class PaymentController extends Controller
         $request->validate([
             'rejection_reason' => 'required|string|max:500',
         ]);
+
+        // Load relationships for emails
+        $payment->load('booking.guest');
 
         $payment->update([
             'payment_status' => 'failed',
