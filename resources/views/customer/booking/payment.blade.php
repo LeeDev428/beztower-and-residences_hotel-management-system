@@ -439,9 +439,7 @@
                         <div class="qr-code-container">
                             <h3>Scan to Pay</h3>
                             <div class="qr-code-wrapper">
-                                <!-- Replace with your actual GCash QR code image -->
-                                <img src="{{ asset('images/gcash-qr-code.png') }}" alt="GCash QR Code" 
-                                     onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=09123456789'">
+                                <img src="{{ asset('images/gcash/gcash.jpg') }}" alt="GCash QR Code">
                             </div>
                             <div class="gcash-info">
                                 <p><strong>Account Name:</strong> Bez Tower & Residences</p>
