@@ -26,7 +26,7 @@ class PaymentApproved extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Payment Approved - Booking #' . $payment->booking->booking_reference,
+            subject: 'Payment Approved - Booking #' . $this->payment->booking->booking_reference,
         );
     }
 
