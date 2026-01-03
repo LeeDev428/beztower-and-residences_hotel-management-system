@@ -9,6 +9,7 @@ use App\Mail\PaymentRejected;
 use App\Mail\PaymentConfirmation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -53,11 +54,15 @@ class PaymentController extends Controller
         ]);
 
         // Send confirmation email
+        Log::info('About to send payment emails to: ' . $payment->booking->guest->email);
         try {
             Mail::to($payment->booking->guest->email)->send(new PaymentApproved($payment));
+            Log::info('PaymentApproved email sent');
             Mail::to($payment->booking->guest->email)->send(new PaymentConfirmation($payment->booking, $payment));
+            Log::info('PaymentConfirmation email sent');
         } catch (\Exception $e) {
-            \Log::error('Failed to send payment approval email: ' . $e->getMessage());
+            Log::error('Failed to send payment approval email: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
         }
 
         return redirect()->route('admin.payments.index')->with('success', 'Payment verified successfully!');
@@ -83,7 +88,7 @@ class PaymentController extends Controller
         try {
             Mail::to($payment->booking->guest->email)->send(new PaymentRejected($payment, $request->rejection_reason));
         } catch (\Exception $e) {
-            \Log::error('Failed to send payment rejection email: ' . $e->getMessage());
+            Log::error('Failed to send payment rejection email: ' . $e->getMessage());
         }
 
         return redirect()->route('admin.payments.index')->with('success', 'Payment rejected.');
