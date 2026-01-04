@@ -1022,7 +1022,7 @@
                 <span class="close" onclick="closeBookingModal()">&times;</span>
             </div>
             <div class="modal-body">
-                <form action="{{ route('booking.create') }}" method="POST" id="bookingForm">
+                <form action="{{ route('booking.create') }}" method="POST" id="bookingForm" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="room_id" value="{{ $room->id }}">
                     
