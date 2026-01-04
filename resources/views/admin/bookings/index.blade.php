@@ -50,6 +50,7 @@
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Guest</th>
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Room</th>
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Dates</th>
+                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Payment Type</th>
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Status</th>
                     <th style="text-align: right; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Amount</th>
                     <th style="text-align: right; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Actions</th>
@@ -73,6 +74,20 @@
                     <td style="padding: 1rem 0.75rem;">
                         <div>{{ $booking->check_in_date->format('M d') }} - {{ $booking->check_out_date->format('M d, Y') }}</div>
                         <div style="font-size: 0.875rem; color: var(--text-muted);">{{ $booking->total_nights }} nights</div>
+                    </td>
+                    <td style="padding: 1rem 0.75rem;">
+                        @if($booking->payments->where('payment_status', 'verified')->first())
+                            @php
+                                $payment = $booking->payments->where('payment_status', 'verified')->first();
+                            @endphp
+                            @if($payment->payment_type === 'down_payment')
+                            <span style="padding: 0.375rem 0.75rem; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 6px; font-size: 0.875rem; font-weight: 600; display: inline-block;">Downpayment</span>
+                            @else
+                            <span style="padding: 0.375rem 0.75rem; background: linear-gradient(135deg, #27ae60, #229954); color: white; border-radius: 6px; font-size: 0.875rem; font-weight: 600; display: inline-block;">Full Payment</span>
+                            @endif
+                        @else
+                            <span style="font-size: 0.875rem; color: var(--text-muted);">—</span>
+                        @endif
                     </td>
                     <td style="padding: 1rem 0.75rem;">
                         <x-admin.badge :status="$booking->status" />
