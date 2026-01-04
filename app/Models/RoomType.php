@@ -12,6 +12,8 @@ class RoomType extends Model
         'base_price',
         'discount_percentage',
         'max_guests',
+        'bed_type',
+        'size_sqm',
         'archived_at'
     ];
 
