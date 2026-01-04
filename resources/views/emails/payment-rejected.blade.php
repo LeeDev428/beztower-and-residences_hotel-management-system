@@ -42,7 +42,72 @@
         </div>
         
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h2 style="color: #C9A961; margin-top: 0;">Next Steps</h2>
+            <h2 style="color: #C9A961; margin-top: 0;">Booking Information</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Booking Reference:</td>
+                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->booking_reference }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Room:</td>
+                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->room->room_number }} - {{ $payment->booking->room->roomType->name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Check-in:</td>
+                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->check_in_date->format('F d, Y') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Check-out:</td>
+                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->check_out_date->format('F d, Y') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Nights:</td>
+                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->total_nights }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Guests:</td>
+                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->number_of_guests }} Guest(s)</td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="color: #C9A961; margin-top: 0;">Total Amount Breakdown</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Room Charges ({{ $payment->booking->total_nights }} night(s) × ₱{{ number_format($payment->booking->room->roomType->price_per_night, 2) }}):</td>
+                    <td style="padding: 8px 0; text-align: right;">₱{{ number_format($payment->booking->subtotal, 2) }}</td>
+                </tr>
+                
+                @if($payment->booking->extras && $payment->booking->extras->count() > 0)
+                    <tr>
+                        <td colspan="2" style="padding: 12px 0; font-weight: bold; background: #f9f9f9; border-radius: 4px; padding-left: 8px;">Additional Services/Extras:</td>
+                    </tr>
+                    @foreach($payment->booking->extras as $extra)
+                    <tr>
+                        <td style="padding: 5px 0 5px 20px; color: #666;">{{ $extra->name }} ({{ $extra->pivot->quantity }} × ₱{{ number_format($extra->pivot->price_at_booking, 2) }}):</td>
+                        <td style="padding: 5px 0; text-align: right;">₱{{ number_format($extra->pivot->quantity * $extra->pivot->price_at_booking, 2) }}</td>
+                    </tr>
+                    @endforeach
+                    <tr>
+                        <td style="padding: 8px 0; font-weight: bold;">Subtotal Extras:</td>
+                        <td style="padding: 8px 0; text-align: right; font-weight: bold;">₱{{ number_format($payment->booking->extras_total, 2) }}</td>
+                    </tr>
+                @endif
+
+                @if($payment->booking->tax_amount > 0)
+                <tr>
+                    <td style="padding: 8px 0; color: #666;">Tax (12%):</td>
+                    <td style="padding: 8px 0; text-align: right;">₱{{ number_format($payment->booking->tax_amount, 2) }}</td>
+                </tr>
+                @endif
+
+                <tr style="background: #fff3cd; border-top: 2px solid #C9A961;">
+                    <td style="padding: 12px 8px; font-weight: bold; font-size: 16px; color: #2c2c2c;">TOTAL AMOUNT:</td>
+                    <td style="padding: 12px 8px; font-weight: bold; font-size: 16px; text-align: right; color: #dc3545;">₱{{ number_format($payment->booking->total_amount, 2) }}</td>
+                </tr>
+            </table>
+        </div>
             <ol style="line-height: 1.8;">
                 <li>Please review the rejection reason above</li>
                 <li>Verify your payment details</li>
@@ -51,7 +116,41 @@
             </ol>
         </div>
         
-        <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="color: #C9A961; margin-top: 0;">Next Steps - Payment Instructions</h2>
+            <ol style="line-height: 1.8;">
+                <li>Please review the rejection reason above</li>
+                <li>Verify your payment details</li>
+                <li>Submit a new payment using the methods below</li>
+                <li>Contact us if you need assistance</li>
+            </ol>
+
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                <h3 style="margin-top: 0; color: #2c2c2c;">💳 Accepted Payment Methods:</h3>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li><strong>Bank Transfer:</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>Bank Name: BDO - Banco de Oro</li>
+                            <li>Account Name: Beztower & Residences Inc.</li>
+                            <li>Account Number: 1234-5678-9012</li>
+                        </ul>
+                    </li>
+                    <li><strong>GCash:</strong> 0917-123-4567 (Beztower & Residences)</li>
+                    <li><strong>PayMaya:</strong> 0917-123-4567 (Beztower & Residences)</li>
+                    <li><strong>Over-the-counter:</strong> Available at our front desk</li>
+                </ul>
+
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #4caf50;">
+                    <p style="margin: 0;"><strong>📧 Where to Send Proof of Payment:</strong></p>
+                    <ul style="margin: 8px 0; padding-left: 20px;">
+                        <li><strong>Email:</strong> payments@beztower.com</li>
+                        <li><strong>Subject:</strong> Payment Proof - {{ $payment->booking->booking_reference }}</li>
+                        <li><strong>Include:</strong> Screenshot/Photo of payment receipt with your booking reference number</li>
+                    </ul>
+                    <p style="margin: 8px 0 0 0; font-size: 14px;"><em>📱 You can also send via WhatsApp: +63 917 123 4567</em></p>
+                </div>
+            </div>
+        </div>
         
         <p style="margin-top: 30px;">
             Best regards,<br>
