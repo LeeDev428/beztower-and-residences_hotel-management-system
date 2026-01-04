@@ -52,6 +52,15 @@
             </div>
 
             <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Discount Percentage</label>
+                <input type="number" name="discount_percentage" value="{{ old('discount_percentage', $room->discount_percentage ?? 0) }}" min="0" max="100" step="5" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                <small style="color: #666; font-size: 0.875rem;">Must be divisible by 5 (e.g., 0%, 5%, 10%, 15%)</small>
+                @error('discount_percentage')
+                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div>
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Status *</label>
                 <select name="status" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                     <option value="available" {{ old('status', $room->status) == 'available' ? 'selected' : '' }}>Available</option>
