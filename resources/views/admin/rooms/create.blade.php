@@ -673,6 +673,8 @@
                 document.getElementById('roomTypeBasePrice').value = roomType.base_price;
                 document.getElementById('roomTypeDiscount').value = roomType.discount_percentage || 0;
                 document.getElementById('roomTypeMaxGuests').value = roomType.max_guests;
+                document.getElementById('roomTypeBedType').value = roomType.bed_type || '';
+                document.getElementById('roomTypeSize').value = roomType.size_sqm || '';
                 document.getElementById('roomTypeFormModal').style.display = 'flex';
             }
         } catch (error) {
