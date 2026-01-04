@@ -30,7 +30,7 @@ class BookingController extends Controller
             'phone' => 'required|string',
             'country' => 'nullable|string',
             'address' => 'nullable|string',
-            'id_number' => 'nullable|string',
+            'id_photo' => 'nullable|image|mimes:jpeg,png,jpg,pdf|max:5120',
             'check_in_date' => 'required|date|after_or_equal:today',
             'check_out_date' => 'required|date|after:check_in_date',
             'number_of_guests' => 'required|integer|min:1',
@@ -43,6 +43,12 @@ class BookingController extends Controller
         try {
             DB::beginTransaction();
 
+            // Handle ID photo upload
+            $idPhotoPath = null;
+            if ($request->hasFile('id_photo')) {
+                $idPhotoPath = $request->file('id_photo')->store('guests/id_photos', 'public');
+            }
+
             // Create or update guest
             $guest = Guest::updateOrCreate(
                 ['email' => $validated['email']],
@@ -52,7 +58,7 @@ class BookingController extends Controller
                     'phone' => $validated['phone'],
                     'country' => $validated['country'],
                     'address' => $validated['address'],
-                    'id_number' => $validated['id_number']
+                    'id_photo' => $idPhotoPath ?? $guest->id_photo ?? null
                 ]
             );
 
