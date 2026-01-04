@@ -26,7 +26,7 @@
                     <a href="#contact" class="text-gray-700 hover:text-blue-600 font-medium">Contact</a>
                     <div class="flex items-center space-x-2 text-gray-700">
                         <i class="fas fa-phone"></i>
-                        <span>+1 234 567 8910</span>
+                        <span>(02) 88075046 or 09171221429</span>
                     </div>
                 </div>
             </div>
@@ -48,7 +48,7 @@
                 </div>
                 <div>
                     <h3 class="text-xl font-bold mb-4">Contact</h3>
-                    <p class="text-gray-400"><i class="fas fa-phone mr-2"></i>+1 234 567 8910</p>
+                    <p class="text-gray-400"><i class="fas fa-phone mr-2"></i>(02) 88075046 or 09171221429</p>
                     <p class="text-gray-400"><i class="fas fa-envelope mr-2"></i>info@beztower.com</p>
                 </div>
                 <div>
