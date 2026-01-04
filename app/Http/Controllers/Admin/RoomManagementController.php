@@ -130,15 +130,18 @@ class RoomManagementController extends Controller
 
     public function destroy(Room $room)
     {
-        // Delete associated photos
-        foreach ($room->photos as $photo) {
-            Storage::disk('public')->delete($photo->photo_path);
-            $photo->delete();
-        }
+        // Archive the room instead of deleting
+        $room->archive();
 
-        $room->delete();
+        return redirect()->route('admin.rooms.index')->with('success', 'Room archived successfully!');
+    }
 
-        return redirect()->route('admin.rooms.index')->with('success', 'Room deleted successfully!');
+    public function restore(Room $room)
+    {
+        // Restore archived room
+        $room->restore();
+
+        return redirect()->route('admin.rooms.index')->with('success', 'Room restored successfully!');
     }
 
     public function uploadPhoto(Request $request, Room $room)
