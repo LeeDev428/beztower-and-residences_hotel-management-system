@@ -45,6 +45,7 @@ Route::prefix('admin')->group(function () {
             Route::get('/{room}/edit', [RoomManagementController::class, 'edit'])->name('admin.rooms.edit')->middleware('role:admin,manager');
             Route::put('/{room}', [RoomManagementController::class, 'update'])->name('admin.rooms.update')->middleware('role:admin,manager');
             Route::delete('/{room}', [RoomManagementController::class, 'destroy'])->name('admin.rooms.destroy')->middleware('role:admin');
+            Route::post('/{room}/restore', [RoomManagementController::class, 'restore'])->name('admin.rooms.restore')->middleware('role:admin');
             Route::post('/{room}/upload-photo', [RoomManagementController::class, 'uploadPhoto'])->name('admin.rooms.uploadPhoto')->middleware('role:admin,manager');
             Route::delete('/{room}/photos/{photo}', [RoomManagementController::class, 'deletePhoto'])->name('admin.rooms.deletePhoto')->middleware('role:admin,manager');
             Route::post('/{room}/block-dates', [RoomManagementController::class, 'blockDates'])->name('admin.rooms.blockDates')->middleware('role:admin,manager');
