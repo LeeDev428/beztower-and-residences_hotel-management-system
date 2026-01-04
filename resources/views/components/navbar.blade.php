@@ -2,7 +2,7 @@
     <div class="logo">
         <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower & Residences Logo" class="logo-image">
         <span class="logo-text">BEZ TOWER & RESIDENCES</span>
-    </img>
+    </div>
     
     <ul class="nav-links">
         <li><a href="{{ route('home') }}">Home</a></li>
