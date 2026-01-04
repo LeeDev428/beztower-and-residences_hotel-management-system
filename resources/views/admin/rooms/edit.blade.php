@@ -183,11 +183,6 @@
                     <input type="number" id="roomTypeBasePrice" name="base_price" step="0.01" min="0" required class="form-control">
                 </div>
                 <div class="form-group">
-                    <label>Discount Percentage (Must be divisible by 5)</label>
-                    <input type="number" id="roomTypeDiscount" name="discount_percentage" step="5" min="0" max="100" class="form-control">
-                    <small style="color: #666;">Examples: 0%, 5%, 10%, 15%, 20%, etc.</small>
-                </div>
-                <div class="form-group">
                     <label>Max Guests *</label>
                     <input type="number" id="roomTypeMaxGuests" name="max_guests" min="1" required class="form-control">
                 </div>
