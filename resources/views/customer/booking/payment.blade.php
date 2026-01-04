@@ -409,9 +409,19 @@
                         <span>₱{{ number_format($booking->subtotal, 2) }}</span>
                     </div>
                     @if($booking->extras_total > 0)
-                        <div class="summary-row">
-                            <span>Additional Services</span>
-                            <span>₱{{ number_format($booking->extras_total, 2) }}</span>
+                        <div class="summary-section">
+                            <div class="summary-row extras-header">
+                                <span><i class="fas fa-plus-circle"></i> Additional Services</span>
+                                <span>₱{{ number_format($booking->extras_total, 2) }}</span>
+                            </div>
+                            @if($booking->extras->count() > 0)
+                                @foreach($booking->extras as $extra)
+                                    <div class="summary-row extras-detail">
+                                        <span>{{ $extra->name }}</span>
+                                        <span>₱{{ number_format($extra->price, 2) }}</span>
+                                    </div>
+                                @endforeach
+                            @endif
                         </div>
                     @endif
                     <div class="summary-row">
@@ -419,12 +429,12 @@
                         <span>₱{{ number_format($booking->tax_amount, 2) }}</span>
                     </div>
                     <div class="summary-row">
-                        <span>Total Amount</span>
-                        <span>₱{{ number_format($booking->total_amount, 2) }}</span>
+                        <span><strong>Total Amount</strong></span>
+                        <span><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></span>
                     </div>
                     <div class="summary-row down-payment-row">
-                        <span>Down Payment (30%)</span>
-                        <span>₱{{ number_format($downPaymentAmount, 2) }}</span>
+                        <span><strong>{{ $booking->payment_option === 'full_payment' ? 'Full Payment (100%)' : 'Down Payment (30%)' }}</strong></span>
+                        <span><strong>₱{{ number_format($paymentAmount, 2) }}</strong></span>
                     </div>
                 </div>
 
@@ -444,7 +454,7 @@
                             <div class="gcash-info">
                                 <p><strong>Account Name:</strong> Bez Tower & Residences</p>
                                 <p><strong>Mobile Number:</strong> +63 912 345 6789</p>
-                                <p><strong>Amount:</strong> ₱{{ number_format($downPaymentAmount, 2) }}</p>
+                                <p><strong>Amount:</strong> ₱{{ number_format($paymentAmount, 2) }}</p>
                             </div>
                         </div>
 
@@ -464,7 +474,7 @@
                             <ol class="instructions-list">
                                 <li data-step="1">Open your GCash app on your mobile phone</li>
                                 <li data-step="2">Tap "Scan QR" and scan the QR code above</li>
-                                <li data-step="3">Confirm the amount (₱{{ number_format($downPaymentAmount, 2) }})</li>
+                                <li data-step="3">Confirm the amount (₱{{ number_format($paymentAmount, 2) }})</li>
                                 <li data-step="4">Complete the payment in your GCash app</li>
                                 <li data-step="5">Take a screenshot of the payment confirmation</li>
                                 <li data-step="6">Upload the screenshot below and submit</li>
