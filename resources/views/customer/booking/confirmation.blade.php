@@ -197,7 +197,8 @@
         }
 
         .action-buttons {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 1rem;
             margin-top: 2rem;
         }
@@ -590,8 +591,11 @@
                     <a href="{{ route('home') }}" class="btn btn-secondary">
                         <i class="fas fa-home"></i> Back to Home
                     </a>
+                    <a href="{{ route('booking.downloadPDF', $booking->booking_reference) }}" class="btn btn-primary">
+                        <i class="fas fa-file-pdf"></i> Download PDF
+                    </a>
                     <button onclick="window.print()" class="btn btn-primary">
-                        <i class="fas fa-print"></i> Print Confirmation
+                        <i class="fas fa-print"></i> Print
                     </button>
                 </div>
 
