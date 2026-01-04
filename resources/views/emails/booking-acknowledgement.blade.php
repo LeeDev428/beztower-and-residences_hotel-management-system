@@ -208,7 +208,7 @@
             <p>If you have any questions or need to make changes to your booking, please contact us:</p>
             <ul>
                 <li><strong>Email:</strong> reservations@beztower.com</li>
-                <li><strong>Phone:</strong> +1 234 567 8910</li>
+                <li><strong>Phone:</strong> (02) 88075046 or 09171221429</li>
             </ul>
 
             <p>We look forward to welcoming you!</p>
@@ -220,7 +220,7 @@
         <div class="footer">
             <p><strong>Beztower & Residences</strong></p>
             <p>205 F. Blumentritt Street, Brgy. Pedro Cruz<br>San Juan City, Philippines</p>
-            <p>Email: <a href="mailto:info@beztower.com">info@beztower.com</a> | Phone: +1 234 567 8910</p>
+            <p>Email: <a href="mailto:info@beztower.com">info@beztower.com</a> | Phone: (02) 88075046 or 09171221429</p>
         </div>
     </div>
 </body>
