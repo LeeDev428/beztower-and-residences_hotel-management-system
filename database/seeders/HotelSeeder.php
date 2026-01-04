@@ -120,6 +120,8 @@ class HotelSeeder extends Seeder
         Extra::create(['name' => 'Airport Transfer', 'description' => 'Round-trip airport shuttle service', 'price' => 1200.00]);
         Extra::create(['name' => 'Late Check-out', 'description' => 'Extend check-out time until 3PM', 'price' => 800.00]);
         Extra::create(['name' => 'Early Check-in', 'description' => 'Check-in from 10AM', 'price' => 600.00]);
+        Extra::create(['name' => 'Car Parking', 'description' => 'Secure parking space for car (per night)', 'price' => 200.00]);
+        Extra::create(['name' => 'Motorcycle Parking', 'description' => 'Secure parking space for motorcycle (per night)', 'price' => 100.00]);
 
         $this->command->info('Hotel data seeded successfully!');
     }
