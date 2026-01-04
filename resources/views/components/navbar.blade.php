@@ -17,7 +17,7 @@
     <div class="nav-right">
         {{-- <div class="contact-number">
             <i class="fas fa-phone"></i>
-            +1 234 567 8910
+            (02) 88075046 or 09171221429
         </div> --}}
         <a href="{{ route('home') }}#rooms" class="check-now-btn">
             <i class="fas fa-search"></i> Check Now
