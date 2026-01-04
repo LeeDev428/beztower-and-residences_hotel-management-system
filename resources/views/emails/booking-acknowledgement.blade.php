@@ -161,11 +161,11 @@
                 </div>
             </div>
 
-            <div class="highlight">
+            {{-- <div class="highlight">
                 <strong>⚠️ Important:</strong> Please proceed with the payment within 48 hours to confirm your reservation.
-            </div>
+            </div> --}}
 
-            <div class="info-box">
+            {{-- <div class="info-box">
                 <h3 style="margin-top:0; color:#2c2c2c;">💳 Payment Instructions</h3>
                 <p style="margin:10px 0;"><strong>Accepted Payment Methods:</strong></p>
                 <ul style="margin:10px 0; padding-left:20px;">
@@ -194,7 +194,7 @@
                 <div style="background:#fff3cd; padding:12px; border-radius:5px; margin-top:10px;">
                     <small><strong>Note:</strong> Your booking will be confirmed once we verify your payment. This usually takes 2-4 hours during business hours.</small>
                 </div>
-            </div>
+            </div> --}}
 
             @if($booking->special_requests)
             <div class="info-box">
