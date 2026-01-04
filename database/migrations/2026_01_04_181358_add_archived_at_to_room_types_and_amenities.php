@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('room_types_and_amenities', function (Blueprint $table) {
-            //
+        Schema::table('room_types', function (Blueprint $table) {
+            $table->timestamp('archived_at')->nullable()->after('max_guests');
+        });
+        
+        Schema::table('amenities', function (Blueprint $table) {
+            $table->timestamp('archived_at')->nullable()->after('icon');
         });
     }
 
@@ -21,8 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('room_types_and_amenities', function (Blueprint $table) {
-            //
+        Schema::table('room_types', function (Blueprint $table) {
+            $table->dropColumn('archived_at');
+        });
+        
+        Schema::table('amenities', function (Blueprint $table) {
+            $table->dropColumn('archived_at');
         });
     }
 };
