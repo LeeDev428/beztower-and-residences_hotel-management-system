@@ -538,9 +538,9 @@
                                 <li class="extra-item">
                                     <span class="extra-name">
                                         <i class="fas fa-check-circle" style="color: #d4af37;"></i>
-                                        {{ $extra->name }}
+                                        {{ $extra->name }} (Qty: {{ $extra->pivot->quantity }})
                                     </span>
-                                    <span class="extra-price">₱{{ number_format($extra->pivot->price_at_booking, 2) }}</span>
+                                    <span class="extra-price">₱{{ number_format($extra->pivot->quantity * $extra->pivot->price_at_booking, 2) }}</span>
                                 </li>
                             @endforeach
                         </ul>
