@@ -39,7 +39,9 @@ class BookingController extends Controller
             'payment_option' => 'required|in:full_payment,down_payment',
             'special_requests' => 'nullable|string',
             'extras' => 'nullable|array',
-            'extras.*' => 'exists:extras,id'
+            'extras.*' => 'exists:extras,id',
+            'extra_quantities' => 'nullable|array',
+            'extra_quantities.*' => 'integer|min:1|max:50'
         ]);
 
         try {
@@ -71,15 +73,17 @@ class BookingController extends Controller
             $subtotal = $room->roomType->base_price * $validated['total_nights'];
             $extrasTotal = 0;
 
-            // Get selected extras if any
+            // Get selected extras with quantities
             $selectedExtras = [];
             if (!empty($validated['extras'])) {
                 $extras = Extra::whereIn('id', $validated['extras'])->get();
                 foreach ($extras as $extra) {
-                    $extrasTotal += $extra->price;
+                    $quantity = $validated['extra_quantities'][$extra->id] ?? 1;
+                    $lineTotal = $extra->price * $quantity;
+                    $extrasTotal += $lineTotal;
                     $selectedExtras[] = [
                         'extra_id' => $extra->id,
-                        'quantity' => 1,
+                        'quantity' => $quantity,
                         'price_at_booking' => $extra->price
                     ];
                 }
