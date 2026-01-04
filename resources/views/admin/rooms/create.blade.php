@@ -4,8 +4,11 @@
 @section('page-title', 'Create New Room')
 
 @section('content')
-<div style="margin-bottom: 1.5rem;">
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
     <x-admin.button type="outline" href="{{ route('admin.rooms.index') }}">← Back to Rooms</x-admin.button>
+    <button type="button" onclick="openArchivedRoomsModal()" class="btn-view-details">
+        <i class="fas fa-archive"></i> View Archived Rooms
+    </button>
 </div>
 
 <x-admin.card title="Room Information">
