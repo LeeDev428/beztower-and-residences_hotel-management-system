@@ -11,6 +11,7 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         $rooms = Room::with(['roomType', 'amenities', 'photos'])
+            ->whereIn('status', ['available', 'occupied']) // Exclude dirty and maintenance
             ->paginate(6);
 
         if ($request->ajax()) {
