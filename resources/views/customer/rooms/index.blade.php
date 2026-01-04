@@ -651,7 +651,7 @@
     .room-badge {
         position: absolute;
         top: 1rem;
-        right: 1rem;
+        left: 1rem;
         background: linear-gradient(135deg, #d4af37, #f4e4c1);
         color: #2c2c2c;
         padding: 0.5rem 1rem;
