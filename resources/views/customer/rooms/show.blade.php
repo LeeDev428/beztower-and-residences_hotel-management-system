@@ -978,10 +978,21 @@
                 <!-- Price Section -->
                 <div class="price-section">
                     <div class="price-label">Price:</div>
-                    <div class="price-wrapper">
-                        <span class="price-amount">₱{{ number_format($room->roomType->base_price, 2) }}</span>
-                        <span class="price-period">/night</span>
-                    </div>
+                    @if($room->discount_percentage > 0)
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                            <span class="discount-badge" style="position: static;">{{ $room->discount_percentage }}% OFF</span>
+                        </div>
+                        <div class="original-price" style="font-size: 1.2rem; color: #999; text-decoration: line-through;">₱{{ number_format($room->roomType->base_price, 2) }}</div>
+                        <div class="price-wrapper">
+                            <span class="price-amount" style="color: #dc3545;">₱{{ number_format($room->roomType->base_price * (1 - $room->discount_percentage / 100), 2) }}</span>
+                            <span class="price-period">/night</span>
+                        </div>
+                    @else
+                        <div class="price-wrapper">
+                            <span class="price-amount">₱{{ number_format($room->roomType->base_price, 2) }}</span>
+                            <span class="price-period">/night</span>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Room Specifications -->
