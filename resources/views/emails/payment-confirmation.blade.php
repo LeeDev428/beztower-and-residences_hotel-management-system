@@ -104,7 +104,7 @@
             <div class="info-box">
                 <div class="info-row">
                     <span class="label">Booking Reference:</span>
-                    <span class="value"><strong>{{ $booking->reference_number }}</strong></span>
+                    <span class="value"><strong>{{ $booking->booking_reference }}</strong></span>
                 </div>
                 <div class="info-row">
                     <span class="label">Room:</span>
@@ -120,11 +120,47 @@
                 </div>
                 <div class="info-row">
                     <span class="label">Nights:</span>
-                    <span class="value">{{ $booking->number_of_nights }}</span>
+                    <span class="value">{{ $booking->total_nights }}</span>
                 </div>
                 <div class="info-row">
                     <span class="label">Guests:</span>
-                    <span class="value">{{ $booking->number_of_adults }} Adult(s), {{ $booking->number_of_children }} Child(ren)</span>
+                    <span class="value">{{ $booking->number_of_guests }} Guest(s)</span>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h3 style="margin-top:0; color:#2c2c2c;">💰 Total Amount Breakdown</h3>
+                <div class="info-row">
+                    <span class="label">Room Charges ({{ $booking->total_nights }} night(s) × ₱{{ number_format($booking->room->roomType->price_per_night, 2) }}):</span>
+                    <span class="value">₱{{ number_format($booking->subtotal, 2) }}</span>
+                </div>
+                
+                @if($booking->extras && $booking->extras->count() > 0)
+                    <div class="info-row" style="background:#f0f0f0; margin-top:10px; padding:10px; border-radius:5px;">
+                        <span class="label" style="color:#2c2c2c;"><strong>Additional Services/Extras:</strong></span>
+                    </div>
+                    @foreach($booking->extras as $extra)
+                    <div class="info-row" style="padding-left:20px;">
+                        <span class="label">{{ $extra->name }} ({{ $extra->pivot->quantity }} × ₱{{ number_format($extra->pivot->price_at_booking, 2) }}):</span>
+                        <span class="value">₱{{ number_format($extra->pivot->quantity * $extra->pivot->price_at_booking, 2) }}</span>
+                    </div>
+                    @endforeach
+                    <div class="info-row">
+                        <span class="label"><strong>Subtotal Extras:</strong></span>
+                        <span class="value"><strong>₱{{ number_format($booking->extras_total, 2) }}</strong></span>
+                    </div>
+                @endif
+
+                @if($booking->tax_amount > 0)
+                <div class="info-row">
+                    <span class="label">Tax (12%):</span>
+                    <span class="value">₱{{ number_format($booking->tax_amount, 2) }}</span>
+                </div>
+                @endif
+
+                <div class="info-row" style="background:#e8f5e9; padding:12px; margin-top:10px; border-radius:5px;">
+                    <span class="label" style="font-size:18px; color:#2c2c2c;"><strong>TOTAL AMOUNT:</strong></span>
+                    <span class="value" style="font-size:18px; color:#4caf50;"><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></span>
                 </div>
             </div>
 
@@ -178,7 +214,7 @@
             <p>Should you have any questions or require assistance, please don't hesitate to contact us:</p>
             <ul>
                 <li><strong>Email:</strong> reservations@beztower.com</li>
-                <li><strong>Phone:</strong> +1 234 567 8910</li>
+                <li><strong>Phone:</strong> (02) 88075046 or 09171221429</li>
             </ul>
 
             <p>We look forward to providing you with an exceptional stay!</p>
@@ -190,7 +226,7 @@
         <div class="footer">
             <p><strong>Beztower & Residences</strong></p>
             <p>205 F. Blumentritt Street, Brgy. Pedro Cruz<br>San Juan City, Philippines</p>
-            <p>Email: <a href="mailto:info@beztower.com">info@beztower.com</a> | Phone: +1 234 567 8910</p>
+            <p>Email: <a href="mailto:info@beztower.com">info@beztower.com</a> | Phone: (02) 88075046 or 09171221429</p>
         </div>
     </div>
 </body>
