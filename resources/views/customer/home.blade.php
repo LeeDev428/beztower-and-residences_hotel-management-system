@@ -1290,7 +1290,7 @@
                 
                 if (currentDate < today) {
                     className += ' past';
-                    statusText = 'Past';
+                    statusText = '';
                 } else if (blockedInfo) {
                     className += ' full';
                     statusText = 'Blocked';
