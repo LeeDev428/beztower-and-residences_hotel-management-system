@@ -20,6 +20,10 @@
             <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
             <option value="blocked" {{ request('status') == 'blocked' ? 'selected' : '' }}>Blocked</option>
         </select>
+        <select name="archived" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+            <option value="">Active Rooms</option>
+            <option value="yes" {{ request('archived') == 'yes' ? 'selected' : '' }}>Archived Rooms</option>
+        </select>
         <x-admin.button type="primary">Filter</x-admin.button>
     </form>
 </div>
@@ -60,11 +64,18 @@
                         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                             <x-admin.button type="outline" size="sm" href="{{ route('admin.rooms.edit', $room) }}">Edit</x-admin.button>
                             @if(auth()->user()->role === 'admin')
-                            <form method="POST" action="{{ route('admin.rooms.destroy', $room) }}" onsubmit="return confirm('Are you sure?');">
-                                @csrf
-                                @method('DELETE')
-                                <x-admin.button type="danger" size="sm">Delete</x-admin.button>
-                            </form>
+                                @if($room->isArchived())
+                                    <form method="POST" action="{{ route('admin.rooms.restore', $room) }}" onsubmit="return confirm('Are you sure you want to restore this room?');">
+                                        @csrf
+                                        <x-admin.button type="success" size="sm">Restore</x-admin.button>
+                                    </form>
+                                @else
+                                    <form method="POST" action="{{ route('admin.rooms.destroy', $room) }}" onsubmit="return confirm('Are you sure you want to archive this room?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <x-admin.button type="warning" size="sm">Archive</x-admin.button>
+                                    </form>
+                                @endif
                             @endif
                         </div>
                     </td>
