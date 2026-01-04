@@ -499,7 +499,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
+            overflow: auxxxto;
             background-color: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(5px);
         }
@@ -1058,8 +1058,9 @@
                         </div>
                         
                         <div>
-                            <label class="form-label">ID Number (Passport/Driver's License)</label>
-                            <input type="text" name="id_number" class="form-input">
+                            <label class="form-label">Upload ID Photo (Passport/Driver's License) <span class="required">*</span></label>
+                            <input type="file" name="id_photo" class="form-input" accept="image/jpeg,image/png,image/jpg,application/pdf" required>
+                            <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 0.3rem;">Accepted formats: JPG, PNG, PDF (Max: 5MB)</small>
                         </div>
                         
                         <div class="form-group-full">
