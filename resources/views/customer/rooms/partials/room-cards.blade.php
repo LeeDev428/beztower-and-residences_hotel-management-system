@@ -7,8 +7,8 @@
                 <img src="https://via.placeholder.com/400x300/d4af37/2c2c2c?text={{ urlencode($room->roomType->name) }}" alt="{{ $room->roomType->name }}">
             @endif
             <div class="room-badge">{{ $room->status }}</div>
-            @if($room->roomType->discount_percentage > 0)
-                <div class="discount-badge">{{ $room->roomType->discount_percentage }}% OFF</div>
+            @if($room->discount_percentage > 0)
+                <div class="discount-badge">{{ $room->discount_percentage }}% OFF</div>
             @endif
         </div>
         
@@ -35,10 +35,10 @@
             
             <div class="room-footer">
                 <div class="room-price">
-                    @if($room->roomType->discount_percentage > 0)
+                    @if($room->discount_percentage > 0)
                         <span class="price-label">From</span>
                         <span class="original-price">₱{{ number_format($room->roomType->base_price, 2) }}</span>
-                        <span class="price-amount discounted-price">₱{{ number_format($room->roomType->base_price * (1 - $room->roomType->discount_percentage / 100), 2) }}</span>
+                        <span class="price-amount discounted-price">₱{{ number_format($room->roomType->base_price * (1 - $room->discount_percentage / 100), 2) }}</span>
                         <span class="price-period">/night</span>
                     @else
                         <span class="price-label">From</span>
