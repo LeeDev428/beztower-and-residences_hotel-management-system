@@ -441,8 +441,8 @@
                             @if($booking->extras->count() > 0)
                                 @foreach($booking->extras as $extra)
                                     <div class="summary-row extras-detail">
-                                        <span>{{ $extra->name }}</span>
-                                        <span>₱{{ number_format($extra->price, 2) }}</span>
+                                        <span>{{ $extra->name }} ({{ $extra->pivot->quantity }} × ₱{{ number_format($extra->pivot->price_at_booking, 2) }})</span>
+                                        <span>₱{{ number_format($extra->pivot->quantity * $extra->pivot->price_at_booking, 2) }}</span>
                                     </div>
                                 @endforeach
                             @endif
