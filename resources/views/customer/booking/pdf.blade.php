@@ -262,7 +262,7 @@
             <li>Check-in time: 2:00 PM onwards</li>
             <li>Check-out time: 12:00 PM</li>
             <li>Free cancellation up to 24 hours before check-in</li>
-            <li>For inquiries, contact us at reservations@beztower.com or +1 234 567 8910</li>
+            <li>For inquiries, contact us at beztower05@gmail.com/(02) 88075046 or 09171221429</li>
         </ul>
     </div>
 
