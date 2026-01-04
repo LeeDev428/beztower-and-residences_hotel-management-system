@@ -184,6 +184,66 @@
                 <p style="margin:10px 0 0 0;">We hope you had a wonderful experience. We'd love to welcome you back soon!</p>
             </div>
 
+            <!-- Final Receipt Summary -->
+            <div class="info-box">
+                <h3 style="margin-top:0; color:#2c2c2c;">📄 Final Receipt</h3>
+                <div class="info-row">
+                    <span class="label">Room Charges ({{ $booking->total_nights }} night(s)):</span>
+                    <span class="value">₱{{ number_format($booking->subtotal, 2) }}</span>
+                </div>
+                
+                @if($booking->extras_total > 0)
+                <div class="info-row">
+                    <span class="label">Additional Services:</span>
+                    <span class="value">₱{{ number_format($booking->extras_total, 2) }}</span>
+                </div>
+                @endif
+                
+                <div class="info-row">
+                    <span class="label">Tax (12%):</span>
+                    <span class="value">₱{{ number_format($booking->tax_amount, 2) }}</span>
+                </div>
+                
+                <div class="info-row" style="background:#e8f5e9; padding:12px; border-radius:5px; margin-top:10px;">
+                    <span class="label"><strong>Total Amount Paid:</strong></span>
+                    <span class="value"><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></span>
+                </div>
+            </div>
+
+            @if($booking->payments && $booking->payments->count() > 0)
+            <div class="info-box">
+                <h3 style="margin-top:0; color:#2c2c2c;">💳 Payment Summary</h3>
+                @foreach($booking->payments as $payment)
+                <div class="info-row">
+                    <span class="label">Payment Method:</span>
+                    <span class="value">{{ strtoupper($payment->payment_method) }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Reference Number:</span>
+                    <span class="value">{{ $payment->payment_reference }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Amount Paid:</span>
+                    <span class="value">₱{{ number_format($payment->amount, 2) }}</span>
+                </div>
+                @endforeach
+            </div>
+            @endif
+
+            <!-- Book Again Invitation -->
+            <div style="background: linear-gradient(135deg, #d4af37, #f4e4c1); padding: 2rem; border-radius: 10px; text-align: center; margin: 2rem 0;">
+                <h2 style="margin: 0 0 1rem 0; color: #2c2c2c;">💝 We'd Love to See You Again!</h2>
+                <p style="margin: 0 0 1.5rem 0; color: #2c2c2c; font-size: 1.05rem;">
+                    Thank you for choosing Beztower & Residences. We hope you had a wonderful stay!
+                </p>
+                <a href="{{ route('home') }}" style="display: inline-block; background: #2c2c2c; color: #d4af37; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1rem; margin: 10px 0;">
+                    <i class="fas fa-calendar-alt"></i> Book Your Next Stay
+                </a>
+                <p style="margin: 1.5rem 0 0 0; color: #2c2c2c; font-size: 0.95rem;">
+                    ⭐ <strong>Special Offer:</strong> Returning guests get 10% off their next booking!
+                </p>
+            </div>
+
             <p>If you have any questions or feedback about your stay, please don't hesitate to reach out:</p>
             <ul>
                 <li><strong>Email:</strong> feedback@beztower.com</li>
