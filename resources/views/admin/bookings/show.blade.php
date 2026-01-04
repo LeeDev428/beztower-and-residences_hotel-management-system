@@ -16,7 +16,7 @@
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Reference Number</div>
-                        <div style="font-weight: 700; font-size: 1.125rem;">{{ $booking->reference_number }}</div>
+                        <div style="font-weight: 700; font-size: 1.125rem;">{{ $booking->booking_reference }}</div>
                     </div>
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Booking Status</div>
