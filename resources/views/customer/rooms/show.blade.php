@@ -1001,7 +1001,7 @@
                 </div>
 
                 <!-- Additional Information -->
-                <div class="additional-info">
+                {{-- <div class="additional-info">
                     <div class="info-item">
                         <i class="fas fa-check-circle"></i>
                         <span>Free cancellation up to 24 hours before check-in</span>
@@ -1014,7 +1014,7 @@
                         <i class="fas fa-clock"></i>
                         <span>Check-in: 2:00 PM | Check-out: 12:00 PM</span>
                     </div>
-                </div>
+                </div> --}}
             </div>
         </div>
 
