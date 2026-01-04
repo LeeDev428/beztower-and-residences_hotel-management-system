@@ -67,6 +67,7 @@ class RoomManagementController extends Controller
             'room_number' => 'required|string|unique:rooms',
             'room_type_id' => 'required|exists:room_types,id',
             'floor' => 'required|integer|min:1',
+            'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'status' => 'required|in:available,occupied,maintenance,blocked',
             'description' => 'nullable|string',
             'amenities' => 'array',
@@ -74,10 +75,19 @@ class RoomManagementController extends Controller
             'photos.*' => 'nullable|image|max:5120', // 5MB max
         ]);
 
+        // Validate discount is divisible by 5
+        if (!empty($validated['discount_percentage'])) {
+            $discount = $validated['discount_percentage'];
+            if ($discount > 0 && fmod($discount, 5) != 0) {
+                return back()->withErrors(['discount_percentage' => 'Discount percentage must be divisible by 5'])->withInput();
+            }
+        }
+
         $room = Room::create([
             'room_number' => $validated['room_number'],
             'room_type_id' => $validated['room_type_id'],
             'floor' => $validated['floor'],
+            'discount_percentage' => $validated['discount_percentage'] ?? 0,
             'status' => $validated['status'],
             'description' => $validated['description'] ?? null,
         ]);
@@ -116,16 +126,26 @@ class RoomManagementController extends Controller
             'room_number' => 'required|string|unique:rooms,room_number,' . $room->id,
             'room_type_id' => 'required|exists:room_types,id',
             'floor' => 'required|integer|min:1',
+            'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'status' => 'required|in:available,occupied,maintenance,blocked',
             'description' => 'nullable|string',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
         ]);
 
+        // Validate discount is divisible by 5
+        if (!empty($validated['discount_percentage'])) {
+            $discount = $validated['discount_percentage'];
+            if ($discount > 0 && fmod($discount, 5) != 0) {
+                return back()->withErrors(['discount_percentage' => 'Discount percentage must be divisible by 5'])->withInput();
+            }
+        }
+
         $room->update([
             'room_number' => $validated['room_number'],
             'room_type_id' => $validated['room_type_id'],
             'floor' => $validated['floor'],
+            'discount_percentage' => $validated['discount_percentage'] ?? 0,
             'status' => $validated['status'],
             'description' => $validated['description'] ?? null,
         ]);
