@@ -692,6 +692,40 @@
             accent-color: #d4af37;
         }
         
+        .qty-btn {
+            background: linear-gradient(135deg, #d4af37, #f4e4c1);
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2c2c2c;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+        
+        .qty-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(212, 175, 55, 0.3);
+        }
+        
+        .qty-btn:active {
+            transform: translateY(0);
+        }
+        
+        .qty-input {
+            width: 50px;
+            text-align: center;
+            border: 2px solid #e5e5e5;
+            border-radius: 6px;
+            padding: 0.25rem;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
         /* Payment Options */
         .payment-options {
             display: grid;
@@ -1204,9 +1238,26 @@
                                                 <div class="extra-desc">{{ $extra->description }}</div>
                                             </div>
                                             <div class="extra-price">₱{{ number_format($extra->price, 2) }}</div>
-                                            <input type="checkbox" name="extras[]" value="{{ $extra->id }}" 
-                                                   class="extra-checkbox" data-price="{{ $extra->price }}" 
-                                                   onchange="updateTotal()">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <input type="checkbox" name="extras[]" value="{{ $extra->id }}" 
+                                                       class="extra-checkbox" data-price="{{ $extra->price }}" 
+                                                       id="extra_checkbox_{{ $extra->id }}"
+                                                       onchange="toggleExtraQuantity({{ $extra->id }}); updateTotal()">
+                                                <div id="extra_quantity_controls_{{ $extra->id }}" style="display: none; align-items: center; gap: 0.5rem;">
+                                                    <button type="button" class="qty-btn" onclick="decreaseExtraQuantity({{ $extra->id }})">
+                                                        <i class="fas fa-minus"></i>
+                                                    </button>
+                                                    <input type="number" name="extra_quantities[{{ $extra->id }}]" 
+                                                           id="extra_quantity_{{ $extra->id }}" 
+                                                           value="1" min="1" max="50"
+                                                           class="qty-input" 
+                                                           onchange="updateTotal()"
+                                                           readonly>
+                                                    <button type="button" class="qty-btn" onclick="increaseExtraQuantity({{ $extra->id }})">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     @endforeach
                                 </div>
@@ -1377,16 +1428,55 @@
             }
         }
 
+        // Toggle extra quantity controls
+        function toggleExtraQuantity(extraId) {
+            const checkbox = document.getElementById('extra_checkbox_' + extraId);
+            const controls = document.getElementById('extra_quantity_controls_' + extraId);
+            const quantityInput = document.getElementById('extra_quantity_' + extraId);
+            
+            if (checkbox.checked) {
+                controls.style.display = 'flex';
+                quantityInput.value = 1; // Reset to 1 when checked
+            } else {
+                controls.style.display = 'none';
+                quantityInput.value = 1; // Reset value
+            }
+        }
+        
+        // Increase extra quantity
+        function increaseExtraQuantity(extraId) {
+            const input = document.getElementById('extra_quantity_' + extraId);
+            const currentValue = parseInt(input.value) || 1;
+            if (currentValue < parseInt(input.max)) {
+                input.value = currentValue + 1;
+                updateTotal();
+            }
+        }
+        
+        // Decrease extra quantity
+        function decreaseExtraQuantity(extraId) {
+            const input = document.getElementById('extra_quantity_' + extraId);
+            const currentValue = parseInt(input.value) || 1;
+            if (currentValue > parseInt(input.min)) {
+                input.value = currentValue - 1;
+                updateTotal();
+            }
+        }
+
         // Update total amount calculation
         function updateTotal() {
             const nights = parseInt(document.getElementById('totalNights').value) || 1;
             const subtotal = basePrice * nights;
             
-            // Calculate extras total
+            // Calculate extras total with quantities
             let extrasTotal = 0;
             const checkedExtras = document.querySelectorAll('.extra-checkbox:checked');
             checkedExtras.forEach(checkbox => {
-                extrasTotal += parseFloat(checkbox.dataset.price);
+                const extraId = checkbox.value;
+                const price = parseFloat(checkbox.dataset.price);
+                const quantityInput = document.getElementById('extra_quantity_' + extraId);
+                const quantity = parseInt(quantityInput.value) || 1;
+                extrasTotal += price * quantity;
             });
             
             // Calculate tax and total
@@ -1414,18 +1504,6 @@
             
             document.getElementById('downPaymentAmount').textContent = '₱' + downPayment.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             document.getElementById('fullPaymentAmount').textContent = '₱' + fullPayment.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-        }
-            
-            // Calculate tax on subtotal + extras
-            const taxableAmount = subtotal + extrasTotal;
-            const tax = taxableAmount * taxRate;
-            const total = taxableAmount + tax;
-            
-            // Update displays
-            document.getElementById('subtotalDisplay').textContent = '₱' + subtotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('extrasDisplay').textContent = '₱' + extrasTotal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('taxDisplay').textContent = '₱' + tax.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('totalDisplay').textContent = '₱' + total.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
 
         // Set minimum check-out date when check-in changes
