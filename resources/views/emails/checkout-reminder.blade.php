@@ -240,7 +240,7 @@
                     <i class="fas fa-calendar-alt"></i> Book Your Next Stay
                 </a>
                 <p style="margin: 1.5rem 0 0 0; color: #2c2c2c; font-size: 0.95rem;">
-                    ⭐ <strong>Special Offer:</strong> Returning guests get 10% off their next booking!
+                    Thank you for choosing us. We look forward to serving you again!
                 </p>
             </div>
 
