@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('room_types', function (Blueprint $table) {
-            //
+            $table->decimal('discount_percentage', 5, 2)->default(0)->after('base_price');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('room_types', function (Blueprint $table) {
-            //
+            $table->dropColumn('discount_percentage');
         });
     }
 };
