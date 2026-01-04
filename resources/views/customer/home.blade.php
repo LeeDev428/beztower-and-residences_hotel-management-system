@@ -403,6 +403,31 @@
             font-size: 0.85rem;
             color: #666;
         }
+        
+        .discount-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+            z-index: 2;
+        }
+        
+        .original-price {
+            font-size: 1.2rem;
+            color: #999;
+            text-decoration: line-through;
+            margin: 0.25rem 0;
+        }
+        
+        .discounted-price {
+            color: #dc3545 !important;
+        }
 
         .book-btn {
             background: linear-gradient(135deg, #d4af37, #f4e4c1);
