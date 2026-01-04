@@ -101,7 +101,7 @@
             <div class="info-box">
                 <div class="info-row">
                     <span class="label">Booking Reference:</span>
-                    <span class="value"><strong>{{ $booking->reference_number }}</strong></span>
+                    <span class="value"><strong>{{ $booking->booking_reference }}</strong></span>
                 </div>
                 <div class="info-row">
                     <span class="label">Room:</span>
@@ -117,20 +117,83 @@
                 </div>
                 <div class="info-row">
                     <span class="label">Nights:</span>
-                    <span class="value">{{ $booking->number_of_nights }}</span>
+                    <span class="value">{{ $booking->total_nights }}</span>
                 </div>
                 <div class="info-row">
                     <span class="label">Guests:</span>
-                    <span class="value">{{ $booking->number_of_adults }} Adult(s), {{ $booking->number_of_children }} Child(ren)</span>
+                    <span class="value">{{ $booking->number_of_guests }} Guest(s)</span>
                 </div>
+            </div>
+
+            <div class="info-box">
+                <h3 style="margin-top:0; color:#2c2c2c;">💰 Total Amount Breakdown</h3>
                 <div class="info-row">
-                    <span class="label">Total Amount:</span>
-                    <span class="value"><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></span>
+                    <span class="label">Room Charges ({{ $booking->total_nights }} night(s) × ₱{{ number_format($booking->room->roomType->price_per_night, 2) }}):</span>
+                    <span class="value">₱{{ number_format($booking->subtotal, 2) }}</span>
+                </div>
+                
+                @if($booking->extras && $booking->extras->count() > 0)
+                    <div class="info-row" style="background:#f0f0f0; margin-top:10px; padding:10px; border-radius:5px;">
+                        <span class="label" style="color:#2c2c2c;"><strong>Additional Services/Extras:</strong></span>
+                    </div>
+                    @foreach($booking->extras as $extra)
+                    <div class="info-row" style="padding-left:20px;">
+                        <span class="label">{{ $extra->name }} ({{ $extra->pivot->quantity }} × ₱{{ number_format($extra->pivot->price_at_booking, 2) }}):</span>
+                        <span class="value">₱{{ number_format($extra->pivot->quantity * $extra->pivot->price_at_booking, 2) }}</span>
+                    </div>
+                    @endforeach
+                    <div class="info-row">
+                        <span class="label"><strong>Subtotal Extras:</strong></span>
+                        <span class="value"><strong>₱{{ number_format($booking->extras_total, 2) }}</strong></span>
+                    </div>
+                @endif
+
+                @if($booking->tax_amount > 0)
+                <div class="info-row">
+                    <span class="label">Tax (12%):</span>
+                    <span class="value">₱{{ number_format($booking->tax_amount, 2) }}</span>
+                </div>
+                @endif
+
+                <div class="info-row" style="background:#fff3cd; padding:12px; margin-top:10px; border-radius:5px;">
+                    <span class="label" style="font-size:18px; color:#2c2c2c;"><strong>TOTAL AMOUNT:</strong></span>
+                    <span class="value" style="font-size:18px; color:#d4af37;"><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></span>
                 </div>
             </div>
 
             <div class="highlight">
-                <strong>⚠️ Important:</strong> Please proceed with the payment within 48 hours to confirm your reservation. You will receive payment instructions in a separate email.
+                <strong>⚠️ Important:</strong> Please proceed with the payment within 48 hours to confirm your reservation.
+            </div>
+
+            <div class="info-box">
+                <h3 style="margin-top:0; color:#2c2c2c;">💳 Payment Instructions</h3>
+                <p style="margin:10px 0;"><strong>Accepted Payment Methods:</strong></p>
+                <ul style="margin:10px 0; padding-left:20px;">
+                    <li><strong>Bank Transfer:</strong>
+                        <ul style="margin:5px 0;">
+                            <li>Bank Name: BDO - Banco de Oro</li>
+                            <li>Account Name: Beztower & Residences Inc.</li>
+                            <li>Account Number: 1234-5678-9012</li>
+                        </ul>
+                    </li>
+                    <li><strong>GCash:</strong> 0917-123-4567 (Beztower & Residences)</li>
+                    <li><strong>PayMaya:</strong> 0917-123-4567 (Beztower & Residences)</li>
+                    <li><strong>Over-the-counter:</strong> Available at our front desk</li>
+                </ul>
+
+                <div style="background:#e8f5e9; padding:15px; border-radius:5px; margin-top:15px; border:1px solid #4caf50;">
+                    <p style="margin:0;"><strong>📧 Where to Send Proof of Payment:</strong></p>
+                    <ul style="margin:8px 0; padding-left:20px;">
+                        <li><strong>Email:</strong> payments@beztower.com</li>
+                        <li><strong>Subject:</strong> Payment Proof - {{ $booking->booking_reference }}</li>
+                        <li><strong>Include:</strong> Screenshot/Photo of payment receipt with your booking reference number</li>
+                    </ul>
+                    <p style="margin:8px 0 0 0; font-size:14px;"><em>📱 You can also send via WhatsApp: +63 917 123 4567</em></p>
+                </div>
+
+                <div style="background:#fff3cd; padding:12px; border-radius:5px; margin-top:10px;">
+                    <small><strong>Note:</strong> Your booking will be confirmed once we verify your payment. This usually takes 2-4 hours during business hours.</small>
+                </div>
             </div>
 
             @if($booking->special_requests)
