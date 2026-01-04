@@ -118,6 +118,12 @@
                 <button type="button" onclick="closeRoomTypesModal()" class="btn-close">&times;</button>
             </div>
         </div>
+        <div style="padding: 0 1.5rem;">
+            <div style="display: flex; gap: 1rem; border-bottom: 2px solid #e5e5e5;">
+                <button onclick="loadRoomTypes(false)" id="activeRoomTypesTab" style="padding: 0.75rem 1.5rem; background: none; border: none; border-bottom: 3px solid #d4af37; font-weight: 600; cursor: pointer; color: #2c2c2c;">Active</button>
+                <button onclick="loadRoomTypes(true)" id="archivedRoomTypesTab" style="padding: 0.75rem 1.5rem; background: none; border: none; border-bottom: 3px solid transparent; font-weight: 600; cursor: pointer; color: #666;">Archived</button>
+            </div>
+        </div>
         <div class="modal-body">
             <div id="roomTypesTableContainer">
                 <table class="data-table">
@@ -125,8 +131,6 @@
                         <tr>
                             <th>Name</th>
                             <th>Base Price</th>
-                            <th>Discount</th>
-                            <th>Final Price</th>
                             <th>Max Guests</th>
                             <th>Actions</th>
                         </tr>
@@ -148,6 +152,12 @@
             <div style="display: flex; gap: 0.5rem;">
                 <button type="button" onclick="openAddAmenityForm()" class="btn-add">+ Add Amenity</button>
                 <button type="button" onclick="closeAmenitiesModal()" class="btn-close">&times;</button>
+            </div>
+        </div>
+        <div style="padding: 0 1.5rem;">
+            <div style="display: flex; gap: 1rem; border-bottom: 2px solid #e5e5e5;">
+                <button onclick="loadAmenities(false)" id="activeAmenitiesTab" style="padding: 0.75rem 1.5rem; background: none; border: none; border-bottom: 3px solid #d4af37; font-weight: 600; cursor: pointer; color: #2c2c2c;">Active</button>
+                <button onclick="loadAmenities(true)" id="archivedAmenitiesTab" style="padding: 0.75rem 1.5rem; background: none; border: none; border-bottom: 3px solid transparent; font-weight: 600; cursor: pointer; color: #666;">Archived</button>
             </div>
         </div>
         <div class="modal-body">
@@ -511,31 +521,27 @@
         document.getElementById('amenityFormModal').style.display = 'none';
     }
     
-    async function loadRoomTypes() {
+    async function loadRoomTypes(showArchived = false) {
         try {
-            const response = await fetch('/admin/room-types');
+            const url = showArchived ? '/admin/room-types?archived=yes' : '/admin/room-types';
+            const response = await fetch(url);
             const data = await response.json();
+            
+            // Update tab styles
+            document.getElementById('activeRoomTypesTab').style.borderBottomColor = showArchived ? 'transparent' : '#d4af37';
+            document.getElementById('activeRoomTypesTab').style.color = showArchived ? '#666' : '#2c2c2c';
+            document.getElementById('archivedRoomTypesTab').style.borderBottomColor = showArchived ? '#d4af37' : 'transparent';
+            document.getElementById('archivedRoomTypesTab').style.color = showArchived ? '#2c2c2c' : '#666';
             
             const tbody = document.getElementById('roomTypesTableBody');
             tbody.innerHTML = '';
             
             data.roomTypes.forEach(type => {
-                const finalPrice = type.discount_percentage > 0 
-                    ? type.base_price * (1 - type.discount_percentage / 100)
-                    : type.base_price;
                     
                 const row = `
                     <tr>
                         <td>${type.name}</td>
                         <td>₱${parseFloat(type.base_price).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
-                        <td>
-                            ${type.discount_percentage > 0 
-                                ? `<span class="discount-badge">${type.discount_percentage}% OFF</span>` 
-                                : '-'}
-                        </td>
-                        <td>
-                            <strong>₱${finalPrice.toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong>
-                        </td>
                         <td>${type.max_guests}</td>
                         <td>
                             <button class="btn-edit" onclick="editRoomType(${type.id})">Edit</button>
@@ -554,10 +560,17 @@
         }
     }
     
-    async function loadAmenities() {
+    async function loadAmenities(showArchived = false) {
         try {
-            const response = await fetch('/admin/amenities');
+            const url = showArchived ? '/admin/amenities?archived=yes' : '/admin/amenities';
+            const response = await fetch(url);
             const data = await response.json();
+            
+            // Update tab styles
+            document.getElementById('activeAmenitiesTab').style.borderBottomColor = showArchived ? 'transparent' : '#d4af37';
+            document.getElementById('activeAmenitiesTab').style.color = showArchived ? '#666' : '#2c2c2c';
+            document.getElementById('archivedAmenitiesTab').style.borderBottomColor = showArchived ? '#d4af37' : 'transparent';
+            document.getElementById('archivedAmenitiesTab').style.color = showArchived ? '#2c2c2c' : '#666';
             
             const tbody = document.getElementById('amenitiesTableBody');
             tbody.innerHTML = '';
@@ -591,12 +604,6 @@
         const id = formData.get('id');
         const data = Object.fromEntries(formData.entries());
         delete data.id;
-        
-        // Validate discount
-        if (data.discount_percentage && data.discount_percentage % 5 !== 0) {
-            alert('Discount percentage must be divisible by 5');
-            return;
-        }
         
         try {
             const url = id ? `/admin/room-types/${id}` : '/admin/room-types';
@@ -678,7 +685,6 @@
                 document.getElementById('roomTypeName').value = roomType.name;
                 document.getElementById('roomTypeDescription').value = roomType.description || '';
                 document.getElementById('roomTypeBasePrice').value = roomType.base_price;
-                document.getElementById('roomTypeDiscount').value = roomType.discount_percentage || 0;
                 document.getElementById('roomTypeMaxGuests').value = roomType.max_guests;
                 document.getElementById('roomTypeBedType').value = roomType.bed_type || '';
                 document.getElementById('roomTypeSize').value = roomType.size_sqm || '';
