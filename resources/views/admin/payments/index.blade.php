@@ -28,7 +28,14 @@
                             <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">{{ $payment->booking->booking_reference }}</h4>
                             <p style="color: var(--text-muted);">{{ $payment->booking->guest->name }} | {{ $payment->booking->guest->email }}</p>
                         </div>
-                        <x-admin.badge :status="$payment->payment_status" />
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            @if($payment->payment_type === 'down_payment')
+                            <span style="padding: 0.375rem 0.75rem; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 6px; font-size: 0.875rem; font-weight: 600;">Downpayment</span>
+                            @else
+                            <span style="padding: 0.375rem 0.75rem; background: linear-gradient(135deg, #27ae60, #229954); color: white; border-radius: 6px; font-size: 0.875rem; font-weight: 600;">Full Payment</span>
+                            @endif
+                            <x-admin.badge :status="$payment->payment_status" />
+                        </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem;">
