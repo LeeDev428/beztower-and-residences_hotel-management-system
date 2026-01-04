@@ -18,6 +18,7 @@ class Booking extends Model
         'extras_total',
         'tax_amount',
         'total_amount',
+        'payment_option',
         'status',
         'special_requests'
     ];
