@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('room_types', function (Blueprint $table) {
-            //
+            $table->string('bed_type')->nullable()->after('max_guests');
+            $table->decimal('size_sqm', 8, 2)->nullable()->after('bed_type');
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('room_types', function (Blueprint $table) {
-            //
+            $table->dropColumn(['bed_type', 'size_sqm']);
         });
     }
 };
