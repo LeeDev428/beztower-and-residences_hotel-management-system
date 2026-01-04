@@ -691,6 +691,90 @@
             cursor: pointer;
             accent-color: #d4af37;
         }
+        
+        /* Payment Options */
+        .payment-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .payment-option-card {
+            cursor: pointer;
+            border: 2px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 1.5rem;
+            background: #f8f8f8;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .payment-option-card:hover {
+            background: #fff;
+            border-color: #d4af37;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+        }
+        
+        .payment-option-card input[type="radio"] {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #d4af37;
+        }
+        
+        .payment-option-card input[type="radio"]:checked ~ .payment-card-content {
+            opacity: 1;
+        }
+        
+        .payment-option-card input[type="radio"]:checked {
+            accent-color: #d4af37;
+        }
+        
+        .payment-option-card:has(input[type="radio"]:checked) {
+            border-color: #d4af37;
+            background: linear-gradient(135deg, #fff9e6, #fff);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+        }
+        
+        .payment-card-content {
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .payment-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c2c2c;
+        }
+        
+        .payment-card-header i {
+            color: #d4af37;
+            font-size: 1.3rem;
+        }
+        
+        .payment-card-desc {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        
+        .payment-amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #d4af37;
+            text-align: right;
+            margin-top: 1rem;
+        }
 
         .booking-summary {
             background: linear-gradient(135deg, #f8f8f8, #fff);
@@ -1131,6 +1215,39 @@
                             @endif
                         </div>
                         
+                        <!-- Payment Option -->
+                        <div class="form-group-full section-divider">
+                            <div class="section-title-modal">
+                                <i class="fas fa-credit-card"></i> Payment Option
+                            </div>
+                            
+                            <div class="payment-options">
+                                <label class="payment-option-card">
+                                    <input type="radio" name="payment_option" value="down_payment" checked onchange="updatePaymentSummary()">
+                                    <div class="payment-card-content">
+                                        <div class="payment-card-header">
+                                            <i class="fas fa-hand-holding-usd"></i>
+                                            <span>Down Payment (30%)</span>
+                                        </div>
+                                        <p class="payment-card-desc">Pay 30% now, and settle the remaining 70% upon check-in at the hotel.</p>
+                                        <div class="payment-amount" id="downPaymentAmount">₱{{ number_format($room->roomType->base_price * 1.12 * 0.30, 2) }}</div>
+                                    </div>
+                                </label>
+                                
+                                <label class="payment-option-card">
+                                    <input type="radio" name="payment_option" value="full_payment" onchange="updatePaymentSummary()">
+                                    <div class="payment-card-content">
+                                        <div class="payment-card-header">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                            <span>Full Payment (100%)</span>
+                                        </div>
+                                        <p class="payment-card-desc">Pay the full amount now and enjoy a hassle-free check-in experience.</p>
+                                        <div class="payment-amount" id="fullPaymentAmount">₱{{ number_format($room->roomType->base_price * 1.12, 2) }}</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
                         <!-- Special Requests -->
                         <div class="form-group-full">
                             <label class="form-label">Special Requests or Preferences</label>
@@ -1271,6 +1388,33 @@
             checkedExtras.forEach(checkbox => {
                 extrasTotal += parseFloat(checkbox.dataset.price);
             });
+            
+            // Calculate tax and total
+            const beforeTax = subtotal + extrasTotal;
+            const taxAmount = beforeTax * taxRate;
+            const totalAmount = beforeTax + taxAmount;
+            
+            // Update displays
+            document.getElementById('subtotalDisplay').textContent = '₱' + subtotal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            document.getElementById('extrasDisplay').textContent = '₱' + extrasTotal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            document.getElementById('taxDisplay').textContent = '₱' + taxAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            document.getElementById('totalDisplay').textContent = '₱' + totalAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            
+            // Update payment options
+            updatePaymentSummary();
+        }
+        
+        // Update payment option amounts
+        function updatePaymentSummary() {
+            const totalAmountText = document.getElementById('totalDisplay').textContent;
+            const totalAmount = parseFloat(totalAmountText.replace(/[₱,]/g, ''));
+            
+            const downPayment = totalAmount * 0.30;
+            const fullPayment = totalAmount;
+            
+            document.getElementById('downPaymentAmount').textContent = '₱' + downPayment.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            document.getElementById('fullPaymentAmount').textContent = '₱' + fullPayment.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
             
             // Calculate tax on subtotal + extras
             const taxableAmount = subtotal + extrasTotal;
