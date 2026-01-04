@@ -435,7 +435,7 @@
         <div class="nav-right">
             <div class="contact-number">
                 <i class="fas fa-phone"></i>
-                +1 234 567 8910
+                (02) 88075046 or 09171221429
             </div>
             <i class="fas fa-shopping-cart cart-icon"></i>
         </div>
