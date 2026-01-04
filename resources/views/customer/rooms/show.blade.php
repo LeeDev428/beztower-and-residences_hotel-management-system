@@ -1188,8 +1188,14 @@
                         
                         <div>
                             <label class="form-label">Upload ID Photo (Passport/Driver's License) <span class="required">*</span></label>
-                            <input type="file" name="id_photo" class="form-input" accept="image/jpeg,image/png,image/jpg,application/pdf" required>
+                            <input type="file" name="id_photo" id="idPhotoInput" class="form-input" accept="image/jpeg,image/png,image/jpg,application/pdf" required onchange="previewIdPhoto(event)">
                             <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 0.3rem;">Accepted formats: JPG, PNG, PDF (Max: 5MB)</small>
+                            <div id="idPhotoPreview" style="margin-top: 1rem; display: none;">
+                                <img id="idPhotoImage" src="" alt="ID Preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 2px solid #e5e5e5; object-fit: contain;">
+                                <button type="button" onclick="removeIdPhoto()" style="margin-top: 0.5rem; background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-size: 0.9rem;">
+                                    <i class="fas fa-times"></i> Remove
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="form-group-full">
@@ -1533,6 +1539,49 @@
                 }
             });
         });
+
+        // Preview ID Photo
+        function previewIdPhoto(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('idPhotoPreview');
+            const previewImage = document.getElementById('idPhotoImage');
+            
+            if (file) {
+                // Check file size (5MB = 5 * 1024 * 1024 bytes)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size exceeds 5MB. Please select a smaller file.');
+                    event.target.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                
+                // Check if file is PDF
+                if (file.type === 'application/pdf') {
+                    preview.style.display = 'block';
+                    previewImage.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmNGU0YzEiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSIjZDRhZjM3IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+UERGIEZpbGU8L3RleHQ+PC9zdmc+';
+                    previewImage.alt = 'PDF File Selected';
+                } else {
+                    // Show image preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        preview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        // Remove ID Photo
+        function removeIdPhoto() {
+            const input = document.getElementById('idPhotoInput');
+            const preview = document.getElementById('idPhotoPreview');
+            const previewImage = document.getElementById('idPhotoImage');
+            
+            input.value = '';
+            preview.style.display = 'none';
+            previewImage.src = '';
+        }
     </script>
 </body>
 </html>
