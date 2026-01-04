@@ -36,6 +36,7 @@ class BookingController extends Controller
             'check_out_date' => 'required|date|after:check_in_date',
             'number_of_guests' => 'required|integer|min:1',
             'total_nights' => 'required|integer|min:1',
+            'payment_option' => 'required|in:full_payment,down_payment',
             'special_requests' => 'nullable|string',
             'extras' => 'nullable|array',
             'extras.*' => 'exists:extras,id'
@@ -104,6 +105,7 @@ class BookingController extends Controller
                 'extras_total' => $extrasTotal,
                 'tax_amount' => $taxAmount,
                 'total_amount' => $totalAmount,
+                'payment_option' => $validated['payment_option'],
                 'status' => 'pending',
                 'special_requests' => $validated['special_requests']
             ]);
@@ -151,10 +153,16 @@ class BookingController extends Controller
             ->where('booking_reference', $reference)
             ->firstOrFail();
 
-        // Calculate 30% down payment
-        $downPaymentAmount = $booking->total_amount * 0.30;
+        // Calculate payment amount based on option
+        if ($booking->payment_option === 'full_payment') {
+            $paymentAmount = $booking->total_amount;
+            $paymentPercentage = 100.00;
+        } else {
+            $paymentAmount = $booking->total_amount * 0.30;
+            $paymentPercentage = 30.00;
+        }
 
-        return view('customer.booking.payment', compact('booking', 'downPaymentAmount'));
+        return view('customer.booking.payment', compact('booking', 'paymentAmount', 'paymentPercentage'));
     }
 
     public function processPayment(Request $request, $reference)
@@ -173,17 +181,18 @@ class BookingController extends Controller
             // Store proof of payment
             $proofPath = $request->file('proof_of_payment')->store('payments/proofs', 'public');
 
-            // Calculate 30% down payment
-            $downPaymentAmount = $booking->total_amount * 0.30;
+            // Calculate payment amount based on option
+            $paymentPercentage = $booking->payment_option === 'full_payment' ? 100.00 : 30.00;
+            $paymentAmount = $booking->total_amount * ($paymentPercentage / 100);
 
             // Create payment record
             $payment = Payment::create([
                 'booking_id' => $booking->id,
-                'payment_type' => 'down_payment',
+                'payment_type' => $booking->payment_option,
                 'payment_method' => $validated['payment_method'],
                 'payment_reference' => $validated['payment_reference'],
-                'amount' => $downPaymentAmount,
-                'percentage' => 30.00,
+                'amount' => $paymentAmount,
+                'percentage' => $paymentPercentage,
                 'payment_status' => 'pending', // Will be verified by admin
                 'proof_of_payment' => $proofPath,
                 'payment_date' => now(),
