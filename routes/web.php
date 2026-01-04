@@ -7,6 +7,8 @@ use App\Http\Controllers\Customer\BookingController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RoomManagementController;
+use App\Http\Controllers\Admin\RoomTypeController;
+use App\Http\Controllers\Admin\AmenityController;
 use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\GuestManagementController;
 use App\Http\Controllers\Admin\HousekeepingController;
