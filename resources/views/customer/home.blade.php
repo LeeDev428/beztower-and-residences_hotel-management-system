@@ -878,7 +878,7 @@
                 <div class="contact-icon"><i class="fas fa-phone"></i></div>
                 <div class="contact-details">
                     <h4>Phone</h4>
-                    <p>+1 234 567 8910<br>+1 234 567 8911</p>
+                    <p>(02) 88075046 or 09171221429</p>
                 </div>
             </div>
             
