@@ -13,7 +13,7 @@ class Guest extends Model
         'phone',
         'country',
         'address',
-        'id_number',
+        'id_photo',
         'preferences'
     ];
 
