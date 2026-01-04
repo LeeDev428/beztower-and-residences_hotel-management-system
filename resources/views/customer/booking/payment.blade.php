@@ -539,7 +539,7 @@
                     </h3>
                     <p style="color: #666; line-height: 1.8;">
                         If you encounter any issues with your payment, please contact us:<br>
-                        <strong>Phone:</strong> +1 234 567 8910<br>
+                        <strong>Phone:</strong> (02) 88075046 or 09171221429<br>
                         <strong>Email:</strong> reservations@beztower.com<br>
                         <strong>Hours:</strong> 24/7 Customer Support
                     </p>
