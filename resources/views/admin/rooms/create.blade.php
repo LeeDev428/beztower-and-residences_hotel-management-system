@@ -188,6 +188,14 @@
                     <label>Max Guests *</label>
                     <input type="number" id="roomTypeMaxGuests" name="max_guests" min="1" required class="form-control">
                 </div>
+                <div class="form-group">
+                    <label>Bed Type *</label>
+                    <input type="text" id="roomTypeBedType" name="bed_type" required class="form-control" placeholder="e.g., King, Queen, Twin">
+                </div>
+                <div class="form-group">
+                    <label>Size (sqm) *</label>
+                    <input type="number" id="roomTypeSize" name="size_sqm" step="0.01" min="0" required class="form-control" placeholder="e.g., 25.5">
+                </div>
                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
                     <button type="submit" class="btn-primary">Save</button>
                     <button type="button" onclick="closeRoomTypeFormModal()" class="btn-secondary">Cancel</button>
