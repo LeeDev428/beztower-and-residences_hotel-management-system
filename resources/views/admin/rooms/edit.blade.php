@@ -24,14 +24,20 @@
 
             <div>
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Room Type *</label>
-                <select name="room_type_id" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
-                    <option value="">Select Type</option>
-                    @foreach($roomTypes as $type)
-                    <option value="{{ $type->id }}" {{ old('room_type_id', $room->room_type_id) == $type->id ? 'selected' : '' }}>
-                        {{ $type->name }} - ₱{{ number_format($type->base_price, 2) }}
-                    </option>
-                    @endforeach
-                </select>
+                <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                    <select name="room_type_id" required style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                        <option value="">Select Type</option>
+                        @foreach($roomTypes as $type)
+                        <option value="{{ $type->id }}" {{ old('room_type_id', $room->room_type_id) == $type->id ? 'selected' : '' }}>
+                            {{ $type->name }} - ₱{{ number_format($type->base_price, 2) }}
+                            @if($type->discount_percentage > 0)
+                                ({{ $type->discount_percentage }}% OFF)
+                            @endif
+                        </option>
+                        @endforeach
+                    </select>
+                    <button type="button" onclick="openRoomTypesModal()" class="btn-view-details">View Details</button>
+                </div>
                 @error('room_type_id')
                 <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                 @enderror
