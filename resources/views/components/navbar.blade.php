@@ -1,10 +1,8 @@
 <nav class="navbar">
     <div class="logo">
-        <div class="logo-icon">
-            <i class="fas fa-gem"></i>
-        </div>
-        BEZ TOWER & RESIDENCES
-    </div>
+        <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower & Residences Logo" class="logo-image">
+        <span class="logo-text">BEZ TOWER & RESIDENCES</span>
+    </img>
     
     <ul class="nav-links">
         <li><a href="{{ route('home') }}">Home</a></li>
@@ -44,23 +42,21 @@
     .logo {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
+    }
+
+    .logo-image {
+        height: 50px;
+        width: auto;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+
+    .logo-text {
         color: white;
         font-size: 1.5rem;
         font-weight: 600;
         letter-spacing: 2px;
-    }
-
-    .logo-icon {
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, #d4af37, #f4e4c1);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        color: #2c2c2c;
     }
 
     .nav-links {
