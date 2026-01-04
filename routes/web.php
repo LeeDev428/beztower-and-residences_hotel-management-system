@@ -24,6 +24,7 @@ Route::post('/booking/create', [BookingController::class, 'create'])->name('book
 Route::get('/booking/payment/{reference}', [BookingController::class, 'payment'])->name('booking.payment');
 Route::post('/booking/payment/{reference}', [BookingController::class, 'processPayment'])->name('booking.processPayment');
 Route::get('/booking/confirmation/{reference}', [BookingController::class, 'confirmation'])->name('booking.confirmation');
+Route::get('/booking/download-pdf/{reference}', [BookingController::class, 'downloadPDF'])->name('booking.downloadPDF');
 
 // Admin Routes (Protected - Login Required)
 Route::prefix('admin')->group(function () {
