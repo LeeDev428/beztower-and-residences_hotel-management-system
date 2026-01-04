@@ -10,6 +10,7 @@ use App\Models\Extra;
 use App\Models\Payment;
 use App\Mail\BookingAcknowledgement;
 use App\Mail\PaymentConfirmation;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -245,5 +246,16 @@ class BookingController extends Controller
             'available' => !$isBooked,
             'message' => $isBooked ? 'Room is not available for selected dates.' : 'Room is available!'
         ]);
+    }
+
+    public function downloadPDF($reference)
+    {
+        $booking = Booking::with(['guest', 'room.roomType', 'extras', 'payments'])
+            ->where('booking_reference', $reference)
+            ->firstOrFail();
+
+        $pdf = Pdf::loadView('customer.booking.pdf', compact('booking'));
+        
+        return $pdf->download('booking-'.$reference.'.pdf');
     }
 }
