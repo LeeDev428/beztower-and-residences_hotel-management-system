@@ -180,7 +180,7 @@
                 </div>
                 <div class="info-row">
                     <span class="label">Reference Number:</span>
-                    <span class="value">{{ $payment->reference_number }}</span>
+                    <span class="value">{{ $payment->payment_reference }}</span>
                 </div>
                 @if($payment->payment_type === 'down_payment')
                 <div class="info-row">
