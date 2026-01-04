@@ -53,6 +53,24 @@ Route::prefix('admin')->group(function () {
             Route::post('/{room}/block-dates', [RoomManagementController::class, 'blockDates'])->name('admin.rooms.blockDates')->middleware('role:admin,manager');
         });
         
+        // Room Types Management
+        Route::prefix('room-types')->group(function () {
+            Route::get('/', [RoomTypeController::class, 'index'])->name('admin.room-types.index');
+            Route::post('/', [RoomTypeController::class, 'store'])->name('admin.room-types.store')->middleware('role:admin,manager');
+            Route::put('/{roomType}', [RoomTypeController::class, 'update'])->name('admin.room-types.update')->middleware('role:admin,manager');
+            Route::delete('/{roomType}', [RoomTypeController::class, 'destroy'])->name('admin.room-types.destroy')->middleware('role:admin');
+            Route::post('/{roomType}/restore', [RoomTypeController::class, 'restore'])->name('admin.room-types.restore')->middleware('role:admin');
+        });
+        
+        // Amenities Management
+        Route::prefix('amenities')->group(function () {
+            Route::get('/', [AmenityController::class, 'index'])->name('admin.amenities.index');
+            Route::post('/', [AmenityController::class, 'store'])->name('admin.amenities.store')->middleware('role:admin,manager');
+            Route::put('/{amenity}', [AmenityController::class, 'update'])->name('admin.amenities.update')->middleware('role:admin,manager');
+            Route::delete('/{amenity}', [AmenityController::class, 'destroy'])->name('admin.amenities.destroy')->middleware('role:admin');
+            Route::post('/{amenity}/restore', [AmenityController::class, 'restore'])->name('admin.amenities.restore')->middleware('role:admin');
+        });
+        
         // Booking Management
         Route::prefix('bookings')->group(function () {
             Route::get('/', [BookingManagementController::class, 'index'])->name('admin.bookings.index');
