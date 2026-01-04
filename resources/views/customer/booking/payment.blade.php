@@ -125,6 +125,30 @@
         .summary-row:last-child {
             border-bottom: none;
         }
+        
+        .summary-section {
+            margin: 0.5rem 0;
+        }
+        
+        .extras-header {
+            font-weight: 600;
+            color: #2c2c2c;
+        }
+        
+        .extras-header i {
+            color: #d4af37;
+        }
+        
+        .extras-detail {
+            padding-left: 1.5rem;
+            font-size: 0.9rem;
+            color: #666;
+            border-bottom: 1px dashed #e5e5e5;
+        }
+        
+        .extras-detail:last-child {
+            border-bottom: none;
+        }
 
         .down-payment-row {
             font-size: 1.4rem;
