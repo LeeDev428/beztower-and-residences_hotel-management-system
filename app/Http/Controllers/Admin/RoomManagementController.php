@@ -16,6 +16,18 @@ class RoomManagementController extends Controller
     {
         $query = Room::with(['roomType', 'amenities', 'photos']);
 
+        // Filter archived/active rooms
+        if ($request->filled('archived')) {
+            if ($request->archived === 'yes') {
+                $query->archived();
+            } else {
+                $query->active();
+            }
+        } else {
+            // By default, show only active rooms
+            $query->active();
+        }
+
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
