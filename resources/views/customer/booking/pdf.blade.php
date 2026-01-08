@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Booking Confirmation - {{ $booking->booking_reference }}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: DejaVu Sans, Arial, sans-serif;
             font-size: 12px;
             color: #333;
             line-height: 1.6;
@@ -180,8 +180,8 @@
         <div class="price-table">
             <table>
                 <tr>
-                    <td>Room Charges ({{ $booking->total_nights }} night(s) × ₱{{ number_format($booking->room->roomType->base_price, 2) }}):</td>
-                    <td style="text-align: right;">₱{{ number_format($booking->subtotal, 2) }}</td>
+                    <td>Room Charges ({{ $booking->total_nights }} night(s) × PHP {{ number_format($booking->room->roomType->base_price, 2) }}):</td>
+                    <td style="text-align: right;">PHP {{ number_format($booking->subtotal, 2) }}</td>
                 </tr>
                 
                 @if($booking->extras && $booking->extras->count() > 0)
@@ -190,26 +190,26 @@
                 </tr>
                 @foreach($booking->extras as $extra)
                 <tr>
-                    <td style="padding-left: 20px;">{{ $extra->name }} ({{ $extra->pivot->quantity }} × ₱{{ number_format($extra->pivot->price_at_booking, 2) }})</td>
-                    <td style="text-align: right;">₱{{ number_format($extra->pivot->quantity * $extra->pivot->price_at_booking, 2) }}</td>
+                    <td style="padding-left: 20px;">{{ $extra->name }} ({{ $extra->pivot->quantity }} × PHP {{ number_format($extra->pivot->price_at_booking, 2) }})</td>
+                    <td style="text-align: right;">PHP {{ number_format($extra->pivot->quantity * $extra->pivot->price_at_booking, 2) }}</td>
                 </tr>
                 @endforeach
                 <tr>
                     <td>Subtotal Extras:</td>
-                    <td style="text-align: right;">₱{{ number_format($booking->extras_total, 2) }}</td>
+                    <td style="text-align: right;">PHP {{ number_format($booking->extras_total, 2) }}</td>
                 </tr>
                 @endif
 
                 @if($booking->tax_amount > 0)
                 <tr>
                     <td>Tax (12%):</td>
-                    <td style="text-align: right;">₱{{ number_format($booking->tax_amount, 2) }}</td>
+                    <td style="text-align: right;">PHP {{ number_format($booking->tax_amount, 2) }}</td>
                 </tr>
                 @endif
 
                 <tr class="total-row">
                     <td>TOTAL AMOUNT:</td>
-                    <td style="text-align: right;">₱{{ number_format($booking->total_amount, 2) }}</td>
+                    <td style="text-align: right;">PHP {{ number_format($booking->total_amount, 2) }}</td>
                 </tr>
             </table>
         </div>
@@ -243,7 +243,7 @@
             </tr>
             <tr>
                 <td>Amount Paid:</td>
-                <td>₱{{ number_format($payment->amount, 2) }}</td>
+                <td>PHP {{ number_format($payment->amount, 2) }}</td>
             </tr>
             <tr>
                 <td>Payment Status:</td>
