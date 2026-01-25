@@ -976,7 +976,7 @@
 
                 <!-- Price Section -->
                 <div class="price-section">
-                    <div class="price-label">Price:</div>
+                    {{-- <div class="price-label">Price:</div> --}}
                     @if($room->discount_percentage > 0)
                         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
                             <span class="discount-badge" style="position: static;">{{ $room->discount_percentage }}% OFF</span>
