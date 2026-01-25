@@ -985,10 +985,10 @@
     </div>
 
     <!-- Floating Calendar Button -->
-    <button class="floating-calendar-btn" id="showCalendar">
+    {{-- <button class="floating-calendar-btn" id="showCalendar">
         <i class="fas fa-calendar-check"></i>
         <span>Check Availability</span>
-    </button>
+    </button> --}}
 
     <style>
         /* Calendar Modal Styles */
