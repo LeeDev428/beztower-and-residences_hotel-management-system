@@ -20,6 +20,7 @@ Route::get('/services', [HomeController::class, 'services'])->name('services');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room}', [RoomController::class, 'show'])->name('rooms.show');
+Route::get('/rooms/{room}/checkout', [BookingController::class, 'checkout'])->name('booking.checkout');
 Route::get('/api/calendar/availability', [RoomController::class, 'getAvailability'])->name('calendar.availability');
 Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.checkAvailability');
 Route::post('/booking/create', [BookingController::class, 'create'])->name('booking.create');
