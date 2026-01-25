@@ -22,10 +22,18 @@
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
         .header {
-            background: linear-gradient(135deg, #d4af37, #f4e4c1);
-            color: #2c2c2c;
+            background: linear-gradient(135deg, #4caf50, #81c784);
+            color: white;
             padding: 30px;
             text-align: center;
+        }
+        .header img {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 15px;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
         }
         .header h1 {
             margin: 0;
@@ -36,9 +44,30 @@
         }
         .info-box {
             background: #f9f9f9;
-            border-left: 4px solid #d4af37;
+            border-left: 4px solid #4caf50;
             padding: 15px;
             margin: 20px 0;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ff9800;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .qr-box {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .qr-box img {
+            max-width: 250px;
+            height: auto;
+            margin: 15px auto;
         }
         .info-row {
             display: flex;
@@ -57,16 +86,16 @@
             color: #2c2c2c;
         }
         .highlight {
-            background: #fff3cd;
+            background: #e8f5e9;
             padding: 15px;
             border-radius: 5px;
             margin: 20px 0;
-            border: 1px solid #d4af37;
+            border: 1px solid #4caf50;
         }
         .button {
             display: inline-block;
-            background: linear-gradient(135deg, #d4af37, #f4e4c1);
-            color: #2c2c2c;
+            background: linear-gradient(135deg, #4caf50, #81c784);
+            color: white;
             padding: 12px 30px;
             text-decoration: none;
             border-radius: 5px;
@@ -81,7 +110,7 @@
             font-size: 14px;
         }
         .footer a {
-            color: #d4af37;
+            color: #4caf50;
             text-decoration: none;
         }
     </style>
@@ -89,14 +118,21 @@
 <body>
     <div class="container">
         <div class="header">
+            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences">
             <h1>🏨 Booking Acknowledgement</h1>
-            <p>Beztower & Residences</p>
+            <p>Bez Tower and Residences</p>
         </div>
         
         <div class="content">
             <p>Dear {{ $booking->guest->first_name }} {{ $booking->guest->last_name }},</p>
             
-            <p>Thank you for choosing Beztower & Residences! We have received your booking request and are pleased to confirm the following details:</p>
+            <p>Thank you for choosing Bez Tower and Residences! We have received your booking request and are pleased to confirm the following details:</p>
+
+            <div class="warning-box">
+                <h3 style="margin:0 0 10px 0; color:#ff6b00;">⏰ Important: Reservation Expiry</h3>
+                <p style="margin:0; font-size:16px;"><strong>You have 8 hours to complete your payment before this reservation expires.</strong></p>
+                <p style="margin:10px 0 0 0; font-size:14px;">Expiry Time: <strong>{{ \Carbon\Carbon::parse($booking->created_at)->addHours(8)->format('F d, Y - h:i A') }}</strong></p>
+            </div>
             
             <div class="info-box">
                 <div class="info-row">
@@ -105,7 +141,7 @@
                 </div>
                 <div class="info-row">
                     <span class="label">Room:</span>
-                    <span class="value">{{ $booking->room->roomType->name }} - Room {{ $booking->room->room_number }}</span>
+                    <span class="value">{{ $booking->room->roomType->name }}</span>
                 </div>
                 <div class="info-row">
                     <span class="label">Check-in:</span>
@@ -155,9 +191,21 @@
                 </div>
                 @endif
 
-                <div class="info-row" style="background:#fff3cd; padding:12px; margin-top:10px; border-radius:5px;">
+                <div class="info-row" style="background:#e8f5e9; padding:12px; margin-top:10px; border-radius:5px;">
                     <span class="label" style="font-size:18px; color:#2c2c2c;"><strong>TOTAL AMOUNT:</strong></span>
-                    <span class="value" style="font-size:18px; color:#d4af37;"><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></span>
+                    <span class="value" style="font-size:18px; color:#4caf50;"><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></span>
+                </div>
+            </div>
+
+            <div class="qr-box">
+                <h3 style="margin:0 0 15px 0; color:#2c2c2c;">💳 Scan to Pay with GCash</h3>
+                <img src="{{ asset('images/gcash/gcash.png') }}" alt="GCash QR Code">
+                <p style="margin:15px 0 0 0; font-size:14px; color:#666;">Scan this QR code to make your payment via GCash</p>
+                <div style="background:#fff3cd; padding:12px; border-radius:5px; margin-top:15px;">
+                    <p style="margin:0; font-size:13px;"><strong>📱 After payment, please send your proof of payment to:</strong></p>
+                    <p style="margin:5px 0 0 0;">📧 Email: <strong>beztower05@gmail.com</strong></p>
+                    <p style="margin:3px 0 0 0;">💬 WhatsApp: <strong>09171221429</strong></p>
+                    <p style="margin:10px 0 0 0; font-size:12px; color:#666;"><em>Include your booking reference: {{ $booking->booking_reference }}</em></p>
                 </div>
             </div>
 
@@ -214,11 +262,11 @@
             <p>We look forward to welcoming you!</p>
             
             <p>Best regards,<br>
-            <strong>Beztower & Residences Team</strong></p>
+            <strong>Bez Tower and Residences Team</strong></p>
         </div>
         
         <div class="footer">
-            <p><strong>Beztower & Residences</strong></p>
+            <p><strong>Bez Tower and Residences</strong></p>
             <p>205 F. Blumentritt Street, Brgy. Pedro Cruz<br>San Juan City, Philippines</p>
             <p>Email: <a href="mailto:info@beztower.com">info@beztower.com</a> | Phone: (02) 88075046 or 09171221429</p>
         </div>
