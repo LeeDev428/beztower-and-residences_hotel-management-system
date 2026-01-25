@@ -960,7 +960,6 @@
                 <div class="room-type-badge">{{ $room->roomType->name }}</div>
                 
                 <h1 class="room-title">{{ $room->roomType->name }}</h1>
-                <p class="room-number">Room #{{ $room->room_number }}</p>
 
                 <!-- Rating Section -->
                 {{-- <div class="rating-section">
@@ -1040,9 +1039,9 @@
 
                 <!-- Action Buttons -->
                 <div class="action-section">
-                    <button onclick="openBookingModal()" class="check-now-btn">
+                    <a href="{{ route('booking.checkout', $room->id) }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
                         <i class="fas fa-calendar-check"></i> Book Now
-                    </button>
+                    </a>
                 </div>
 
                 <!-- Additional Information -->
