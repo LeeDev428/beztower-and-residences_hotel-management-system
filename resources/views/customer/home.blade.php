@@ -98,7 +98,7 @@
 
         .booking-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 0.8fr 0.8fr 1fr auto;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
             align-items: end;
         }
@@ -115,22 +115,175 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-group label i {
+            color: #d4af37;
         }
 
         .form-group input,
         .form-group select {
-            padding: 0.8rem 1rem;
-            border: 1px solid #ddd;
+            padding: 0.9rem 1rem;
+            border: 2px solid #e0e0e0;
             border-radius: 5px;
             font-size: 0.95rem;
             background: white;
             cursor: pointer;
+            transition: border-color 0.3s;
         }
 
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
             border-color: #d4af37;
+        }
+
+        /* Guest Selector Styles */
+        .guest-selector {
+            position: relative;
+        }
+
+        .guest-display {
+            padding: 0.9rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.3s;
+        }
+
+        .guest-display:hover {
+            border-color: #d4af37;
+        }
+
+        .guest-display i {
+            color: #d4af37;
+            transition: transform 0.3s;
+        }
+
+        .guest-selector.active .guest-display i {
+            transform: rotate(180deg);
+        }
+
+        .guest-dropdown {
+            position: absolute;
+            top: calc(100% + 0.5rem);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #d4af37;
+            border-radius: 5px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 1000;
+        }
+
+        .guest-selector.active .guest-dropdown {
+            display: block;
+        }
+
+        .guest-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .guest-option:last-of-type {
+            border-bottom: none;
+        }
+
+        .guest-option label {
+            font-weight: 600;
+            color: #2c2c2c;
+            margin: 0;
+        }
+
+        .counter {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .counter-btn {
+            width: 35px;
+            height: 35px;
+            border: 2px solid #d4af37;
+            background: white;
+            color: #d4af37;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .counter-btn:hover:not(:disabled) {
+            background: #d4af37;
+            color: white;
+        }
+
+        .counter-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .counter input {
+            width: 50px;
+            text-align: center;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c2c2c;
+        }
+
+        .guest-done-btn {
+            width: 100%;
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #d4af37, #f4e4c1);
+            color: #2c2c2c;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .guest-done-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .book-now-btn {
+            background: linear-gradient(135deg, #d4af37, #f4e4c1);
+            color: #2c2c2c;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .book-now-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
         }
 
         .check-btn {
@@ -737,53 +890,62 @@
         </div>
         
         <!-- Booking Form -->
-        {{-- <div class="booking-form">
-            <form action="{{ route('rooms.index') }}" method="GET">
+        <div class="booking-form">
+            <form action="{{ route('rooms.index') }}" method="GET" id="heroBookingForm">
                 <div class="booking-grid">
                     <div class="form-group">
-                        <label><i class="far fa-calendar"></i> Check In</label>
-                        <input type="date" name="check_in" id="checkIn" min="{{ date('Y-m-d') }}" required>
+                        <label><i class="far fa-calendar"></i> Check-In Date *</label>
+                        <input type="date" name="check_in" id="heroCheckIn" min="{{ date('Y-m-d') }}" required>
                     </div>
                     
                     <div class="form-group">
-                        <label><i class="far fa-calendar"></i> Check Out</label>
-                        <input type="date" name="check_out" id="checkOut" min="{{ date('Y-m-d', strtotime('+1 day')) }}" required>
+                        <label><i class="far fa-calendar"></i> Check-Out Date *</label>
+                        <input type="date" name="check_out" id="heroCheckOut" min="{{ date('Y-m-d', strtotime('+1 day')) }}" required>
                     </div>
                     
                     <div class="form-group">
-                        <label><i class="fas fa-user"></i> Adult</label>
-                        <select name="adults">
-                            <option value="1">1</option>
-                            <option value="2" selected>2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                        </select>
+                        <label><i class="fas fa-users"></i> Guests *</label>
+                        <div class="guest-selector" id="guestSelector">
+                            <div class="guest-display">
+                                <span id="guestCount">1 Room, 1 Adult, 0 Child</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="guest-dropdown" id="guestDropdown">
+                                <div class="guest-option">
+                                    <label>Rooms</label>
+                                    <div class="counter">
+                                        <button type="button" class="counter-btn" data-action="decrement" data-target="rooms">-</button>
+                                        <input type="number" name="rooms" id="rooms" value="1" min="1" max="5" readonly>
+                                        <button type="button" class="counter-btn" data-action="increment" data-target="rooms">+</button>
+                                    </div>
+                                </div>
+                                <div class="guest-option">
+                                    <label>Adults</label>
+                                    <div class="counter">
+                                        <button type="button" class="counter-btn" data-action="decrement" data-target="adults">-</button>
+                                        <input type="number" name="adults" id="adults" value="1" min="1" max="10" readonly>
+                                        <button type="button" class="counter-btn" data-action="increment" data-target="adults">+</button>
+                                    </div>
+                                </div>
+                                <div class="guest-option">
+                                    <label>Children</label>
+                                    <div class="counter">
+                                        <button type="button" class="counter-btn" data-action="decrement" data-target="children">-</button>
+                                        <input type="number" name="children" id="children" value="0" min="0" max="10" readonly>
+                                        <button type="button" class="counter-btn" data-action="increment" data-target="children">+</button>
+                                    </div>
+                                </div>
+                                <button type="button" class="guest-done-btn" id="guestDoneBtn">Done</button>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label><i class="fas fa-child"></i> Children</label>
-                        <select name="children">
-                            <option value="0" selected>0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label><i class="fas fa-bed"></i> Room</label>
-                        <select name="room_type">
-                            <option value="">All Rooms</option>
-                            <option value="1">Standard</option>
-                            <option value="2">Deluxe</option>
-                            <option value="3">Suite</option>
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="check-btn">Check Now</button>
+                    <button type="submit" class="book-now-btn">
+                        <i class="fas fa-search"></i> BOOK NOW
+                    </button>
                 </div>
             </form>
-        </div> --}}
+        </div>
     </section>
 
     <!-- Map Section -->
@@ -1451,6 +1613,91 @@
 
         // Initialize pagination handlers on page load
         attachPaginationHandlers();
+
+        // ===== HERO BOOKING FORM - GUEST SELECTOR =====
+        const guestSelector = document.getElementById('guestSelector');
+        const guestDisplay = guestSelector?.querySelector('.guest-display');
+        const guestDoneBtn = document.getElementById('guestDoneBtn');
+        const roomsInput = document.getElementById('rooms');
+        const adultsInput = document.getElementById('adults');
+        const childrenInput = document.getElementById('children');
+        const guestCountDisplay = document.getElementById('guestCount');
+
+        // Toggle guest dropdown
+        if (guestDisplay) {
+            guestDisplay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                guestSelector.classList.toggle('active');
+            });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (guestSelector && !guestSelector.contains(e.target)) {
+                guestSelector.classList.remove('active');
+            }
+        });
+
+        // Counter buttons functionality
+        document.querySelectorAll('.counter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const action = btn.dataset.action;
+                const target = btn.dataset.target;
+                const input = document.getElementById(target);
+                let value = parseInt(input.value);
+                const min = parseInt(input.min);
+                const max = parseInt(input.max);
+
+                if (action === 'increment' && value < max) {
+                    input.value = value + 1;
+                } else if (action === 'decrement' && value > min) {
+                    input.value = value - 1;
+                }
+
+                updateGuestDisplay();
+            });
+        });
+
+        // Update guest display text
+        function updateGuestDisplay() {
+            const rooms = parseInt(roomsInput?.value || 1);
+            const adults = parseInt(adultsInput?.value || 1);
+            const children = parseInt(childrenInput?.value || 0);
+
+            const roomText = rooms === 1 ? '1 Room' : `${rooms} Rooms`;
+            const adultText = adults === 1 ? '1 Adult' : `${adults} Adults`;
+            const childText = children === 0 ? '0 Child' : children === 1 ? '1 Child' : `${children} Children`;
+
+            if (guestCountDisplay) {
+                guestCountDisplay.textContent = `${roomText}, ${adultText}, ${childText}`;
+            }
+        }
+
+        // Done button closes dropdown
+        if (guestDoneBtn) {
+            guestDoneBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                guestSelector.classList.remove('active');
+            });
+        }
+
+        // Hero form date validation
+        const heroCheckIn = document.getElementById('heroCheckIn');
+        const heroCheckOut = document.getElementById('heroCheckOut');
+        
+        if (heroCheckIn && heroCheckOut) {
+            heroCheckIn.addEventListener('change', function() {
+                const checkIn = new Date(this.value);
+                const minCheckOut = new Date(checkIn);
+                minCheckOut.setDate(minCheckOut.getDate() + 1);
+                heroCheckOut.min = minCheckOut.toISOString().split('T')[0];
+                
+                if (heroCheckOut.value && new Date(heroCheckOut.value) <= checkIn) {
+                    heroCheckOut.value = '';
+                }
+            });
+        }
     </script>
 </body>
 </html>
