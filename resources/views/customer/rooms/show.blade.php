@@ -1368,7 +1368,7 @@
                     </div>
                     
                     <button type="submit" class="submit-booking-btn">
-                        <i class="fas fa-check-circle"></i> Confirm Booking
+                        <i class="fas fa-check-circle"></i> Submit Reservation
                     </button>
                 </form>
             </div>
