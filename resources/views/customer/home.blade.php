@@ -1613,92 +1613,93 @@
 
         // Initialize pagination handlers on page load
         attachPaginationHandlers();
-
-        // ===== HERO BOOKING FORM - GUEST SELECTOR =====
-        // Elements should be available since script is at bottom of page
-        const guestSelector = document.getElementById('guestSelector');
-        const guestDisplay = guestSelector?.querySelector('.guest-display');
-        const guestDoneBtn = document.getElementById('guestDoneBtn');
-        const roomsInput = document.getElementById('rooms');
-        const adultsInput = document.getElementById('adults');
-        const childrenInput = document.getElementById('children');
-        const guestCountDisplay = document.getElementById('guestCount');
-
-        // Toggle guest dropdown
-        if (guestDisplay) {
-            guestDisplay.addEventListener('click', (e) => {
-                e.stopPropagation();
-                guestSelector.classList.toggle('active');
-            });
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (guestSelector && !guestSelector.contains(e.target)) {
-                guestSelector.classList.remove('active');
-            }
-        });
-
-        // Counter buttons functionality
-        document.querySelectorAll('.counter-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const action = btn.dataset.action;
-                const target = btn.dataset.target;
-                const input = document.getElementById(target);
-                let value = parseInt(input.value);
-                const min = parseInt(input.min);
-                const max = parseInt(input.max);
-
-                if (action === 'increment' && value < max) {
-                    input.value = value + 1;
-                } else if (action === 'decrement' && value > min) {
-                    input.value = value - 1;
-                }
-
-                updateGuestDisplay();
-            });
-        });
-
-        // Update guest display text
-        function updateGuestDisplay() {
-            const rooms = parseInt(roomsInput?.value || 1);
-            const adults = parseInt(adultsInput?.value || 1);
-            const children = parseInt(childrenInput?.value || 0);
-
-            const roomText = rooms === 1 ? '1 Room' : `${rooms} Rooms`;
-            const adultText = adults === 1 ? '1 Adult' : `${adults} Adults`;
-            const childText = children === 0 ? '0 Child' : children === 1 ? '1 Child' : `${children} Children`;
-
-            if (guestCountDisplay) {
-                guestCountDisplay.textContent = `${roomText}, ${adultText}, ${childText}`;
-            }
-        }
-
-        // Done button closes dropdown
-        if (guestDoneBtn) {
-            guestDoneBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                guestSelector.classList.remove('active');
-            });
-        }
-
-        // Hero form date validation
-        const heroCheckIn = document.getElementById('heroCheckIn');
-        const heroCheckOut = document.getElementById('heroCheckOut');
-        
-        if (heroCheckIn && heroCheckOut) {
-            heroCheckIn.addEventListener('change', function() {
-                const checkIn = new Date(this.value);
-                const minCheckOut = new Date(checkIn);
-                minCheckOut.setDate(minCheckOut.getDate() + 1);
-                heroCheckOut.min = minCheckOut.toISOString().split('T')[0];
-                
-                if (heroCheckOut.value && new Date(heroCheckOut.value) <= checkIn) {
-                    heroCheckOut.value = '';
-                }
-            });
-        }
     </script>
-</body>
+
+    <!-- GUEST SELECTOR SCRIPT - Simple and Direct -->
+    <script>
+        (function() {
+            // Get elements
+            const selector = document.getElementById('guestSelector');
+            const display = document.querySelector('.guest-display');
+            const dropdown = document.getElementById('guestDropdown');
+            const doneBtn = document.getElementById('guestDoneBtn');
+            const roomsInput = document.getElementById('rooms');
+            const adultsInput = document.getElementById('adults');
+            const childrenInput = document.getElementById('children');
+            const countDisplay = document.getElementById('guestCount');
+
+            // Toggle dropdown on click
+            display.onclick = function(e) {
+                e.stopPropagation();
+                selector.classList.toggle('active');
+            };
+
+            // Close dropdown when clicking outside
+            document.onclick = function(e) {
+                if (!selector.contains(e.target)) {
+                    selector.classList.remove('active');
+                }
+            };
+
+            // Handle all counter buttons
+            const buttons = document.querySelectorAll('.counter-btn');
+            buttons.forEach(function(btn) {
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const action = this.getAttribute('data-action');
+                    const target = this.getAttribute('data-target');
+                    const input = document.getElementById(target);
+                    let value = parseInt(input.value);
+                    const min = parseInt(input.getAttribute('min'));
+                    const max = parseInt(input.getAttribute('max'));
+
+                    if (action === 'increment' && value < max) {
+                        input.value = value + 1;
+                    } else if (action === 'decrement' && value > min) {
+                        input.value = value - 1;
+                    }
+
+                    updateDisplay();
+                };
+            });
+
+            // Update display text
+            function updateDisplay() {
+                const rooms = parseInt(roomsInput.value);
+                const adults = parseInt(adultsInput.value);
+                const children = parseInt(childrenInput.value);
+
+                const roomText = rooms === 1 ? '1 Room' : rooms + ' Rooms';
+                const adultText = adults === 1 ? '1 Adult' : adults + ' Adults';
+                const childText = children === 0 ? '0 Child' : children === 1 ? '1 Child' : children + ' Children';
+
+                countDisplay.textContent = roomText + ', ' + adultText + ', ' + childText;
+            }
+
+            // Done button
+            doneBtn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                selector.classList.remove('active');
+            };
+
+            // Hero form date validation
+            const heroCheckIn = document.getElementById('heroCheckIn');
+            const heroCheckOut = document.getElementById('heroCheckOut');
+            
+            if (heroCheckIn && heroCheckOut) {
+                heroCheckIn.onchange = function() {
+                    const checkIn = new Date(this.value);
+                    const minCheckOut = new Date(checkIn);
+                    minCheckOut.setDate(minCheckOut.getDate() + 1);
+                    heroCheckOut.min = minCheckOut.toISOString().split('T')[0];
+                    
+                    if (heroCheckOut.value && new Date(heroCheckOut.value) <= checkIn) {
+                        heroCheckOut.value = '';
+                    }
+                };
+            }
+        })();
 </html>
