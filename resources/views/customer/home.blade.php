@@ -94,6 +94,7 @@
             width: 90%;
             max-width: 1200px;
             z-index: 20;
+            overflow: visible;
         }
 
         .booking-grid {
@@ -101,12 +102,15 @@
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
             align-items: end;
+            overflow: visible;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            position: relative;
+            overflow: visible;
         }
 
         .form-group label {
@@ -142,6 +146,7 @@
         /* Guest Selector Styles */
         .guest-selector {
             position: relative;
+            z-index: 100;
         }
 
         .guest-display {
@@ -154,6 +159,8 @@
             justify-content: space-between;
             align-items: center;
             transition: border-color 0.3s;
+            position: relative;
+            z-index: 101;
         }
 
         .guest-display:hover {
@@ -177,7 +184,8 @@
             background: white;
             border: 2px solid #d4af37;
             border-radius: 5px;
-            padding: 1.5rem;
+            padding: 1.2;
+            min-width: 100%em;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
             display: none;
             z-index: 1000;
@@ -906,7 +914,7 @@
                     <div class="form-group">
                         <label><i class="fas fa-users"></i> Guests *</label>
                         <div class="guest-selector" id="guestSelector">
-                            <div class="guest-display">
+                            <div class="guest-display" onclick="toggleGuestDropdown(event)">
                                 <span id="guestCount">1 Room, 1 Adult, 0 Child</span>
                                 <i class="fas fa-chevron-down"></i>
                             </div>
@@ -914,28 +922,28 @@
                                 <div class="guest-option">
                                     <label>Rooms</label>
                                     <div class="counter">
-                                        <button type="button" class="counter-btn" data-action="decrement" data-target="rooms">-</button>
+                                        <button type="button" class="counter-btn" onclick="changeValue('rooms', -1)">-</button>
                                         <input type="number" name="rooms" id="rooms" value="1" min="1" max="5" readonly>
-                                        <button type="button" class="counter-btn" data-action="increment" data-target="rooms">+</button>
+                                        <button type="button" class="counter-btn" onclick="changeValue('rooms', 1)">+</button>
                                     </div>
                                 </div>
                                 <div class="guest-option">
                                     <label>Adults</label>
                                     <div class="counter">
-                                        <button type="button" class="counter-btn" data-action="decrement" data-target="adults">-</button>
+                                        <button type="button" class="counter-btn" onclick="changeValue('adults', -1)">-</button>
                                         <input type="number" name="adults" id="adults" value="1" min="1" max="10" readonly>
-                                        <button type="button" class="counter-btn" data-action="increment" data-target="adults">+</button>
+                                        <button type="button" class="counter-btn" onclick="changeValue('adults', 1)">+</button>
                                     </div>
                                 </div>
                                 <div class="guest-option">
                                     <label>Children</label>
                                     <div class="counter">
-                                        <button type="button" class="counter-btn" data-action="decrement" data-target="children">-</button>
+                                        <button type="button" class="counter-btn" onclick="changeValue('children', -1)">-</button>
                                         <input type="number" name="children" id="children" value="0" min="0" max="10" readonly>
-                                        <button type="button" class="counter-btn" data-action="increment" data-target="children">+</button>
+                                        <button type="button" class="counter-btn" onclick="changeValue('children', 1)">+</button>
                                     </div>
                                 </div>
-                                <button type="button" class="guest-done-btn" id="guestDoneBtn">Done</button>
+                                <button type="button" class="guest-done-btn" onclick="closeGuestDropdown()">Done</button>
                             </div>
                         </div>
                     </div>
@@ -1615,91 +1623,74 @@
         attachPaginationHandlers();
     </script>
 
-    <!-- GUEST SELECTOR SCRIPT - Simple and Direct -->
+    <!-- GUEST SELECTOR - Inline onclick approach -->
     <script>
-        (function() {
-            // Get elements
-            const selector = document.getElementById('guestSelector');
-            const display = document.querySelector('.guest-display');
-            const dropdown = document.getElementById('guestDropdown');
-            const doneBtn = document.getElementById('guestDoneBtn');
-            const roomsInput = document.getElementById('rooms');
-            const adultsInput = document.getElementById('adults');
-            const childrenInput = document.getElementById('children');
-            const countDisplay = document.getElementById('guestCount');
+        // Toggle dropdown
+        function toggleGuestDropdown(e) {
+            e.stopPropagation();
+            var selector = document.getElementById('guestSelector');
+            selector.classList.toggle('active');
+            console.log('Dropdown toggled, active:', selector.classList.contains('active'));
+        }
 
-            // Toggle dropdown on click
-            display.onclick = function(e) {
-                e.stopPropagation();
-                selector.classList.toggle('active');
-            };
+        // Close dropdown
+        function closeGuestDropdown() {
+            var selector = document.getElementById('guestSelector');
+            selector.classList.remove('active');
+            console.log('Dropdown closed');
+        }
 
-            // Close dropdown when clicking outside
-            document.onclick = function(e) {
-                if (!selector.contains(e.target)) {
-                    selector.classList.remove('active');
-                }
-            };
+        // Change counter value
+        function changeValue(fieldId, change) {
+            var input = document.getElementById(fieldId);
+            var currentValue = parseInt(input.value);
+            var min = parseInt(input.getAttribute('min'));
+            var max = parseInt(input.getAttribute('max'));
+            var newValue = currentValue + change;
 
-            // Handle all counter buttons
-            const buttons = document.querySelectorAll('.counter-btn');
-            buttons.forEach(function(btn) {
-                btn.onclick = function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const action = this.getAttribute('data-action');
-                    const target = this.getAttribute('data-target');
-                    const input = document.getElementById(target);
-                    let value = parseInt(input.value);
-                    const min = parseInt(input.getAttribute('min'));
-                    const max = parseInt(input.getAttribute('max'));
-
-                    if (action === 'increment' && value < max) {
-                        input.value = value + 1;
-                    } else if (action === 'decrement' && value > min) {
-                        input.value = value - 1;
-                    }
-
-                    updateDisplay();
-                };
-            });
-
-            // Update display text
-            function updateDisplay() {
-                const rooms = parseInt(roomsInput.value);
-                const adults = parseInt(adultsInput.value);
-                const children = parseInt(childrenInput.value);
-
-                const roomText = rooms === 1 ? '1 Room' : rooms + ' Rooms';
-                const adultText = adults === 1 ? '1 Adult' : adults + ' Adults';
-                const childText = children === 0 ? '0 Child' : children === 1 ? '1 Child' : children + ' Children';
-
-                countDisplay.textContent = roomText + ', ' + adultText + ', ' + childText;
+            if (newValue >= min && newValue <= max) {
+                input.value = newValue;
+                updateGuestDisplay();
+                console.log('Changed ' + fieldId + ' to ' + newValue);
             }
+        }
 
-            // Done button
-            doneBtn.onclick = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
+        // Update display text
+        function updateGuestDisplay() {
+            var rooms = parseInt(document.getElementById('rooms').value);
+            var adults = parseInt(document.getElementById('adults').value);
+            var children = parseInt(document.getElementById('children').value);
+
+            var roomText = rooms === 1 ? '1 Room' : rooms + ' Rooms';
+            var adultText = adults === 1 ? '1 Adult' : adults + ' Adults';
+            var childText = children === 0 ? '0 Child' : children === 1 ? '1 Child' : children + ' Children';
+
+            document.getElementById('guestCount').textContent = roomText + ', ' + adultText + ', ' + childText;
+        }
+
+        // Close when clicking outside
+        document.addEventListener('click', function(e) {
+            var selector = document.getElementById('guestSelector');
+            if (selector && !selector.contains(e.target)) {
                 selector.classList.remove('active');
-            };
-
-            // Hero form date validation
-            const heroCheckIn = document.getElementById('heroCheckIn');
-            const heroCheckOut = document.getElementById('heroCheckOut');
-            
-            if (heroCheckIn && heroCheckOut) {
-                heroCheckIn.onchange = function() {
-                    const checkIn = new Date(this.value);
-                    const minCheckOut = new Date(checkIn);
-                    minCheckOut.setDate(minCheckOut.getDate() + 1);
-                    heroCheckOut.min = minCheckOut.toISOString().split('T')[0];
-                    
-                    if (heroCheckOut.value && new Date(heroCheckOut.value) <= checkIn) {
-                        heroCheckOut.value = '';
-                    }
-                };
             }
-        })();
-</html>
+        });
+
+        // Date validation
+        var heroCheckIn = document.getElementById('heroCheckIn');
+        var heroCheckOut = document.getElementById('heroCheckOut');
+        
+        if (heroCheckIn && heroCheckOut) {
+            heroCheckIn.addEventListener('change', function() {
+                var checkIn = new Date(this.value);
+                var minCheckOut = new Date(checkIn);
+                minCheckOut.setDate(minCheckOut.getDate() + 1);
+                heroCheckOut.min = minCheckOut.toISOString().split('T')[0];
+                
+                if (heroCheckOut.value && new Date(heroCheckOut.value) <= checkIn) {
+                    heroCheckOut.value = '';
+                }
+            });
+        }
+    </script>
+</body>
