@@ -4,18 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: linear-gradient(135deg, #C9A961 0%, #8B7355 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-        <h1 style="margin: 0;">Payment Approved!</h1>
-    </div>
-    
-    <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px;">
-        <p>Dear {{ $payment->booking->guest->name }},</p>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+        <div style="background: linear-gradient(135deg, #4caf50, #81c784); color: white; padding: 30px; text-align: center;">
+            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences" style="max-width: 150px; height: auto; margin-bottom: 15px; background: white; padding: 10px; border-radius: 10px;">
+            <h1 style="margin: 0;">✅ Payment Approved!</h1>
+            <p style="margin: 10px 0 0 0;">Bez Tower and Residences</p>
+        </div>
         
-        <p>Great news! Your payment has been verified and approved.</p>
-        
-        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h2 style="color: #C9A961; margin-top: 0;">Payment Details</h2>
+        <div style="padding: 30px;">
+            <p>Dear {{ $payment->booking->guest->name }},</p>
+            
+            <p>Great news! Your payment has been verified and approved.</p>
+            
+            <div style="background: #f9f9f9; border-left: 4px solid #4caf50; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h2 style="color: #4caf50; margin-top: 0;">Payment Details</h2>
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Booking Reference:</td>
@@ -27,7 +30,7 @@
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Amount:</td>
-                    <td style="padding: 8px 0; font-weight: bold; color: #C9A961;">₱{{ number_format($payment->amount, 2) }}</td>
+                    <td style="padding: 8px 0; font-weight: bold; color: #4caf50;">₱{{ number_format($payment->amount, 2) }}</td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Payment Method:</td>
@@ -49,7 +52,7 @@
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Room:</td>
-                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->room->room_number }} - {{ $payment->booking->room->roomType->name }}</td>
+                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->room->roomType->name }}</td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Check-in:</td>
@@ -70,8 +73,8 @@
             </table>
         </div>
 
-        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h2 style="color: #C9A961; margin-top: 0;">Total Amount Breakdown</h2>
+            <div style="background: #f9f9f9; border-left: 4px solid #4caf50; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h2 style="color: #4caf50; margin-top: 0;">Total Amount Breakdown</h2>
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Room Charges ({{ $payment->booking->total_nights }} night(s) × ₱{{ number_format($payment->booking->room->roomType->price_per_night, 2) }}):</td>
