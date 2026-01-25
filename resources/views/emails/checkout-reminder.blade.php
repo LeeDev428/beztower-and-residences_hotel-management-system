@@ -22,10 +22,18 @@
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
         .header {
-            background: linear-gradient(135deg, #2196f3, #64b5f6);
+            background: linear-gradient(135deg, #4caf50, #81c784);
             color: white;
             padding: 30px;
             text-align: center;
+        }
+        .header img {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 15px;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
         }
         .header h1 {
             margin: 0;
@@ -35,8 +43,8 @@
             padding: 30px;
         }
         .reminder-box {
-            background: #e3f2fd;
-            border: 2px solid #2196f3;
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
             padding: 20px;
             border-radius: 8px;
             margin: 20px 0;
@@ -44,7 +52,7 @@
         }
         .info-box {
             background: #f9f9f9;
-            border-left: 4px solid #2196f3;
+            border-left: 4px solid #4caf50;
             padding: 15px;
             margin: 20px 0;
         }
@@ -72,7 +80,7 @@
             font-size: 14px;
         }
         .footer a {
-            color: #d4af37;
+            color: #4caf50;
             text-decoration: none;
         }
     </style>
@@ -80,6 +88,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences">
             <h1>🏨 Check-out Reminder</h1>
             <p>Your stay is coming to an end</p>
         </div>
@@ -87,10 +96,10 @@
         <div class="content">
             <p>Dear {{ $booking->guest->first_name }} {{ $booking->guest->last_name }},</p>
             
-            <p>We hope you've enjoyed your stay at Beztower & Residences! This is a friendly reminder that your check-out is scheduled for today.</p>
+            <p>We hope you've enjoyed your stay at Bez Tower and Residences! This is a friendly reminder that your check-out is scheduled for today.</p>
 
             <div class="reminder-box">
-                <h2 style="margin:0; color:#2196f3; font-size:24px;">Check-out: Today</h2>
+                <h2 style="margin:0; color:#4caf50; font-size:24px;">Check-out: Today</h2>
                 <p style="margin:10px 0 0 0; font-size:18px;">
                     <strong>{{ \Carbon\Carbon::parse($booking->check_out_date)->format('F d, Y, l') }}</strong><br>
                     <span style="font-size:16px;">by 12:00 PM</span>
@@ -104,7 +113,7 @@
                 </div>
                 <div class="info-row">
                     <span class="label">Room:</span>
-                    <span class="value">{{ $booking->room->roomType->name }} - Room {{ $booking->room->room_number }}</span>
+                    <span class="value">{{ $booking->room->roomType->name }}</span>
                 </div>
                 <div class="info-row">
                     <span class="label">Total Nights:</span>
@@ -231,15 +240,15 @@
             @endif
 
             <!-- Book Again Invitation -->
-            <div style="background: linear-gradient(135deg, #d4af37, #f4e4c1); padding: 2rem; border-radius: 10px; text-align: center; margin: 2rem 0;">
-                <h2 style="margin: 0 0 1rem 0; color: #2c2c2c;">💝 We'd Love to See You Again!</h2>
-                <p style="margin: 0 0 1.5rem 0; color: #2c2c2c; font-size: 1.05rem;">
-                    Thank you for choosing Beztower & Residences. We hope you had a wonderful stay!
+            <div style="background: linear-gradient(135deg, #4caf50, #81c784); padding: 2rem; border-radius: 10px; text-align: center; margin: 2rem 0;">
+                <h2 style="margin: 0 0 1rem 0; color: white;">💝 We'd Love to See You Again!</h2>
+                <p style="margin: 0 0 1.5rem 0; color: white; font-size: 1.05rem;">
+                    Thank you for choosing Bez Tower and Residences. We hope you had a wonderful stay!
                 </p>
-                <a href="{{ route('home') }}" style="display: inline-block; background: #2c2c2c; color: #d4af37; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1rem; margin: 10px 0;">
+                <a href="{{ route('home') }}" style="display: inline-block; background: white; color: #4caf50; padding: 1rem 2.5rem; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 1.1rem; margin: 10px 0;">
                     <i class="fas fa-calendar-alt"></i> Book Your Next Stay
                 </a>
-                <p style="margin: 1.5rem 0 0 0; color: #2c2c2c; font-size: 0.95rem;">
+                <p style="margin: 1.5rem 0 0 0; color: white; font-size: 0.95rem;">
                     Thank you for choosing us. We look forward to serving you again!
                 </p>
             </div>
@@ -251,11 +260,11 @@
             </ul>
 
             <p>Safe travels!<br>
-            <strong>Beztower & Residences Team</strong></p>
+            <strong>Bez Tower and Residences Team</strong></p>
         </div>
         
         <div class="footer">
-            <p><strong>Beztower & Residences</strong></p>
+            <p><strong>Bez Tower and Residences</strong></p>
             <p>205 F. Blumentritt Street, Brgy. Pedro Cruz<br>San Juan City, Philippines</p>
             <p>Email: <a href="mailto:info@beztower.com">info@beztower.com</a> | Phone: (02) 88075046 or 09171221429</p>
             {{-- <p style="margin-top:15px; font-size:12px;">
