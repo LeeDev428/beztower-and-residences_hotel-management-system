@@ -1028,14 +1028,14 @@
                     </div>
 
                     <div class="spec-item">
-                        <div class="spec-icon">
+                        {{-- <div class="spec-icon">
                             <i class="fas fa-door-open"></i>
                         </div>
-                        {{-- <div class="spec-details">
+                        <div class="spec-details">
                             <span class="spec-label">Floor</span>
                             <span class="spec-value">{{ $room->floor_number }}</span>
-                        </div> --}}
-                    </div>
+                        </div>
+                    </div> --}}
                 </div>
 
                 <!-- Action Buttons -->
