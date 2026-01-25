@@ -27,6 +27,14 @@
             padding: 30px;
             text-align: center;
         }
+        .header img {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 15px;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+        }
         .header h1 {
             margin: 0;
             font-size: 28px;
@@ -88,6 +96,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences">
             <h1>✅ Payment Confirmed</h1>
             <p>Your reservation is now confirmed!</p>
         </div>
@@ -99,7 +108,7 @@
                 <strong>🎉 Your payment has been verified and confirmed!</strong>
             </div>
 
-            <p>We are delighted to confirm your reservation at Beztower & Residences. Your room is now secured for your stay.</p>
+            <p>We are delighted to confirm your reservation at Bez Tower and Residences. Your room is now secured for your stay.</p>
             
             <div class="info-box">
                 <div class="info-row">
@@ -108,7 +117,7 @@
                 </div>
                 <div class="info-row">
                     <span class="label">Room:</span>
-                    <span class="value">{{ $booking->room->roomType->name }} - Room {{ $booking->room->room_number }}</span>
+                    <span class="value">{{ $booking->room->roomType->name }}</span>
                 </div>
                 <div class="info-row">
                     <span class="label">Check-in:</span>
@@ -220,11 +229,11 @@
             <p>We look forward to providing you with an exceptional stay!</p>
             
             <p>Warm regards,<br>
-            <strong>Beztower & Residences Team</strong></p>
+            <strong>Bez Tower and Residences Team</strong></p>
         </div>
         
         <div class="footer">
-            <p><strong>Beztower & Residences</strong></p>
+            <p><strong>Bez Tower and Residences</strong></p>
             <p>205 F. Blumentritt Street, Brgy. Pedro Cruz<br>San Juan City, Philippines</p>
             <p>Email: <a href="mailto:info@beztower.com">info@beztower.com</a> | Phone: (02) 88075046 or 09171221429</p>
         </div>
