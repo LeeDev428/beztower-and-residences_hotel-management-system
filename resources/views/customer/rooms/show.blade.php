@@ -1021,20 +1021,20 @@
                         <div class="spec-icon">
                             <i class="fas fa-ruler-combined"></i>
                         </div>
-                        <div class="spec-details">
+                        {{-- <div class="spec-details">
                             <span class="spec-label">Room Size</span>
                             <span class="spec-value">{{ $room->roomType->size_sqm }} m²</span>
-                        </div>
+                        </div> --}}
                     </div>
 
                     <div class="spec-item">
                         <div class="spec-icon">
                             <i class="fas fa-door-open"></i>
                         </div>
-                        <div class="spec-details">
+                        {{-- <div class="spec-details">
                             <span class="spec-label">Floor</span>
                             <span class="spec-value">{{ $room->floor_number }}</span>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
 
