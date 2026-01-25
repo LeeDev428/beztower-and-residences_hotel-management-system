@@ -20,6 +20,12 @@ use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
+    public function checkout(Room $room)
+    {
+        $room->load(['roomType', 'photos']);
+        return view('customer.booking.checkout', compact('room'));
+    }
+
     public function create(Request $request)
     {
         // Validate the incoming request
