@@ -248,11 +248,19 @@
         }
 
         .counter input {
-            width: 50px;
+            width: 60px;
             text-align: center;
             border: none;
-            font-size: 1rem;
-            font-weight: 600;
+            background: transparent;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c2c2c;
+            outline: none;
+            pointer-events: none;
+        }
+
+        .counter input[readonly] {
+            background: transparent;
             color: #2c2c2c;
         }
 
