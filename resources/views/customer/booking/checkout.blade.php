@@ -461,9 +461,7 @@
     @include('components.navbar')
 
     <div class="container">
-        <a href="{{ route('rooms.show', $room->id) }}" class="back-link">
-            <i class="fas fa-arrow-left"></i> Back to Room Details
-        </a>
+        <x-back-button url="{{ route('rooms.show', $room->id) }}" text="Back to Room Details" />
 
         <div class="checkout-layout">
             <!-- Left: Checkout Form -->
