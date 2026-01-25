@@ -1224,11 +1224,21 @@
                         
                         <div>
                             <label class="form-label">Number of Guests <span class="required">*</span></label>
-                            <select name="number_of_guests" class="form-select" required>
+                            <select name="number_of_guests" class="form-select" id="guestCountSelect" required onchange="showGuestRecommendation()">
                                 @for($i = 1; $i <= $room->roomType->max_guests; $i++)
                                     <option value="{{ $i }}">{{ $i }} {{ $i == 1 ? 'Guest' : 'Guests' }}</option>
                                 @endfor
                             </select>
+                            <!-- Guest Recommendation -->
+                            <div id="guestRecommendation" style="margin-top: 0.8rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #d4af37; border-radius: 5px; display: none;">
+                                <div style="display: flex; align-items: start; gap: 0.8rem;">
+                                    <i class="fas fa-info-circle" style="color: #d4af37; font-size: 1.2rem; margin-top: 0.2rem;"></i>
+                                    <div>
+                                        <strong style="color: #856404;">Recommendation:</strong>
+                                        <p id="recommendationText" style="margin: 0.3rem 0 0 0; color: #856404; font-size: 0.9rem;"></p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <div>
@@ -1581,6 +1591,52 @@
             input.value = '';
             preview.style.display = 'none';
             previewImage.src = '';
+        }
+
+        // Guest Recommendation Function
+        function showGuestRecommendation() {
+            const guestCount = parseInt(document.getElementById('guestCountSelect').value);
+            const roomMaxGuests = {{ $room->roomType->max_guests }};
+            const roomTypeName = "{{ $room->roomType->name }}";
+            const recommendationBox = document.getElementById('guestRecommendation');
+            const recommendationText = document.getElementById('recommendationText');
+            
+            let message = '';
+            let showBox = false;
+            
+            // Deluxe Room recommendations (max 3-4 guests)
+            if (roomTypeName.toLowerCase().includes('deluxe')) {
+                if (guestCount === 4 && roomMaxGuests >= 4) {
+                    message = 'For 4 guests, we <strong>strongly recommend</strong> adding an extra bed (₱600/stay). Select "Extra Bedding" below for optimal comfort.';
+                    showBox = true;
+                } else if (guestCount >= 1 && guestCount <= 4) {
+                    message = `This Deluxe Room comfortably accommodates ${guestCount} guest${guestCount > 1 ? 's' : ''}. Perfect choice!`;
+                    showBox = false;
+                }
+            }
+            
+            // Standard Room recommendations (1-3 guests)
+            if (roomTypeName.toLowerCase().includes('standard')) {
+                if (guestCount >= 1 && guestCount <= 3) {
+                    message = `This Standard Room is ideal for ${guestCount} guest${guestCount > 1 ? 's' : ''}.`;
+                    showBox = false;
+                }
+            }
+            
+            // Executive Suite / Family recommendations (4-6 guests)
+            if (roomTypeName.toLowerCase().includes('suite') || roomTypeName.toLowerCase().includes('family')) {
+                if (guestCount >= 4 && guestCount <= 6) {
+                    message = `This room is perfect for families with ${guestCount} guests. Spacious and comfortable!`;
+                    showBox = false;
+                }
+            }
+            
+            if (showBox && message) {
+                recommendationText.innerHTML = message;
+                recommendationBox.style.display = 'block';
+            } else {
+                recommendationBox.style.display = 'none';
+            }
         }
     </script>
 </body>
