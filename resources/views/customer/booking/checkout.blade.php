@@ -25,20 +25,6 @@
             padding: 0 2rem;
         }
 
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #666;
-            text-decoration: none;
-            margin-bottom: 2rem;
-            transition: color 0.3s;
-        }
-
-        .back-link:hover {
-            color: #d4af37;
-        }
-
         .checkout-layout {
             display: grid;
             grid-template-columns: 1.5fr 1fr;
