@@ -1142,7 +1142,7 @@
         </div>
     </div>
 
-    <!-- Booking Modal -->
+    {{-- Booking Modal - DEPRECATED: Now using separate checkout page
     <div id="bookingModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1373,6 +1373,7 @@
             </div>
         </div>
     </div>
+    --}}
 
     <!-- Footer -->
     <footer class="footer">
@@ -1416,7 +1417,8 @@
             evt.currentTarget.classList.add('active');
         }
 
-        // Booking Modal Functions
+        // DEPRECATED: Modal functions - now using checkout page
+        /*
         function openBookingModal() {
             document.getElementById('bookingModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
@@ -1434,6 +1436,7 @@
                 closeBookingModal();
             }
         }
+        */
 
         // Calculate nights between check-in and check-out
         function calculateNights() {
