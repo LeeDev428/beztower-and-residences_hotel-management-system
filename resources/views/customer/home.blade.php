@@ -30,7 +30,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow: visible;
+            z-index: 10;
         }
 
         .hero-video {
@@ -93,7 +94,7 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
             width: 90%;
             max-width: 1200px;
-            z-index: 20;
+            z-index: 9999;
             overflow: visible;
         }
 
@@ -146,7 +147,7 @@
         /* Guest Selector Styles */
         .guest-selector {
             position: relative;
-            z-index: 100;
+            z-index: 10000;
         }
 
         .guest-display {
@@ -184,11 +185,12 @@
             background: white;
             border: 2px solid #d4af37;
             border-radius: 5px;
-            padding: 1.2;
-            min-width: 100%em;
+            padding: 1.5rem;
+            min-width: 100%;
+            width: 100%;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
             display: none;
-            z-index: 1000;
+            z-index: 10001;
         }
 
         .guest-selector.active .guest-dropdown {
@@ -314,6 +316,8 @@
         .map-section {
             padding: 5rem 3rem;
             background: #f9f9f9;
+            position: relative;
+            z-index: 1;
         }
 
         .map-container {
