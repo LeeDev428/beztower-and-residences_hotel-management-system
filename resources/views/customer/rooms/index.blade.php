@@ -672,12 +672,6 @@
         font-family: 'Georgia', serif;
     }
     
-    .room-number {
-        color: #d4af37;
-        font-size: 0.9rem;
-        margin-bottom: 1rem;
-    }
-    
     .room-info {
         display: flex;
         gap: 1.5rem;
