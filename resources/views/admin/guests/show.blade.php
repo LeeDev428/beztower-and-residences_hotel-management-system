@@ -18,26 +18,30 @@
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">First Name</label>
-                        <input type="text" name="first_name" value="{{ $guest->first_name }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" required>
+                        <input type="text" name="first_name" value="{{ $guest->first_name }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" {{ auth()->user()->role === 'manager' ? 'readonly' : 'required' }}>
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Last Name</label>
-                        <input type="text" name="last_name" value="{{ $guest->last_name }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" required>
+                        <input type="text" name="last_name" value="{{ $guest->last_name }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" {{ auth()->user()->role === 'manager' ? 'readonly' : 'required' }}>
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Email</label>
-                        <input type="email" name="email" value="{{ $guest->email }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" required>
+                        <input type="email" name="email" value="{{ $guest->email }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" {{ auth()->user()->role === 'manager' ? 'readonly' : 'required' }}>
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Phone</label>
-                        <input type="text" name="phone" value="{{ $guest->phone }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" required>
+                        <input type="text" name="phone" value="{{ $guest->phone }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" {{ auth()->user()->role === 'manager' ? 'readonly' : 'required' }}>
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Address</label>
-                        <textarea name="address" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px; min-height: 100px;">{{ $guest->address }}</textarea>
+                        <textarea name="address" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px; min-height: 100px;" {{ auth()->user()->role === 'manager' ? 'readonly' : '' }}>{{ $guest->address }}</textarea>
                     </div>
-                    @if(auth()->user()->role === 'admin' || auth()->user()->role === 'manager')
+                    @if(auth()->user()->role === 'admin')
                     <x-admin.button type="primary">Update Information</x-admin.button>
+                    @elseif(auth()->user()->role === 'manager')
+                    <div style="padding: 0.75rem; background: var(--light-gray); border-radius: 8px; text-align: center; color: var(--text-muted); font-size: 0.875rem;">
+                        <i class="fas fa-eye"></i> View Only Mode
+                    </div>
                     @endif
                 </div>
             </form>
