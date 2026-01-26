@@ -101,6 +101,44 @@
             @enderror
         </div>
 
+        <!-- Existing Photos -->
+        @if($room->photos->count() > 0)
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Current Photos</label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
+                @foreach($room->photos as $photo)
+                <div style="position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <img src="{{ asset('storage/' . $photo->photo_path) }}" alt="Room Photo" 
+                         style="width: 100%; height: 150px; object-fit: cover;">
+                    <button type="button" onclick="deletePhoto({{ $photo->id }})" 
+                            style="position: absolute; top: 8px; right: 8px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                        ×
+                    </button>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        <!-- Add New Photos -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Add New Photos</label>
+            <input type="file" name="photos[]" id="photos" accept="image/*" multiple 
+                   onchange="previewImages(event)"
+                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+            <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem;">
+                Upload multiple images (Max 5MB per image)
+            </div>
+            @error('photos.*')
+            <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
+            @enderror
+            
+            <div id="imagePreview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
+        </div>
+
+            @enderror
+        </div>
+
         <div style="display: flex; gap: 1rem;">
             <x-admin.button type="primary">Update Room</x-admin.button>
             <x-admin.button type="outline" href="{{ route('admin.rooms.index') }}">Cancel</x-admin.button>
@@ -480,6 +518,56 @@
 </style>
 
 <script>
+    // Image Preview Function
+    function previewImages(event) {
+        const previewContainer = document.getElementById('imagePreview');
+        previewContainer.innerHTML = '';
+        
+        const files = event.target.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.style.cssText = 'position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+                
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.cssText = 'width: 100%; height: 120px; object-fit: cover;';
+                
+                div.appendChild(img);
+                previewContainer.appendChild(div);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Delete Photo Function
+    async function deletePhoto(photoId) {
+        if (!confirm('Are you sure you want to delete this photo?')) return;
+        
+        try {
+            const response = await fetch(`/admin/rooms/{{ $room->id }}/photos/${photoId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content || '{{ csrf_token() }}'
+                }
+            });
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Failed to delete photo');
+            }
+        } catch (error) {
+            console.error('Error deleting photo:', error);
+            alert('Failed to delete photo');
+        }
+    }
+
     // Room Types Management
     function openRoomTypesModal() {
         document.getElementById('roomTypesModal').style.display = 'flex';
