@@ -4,7 +4,7 @@
 @section('page-title', 'Reports & Analytics')
 
 @section('content')
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
     <!-- Revenue Report -->
     <x-admin.card title="Revenue Report">
         <div style="text-align: center; padding: 2rem 0;">
@@ -14,20 +14,6 @@
             <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Revenue Report</h3>
             <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Detailed revenue breakdown and analysis</p>
             <x-admin.button type="primary" href="{{ route('admin.reports.revenue') }}">
-                Generate Report
-            </x-admin.button>
-        </div>
-    </x-admin.card>
-
-    <!-- Occupancy Report -->
-    <x-admin.card title="Occupancy Report">
-        <div style="text-align: center; padding: 2rem 0;">
-            <svg style="width: 80px; height: 80px; margin: 0 auto 1rem; color: var(--success);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
-            <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Occupancy Report</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Room occupancy rates and trends</p>
-            <x-admin.button type="success" href="{{ route('admin.reports.occupancy') }}">
                 Generate Report
             </x-admin.button>
         </div>
