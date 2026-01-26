@@ -66,8 +66,6 @@
 
         /* Left Column - Image Gallery */
         .image-section {
-            position: sticky;
-            top: 120px;
             height: fit-content;
         }
 
