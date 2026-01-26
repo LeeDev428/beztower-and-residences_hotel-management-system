@@ -62,8 +62,8 @@
                     </td>
                     <td style="padding: 1rem 0.75rem; text-align: right;">
                         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                            <x-admin.button type="outline" size="sm" href="{{ route('admin.rooms.edit', $room) }}">Edit</x-admin.button>
                             @if(auth()->user()->role === 'admin')
+                                <x-admin.button type="outline" size="sm" href="{{ route('admin.rooms.edit', $room) }}">Edit</x-admin.button>
                                 @if($room->isArchived())
                                     <form method="POST" action="{{ route('admin.rooms.restore', $room) }}" onsubmit="return confirm('Are you sure you want to restore this room?');">
                                         @csrf
@@ -76,6 +76,8 @@
                                         <x-admin.button type="warning" size="sm">Archive</x-admin.button>
                                     </form>
                                 @endif
+                            @else
+                                <span style="color: var(--text-muted); font-size: 0.875rem; font-style: italic;">View Only</span>
                             @endif
                         </div>
                     </td>
@@ -91,6 +93,7 @@
 </x-admin.card>
 
 <!-- Floating Add Button -->
+@if(auth()->user()->role === 'admin')
 <a href="{{ route('admin.rooms.create') }}" 
    style="position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; text-decoration: none; box-shadow: 0 4px 20px rgba(201, 169, 97, 0.4); transition: all 0.3s ease; z-index: 999;"
    onmouseover="this.style.transform='scale(1.1) rotate(90deg)'; this.style.boxShadow='0 6px 25px rgba(201, 169, 97, 0.6)';"
@@ -98,4 +101,5 @@
    title="Add New Room">
     +
 </a>
+@endif
 @endsection
