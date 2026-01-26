@@ -136,9 +136,6 @@
             <div id="imagePreview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
         </div>
 
-            @enderror
-        </div>
-
         <div style="display: flex; gap: 1rem;">
             <x-admin.button type="primary">Update Room</x-admin.button>
             <x-admin.button type="outline" href="{{ route('admin.rooms.index') }}">Cancel</x-admin.button>
