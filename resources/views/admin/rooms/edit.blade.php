@@ -9,7 +9,7 @@
 </div>
 
 <x-admin.card title="Room Information">
-    <form method="POST" action="{{ route('admin.rooms.update', $room) }}">
+    <form method="POST" action="{{ route('admin.rooms.update', $room) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')
         
