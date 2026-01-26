@@ -9,7 +9,7 @@
 </div>
 
 <x-admin.card title="Room Information">
-    <form method="POST" action="{{ route('admin.rooms.store') }}">
+    <form method="POST" action="{{ route('admin.rooms.store') }}" enctype="multipart/form-data">
         @csrf
         
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
@@ -96,6 +96,21 @@
             @error('description')
             <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
             @enderror
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Room Photos</label>
+            <input type="file" name="photos[]" id="photos" accept="image/*" multiple 
+                   onchange="previewImages(event)"
+                   style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+            <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem;">
+                Upload multiple images (Max 5MB per image)
+            </div>
+            @error('photos.*')
+            <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
+            @enderror
+            
+            <div id="imagePreview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
         </div>
 
         <div style="display: flex; gap: 1rem;">
@@ -477,6 +492,33 @@
 </style>
 
 <script>
+    // Image Preview Function
+    function previewImages(event) {
+        const previewContainer = document.getElementById('imagePreview');
+        previewContainer.innerHTML = '';
+        
+        const files = event.target.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.style.cssText = 'position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);';
+                
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.cssText = 'width: 100%; height: 120px; object-fit: cover;';
+                
+                div.appendChild(img);
+                previewContainer.appendChild(div);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    }
+
     // Room Types Management
     function openRoomTypesModal() {
         document.getElementById('roomTypesModal').style.display = 'flex';
