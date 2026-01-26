@@ -131,6 +131,7 @@ class RoomManagementController extends Controller
             'description' => 'nullable|string',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
+            'photos.*' => 'nullable|image|max:5120', // 5MB max
         ]);
 
         // Validate discount is divisible by 5
@@ -155,6 +156,17 @@ class RoomManagementController extends Controller
             $room->amenities()->sync($validated['amenities']);
         } else {
             $room->amenities()->detach();
+        }
+
+        // Handle new photos
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $path = $photo->store('rooms', 'public');
+                RoomPhoto::create([
+                    'room_id' => $room->id,
+                    'photo_path' => $path,
+                ]);
+            }
         }
 
         return redirect()->route('admin.rooms.index')->with('success', 'Room updated successfully!');
