@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\ActivityLog;
 use App\Mail\CheckoutReminder;
+use App\Mail\BookingCancelled;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class BookingManagementController extends Controller
 {
@@ -94,5 +97,156 @@ class BookingManagementController extends Controller
         }
 
         return back()->with('success', 'Booking status updated successfully!');
+    }
+
+    public function finalBilling(Booking $booking)
+    {
+        $booking->load(['guest', 'room', 'roomType']);
+
+        // Determine hourly rate based on room type
+        $hourlyRate = 150; // Default for Standard/Deluxe
+        if (stripos($booking->roomType->name, 'family') !== false) {
+            $hourlyRate = 250;
+        }
+
+        return view('admin.bookings.final-billing', compact('booking', 'hourlyRate'));
+    }
+
+    public function updateFinalBilling(Request $request, Booking $booking)
+    {
+        $validated = $request->validate([
+            'early_checkin_hours' => 'nullable|integer|min:0|max:5',
+            'early_checkin_charge' => 'nullable|numeric|min:0',
+            'late_checkout_hours' => 'nullable|integer|min:0|max:5',
+            'late_checkout_charge' => 'nullable|numeric|min:0',
+            'has_pwd_senior' => 'nullable|boolean',
+            'pwd_senior_count' => 'nullable|integer|min:0',
+            'pwd_senior_discount' => 'nullable|numeric|min:0',
+            'manual_adjustment' => 'nullable|numeric',
+            'adjustment_reason' => 'nullable|string|max:500',
+            'payment_method' => 'nullable|in:cash,gcash',
+        ]);
+
+        // Update booking with validated data
+        $booking->update([
+            'early_checkin_hours' => $validated['early_checkin_hours'] ?? 0,
+            'early_checkin_charge' => $validated['early_checkin_charge'] ?? 0,
+            'late_checkout_hours' => $validated['late_checkout_hours'] ?? 0,
+            'late_checkout_charge' => $validated['late_checkout_charge'] ?? 0,
+            'has_pwd_senior' => $request->has('has_pwd_senior'),
+            'pwd_senior_count' => $validated['pwd_senior_count'] ?? 0,
+            'pwd_senior_discount' => $validated['pwd_senior_discount'] ?? 0,
+            'manual_adjustment' => $validated['manual_adjustment'] ?? 0,
+            'adjustment_reason' => $validated['adjustment_reason'],
+        ]);
+
+        // Log the activity
+        ActivityLog::log(
+            'final_billing_edit',
+            'Updated final billing for booking #' . $booking->booking_reference . ' - Final Total: ₱' . number_format($booking->final_total, 2),
+            'App\Models\Booking',
+            $booking->id,
+            [
+                'early_checkin' => $validated['early_checkin_hours'] ?? 0,
+                'late_checkout' => $validated['late_checkout_hours'] ?? 0,
+                'pwd_senior_discount' => $validated['pwd_senior_discount'] ?? 0,
+                'manual_adjustment' => $validated['manual_adjustment'] ?? 0,
+                'final_total' => $booking->final_total,
+            ]
+        );
+
+        return redirect()->route('admin.bookings.show', $booking)
+            ->with('success', 'Final billing updated successfully! Total: ₱' . number_format($booking->final_total, 2));
+    }
+
+    public function cancelBooking(Request $request, Booking $booking)
+    {
+        $validated = $request->validate([
+            'cancellation_reason' => 'required|string|max:500',
+            'refund_status' => 'required|in:unpaid,partially_paid,paid',
+        ]);
+
+        $booking->update([
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+            'cancellation_reason' => $validated['cancellation_reason'],
+            'refund_status' => $validated['refund_status'],
+        ]);
+
+        // Free up the room
+        $booking->room->update(['status' => 'available']);
+
+        // Send cancellation email
+        $booking->load('guest');
+        try {
+            Mail::to($booking->guest->email)->send(new BookingCancelled($booking));
+        } catch (\Exception $e) {
+            Log::error('Failed to send cancellation email: ' . $e->getMessage());
+        }
+
+        // Log the activity
+        ActivityLog::log(
+            'booking_cancel',
+            'Cancelled booking #' . $booking->booking_reference . ' - Reason: ' . $validated['cancellation_reason'],
+            'App\Models\Booking',
+            $booking->id,
+            [
+                'reason' => $validated['cancellation_reason'],
+                'refund_status' => $validated['refund_status'],
+            ]
+        );
+
+        return back()->with('success', 'Booking cancelled successfully. Cancellation email sent to guest.');
+    }
+
+    public function rescheduleBooking(Request $request, Booking $booking)
+    {
+        $validated = $request->validate([
+            'new_check_in_date' => 'required|date|after:today',
+            'new_check_out_date' => 'required|date|after:new_check_in_date',
+        ]);
+
+        // Validate rescheduling eligibility
+        if (!$booking->canReschedule()) {
+            return back()->with('error', 'This booking cannot be rescheduled. Must be cancelled and within 1 week.');
+        }
+
+        if (!$booking->isValidRescheduleDate($validated['new_check_in_date'])) {
+            return back()->with('error', 'New check-in date must be within 1 month of the original check-in date.');
+        }
+
+        // Store original date if not already stored
+        if (!$booking->original_check_in_date) {
+            $booking->original_check_in_date = $booking->check_in_date;
+        }
+
+        // Update booking dates
+        $booking->update([
+            'check_in_date' => $validated['new_check_in_date'],
+            'check_out_date' => $validated['new_check_out_date'],
+            'rescheduled_at' => now(),
+            'status' => 'pending', // Reset to pending
+        ]);
+
+        // Recalculate nights
+        $checkIn = Carbon::parse($validated['new_check_in_date']);
+        $checkOut = Carbon::parse($validated['new_check_out_date']);
+        $nights = $checkIn->diffInDays($checkOut);
+        $booking->update(['number_of_nights' => $nights]);
+
+        // Log the activity
+        ActivityLog::log(
+            'booking_reschedule',
+            'Rescheduled booking #' . $booking->booking_reference . ' to ' . Carbon::parse($validated['new_check_in_date'])->format('M d, Y'),
+            'App\Models\Booking',
+            $booking->id,
+            [
+                'original_date' => $booking->original_check_in_date,
+                'new_check_in' => $validated['new_check_in_date'],
+                'new_check_out' => $validated['new_check_out_date'],
+            ]
+        );
+
+        return back()->with('success', 'Booking rescheduled successfully!');
     }
 }
