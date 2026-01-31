@@ -7,6 +7,7 @@ use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\Amenity;
 use App\Models\RoomPhoto;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -169,6 +170,15 @@ class RoomManagementController extends Controller
             }
         }
 
+        // Log the activity
+        ActivityLog::log(
+            'room_edit',
+            'Updated room #' . $room->room_number . ' (' . $room->roomType->name . ')',
+            'App\Models\Room',
+            $room->id,
+            ['room_number' => $room->room_number, 'status' => $room->status]
+        );
+
         return redirect()->route('admin.rooms.index')->with('success', 'Room updated successfully!');
     }
 
@@ -176,6 +186,14 @@ class RoomManagementController extends Controller
     {
         // Archive the room instead of deleting
         $room->archive();
+
+        // Log the activity
+        ActivityLog::log(
+            'room_archive',
+            'Archived room #' . $room->room_number,
+            'App\Models\Room',
+            $room->id
+        );
 
         return redirect()->route('admin.rooms.index')->with('success', 'Room archived successfully!');
     }
@@ -201,6 +219,14 @@ class RoomManagementController extends Controller
                 'photo_path' => $path,
             ]);
 
+            // Log the activity
+            ActivityLog::log(
+                'image_update',
+                'Added photo to room #' . $room->room_number,
+                'App\Models\Room',
+                $room->id
+            );
+
             return back()->with('success', 'Photo uploaded successfully!');
         }
 
@@ -211,6 +237,14 @@ class RoomManagementController extends Controller
     {
         Storage::disk('public')->delete($photo->photo_path);
         $photo->delete();
+
+        // Log the activity
+        ActivityLog::log(
+            'image_delete',
+            'Deleted photo from room #' . $room->room_number,
+            'App\Models\Room',
+            $room->id
+        );
 
         return back()->with('success', 'Photo deleted successfully!');
     }
