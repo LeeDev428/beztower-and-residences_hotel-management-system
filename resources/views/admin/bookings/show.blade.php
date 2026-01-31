@@ -149,6 +149,14 @@
 
         <!-- Actions -->
         <x-admin.card title="Actions" style="margin-top: 1.5rem;">
+            <!-- Final Billing Button -->
+            <div style="margin-bottom: 1rem;">
+                <a href="{{ route('admin.bookings.finalBilling', $booking) }}" class="btn-success" style="display: block; padding: 0.75rem; background: linear-gradient(135deg, #4caf50, #45a049); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; text-align: center;">
+                    <i class="fas fa-calculator"></i> Final Billing & Charges
+                </a>
+            </div>
+
+            <!-- Update Status Form -->
             <form method="POST" action="{{ route('admin.bookings.updateStatus', $booking) }}" style="margin-bottom: 1rem;">
                 @csrf
                 @method('PUT')
@@ -164,7 +172,115 @@
                     <x-admin.button type="primary">Update Status</x-admin.button>
                 </div>
             </form>
+
+            <!-- Cancel Booking Button -->
+            @if($booking->status !== 'cancelled' && $booking->status !== 'checked_out')
+            <div style="margin-bottom: 1rem;">
+                <button type="button" class="btn-danger" onclick="showCancelModal()" style="display: block; width: 100%; padding: 0.75rem; background: #dc3545; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-times-circle"></i> Cancel Booking
+                </button>
+            </div>
+            @endif
+
+            <!-- Reschedule Button -->
+            @if($booking->status === 'cancelled' && $booking->canReschedule())
+            <div style="margin-bottom: 1rem;">
+                <button type="button" class="btn-warning" onclick="showRescheduleModal()" style="display: block; width: 100%; padding: 0.75rem; background: #ffc107; color: #2c2c2c; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-calendar-alt"></i> Reschedule Booking
+                </button>
+            </div>
+            @endif
         </x-admin.card>
     </div>
 </div>
+
+<!-- Cancel Booking Modal -->
+<div id="cancelModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
+    <div style="position: relative; max-width: 500px; margin: 5% auto; background: white; padding: 2rem; border-radius: 12px;">
+        <h3 style="margin-bottom: 1.5rem;">Cancel Booking</h3>
+        <form method="POST" action="{{ route('admin.bookings.cancel', $booking) }}">
+            @csrf
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Cancellation Reason</label>
+                <textarea name="cancellation_reason" required class="form-control" rows="4" placeholder="Enter reason for cancellation..." style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;"></textarea>
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Refund Status</label>
+                <select name="refund_status" required class="form-select" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;">
+                    <option value="unpaid">Unpaid (No refund needed)</option>
+                    <option value="partially_paid">Partially Paid</option>
+                    <option value="paid">Paid (Full refund)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" onclick="hideCancelModal()" class="btn-secondary" style="flex: 1; padding: 0.75rem; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-danger" style="flex: 1; padding: 0.75rem; background: #dc3545; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Confirm Cancellation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reschedule Booking Modal -->
+<div id="rescheduleModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
+    <div style="position: relative; max-width: 500px; margin: 5% auto; background: white; padding: 2rem; border-radius: 12px;">
+        <h3 style="margin-bottom: 1.5rem;">Reschedule Booking</h3>
+        <form method="POST" action="{{ route('admin.bookings.reschedule', $booking) }}">
+            @csrf
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle"></i> Original Check-in: <strong>{{ $booking->check_in_date->format('M d, Y') }}</strong>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New Check-in Date</label>
+                <input type="date" name="new_check_in_date" required class="form-control" min="{{ date('Y-m-d', strtotime('+1 day')) }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New Check-out Date</label>
+                <input type="date" name="new_check_out_date" required class="form-control" min="{{ date('Y-m-d', strtotime('+2 days')) }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;">
+            </div>
+            <div class="alert alert-warning small mb-3">
+                <i class="fas fa-exclamation-triangle"></i> New check-in date must be within 1 month of original date
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" onclick="hideRescheduleModal()" class="btn-secondary" style="flex: 1; padding: 0.75rem; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-warning" style="flex: 1; padding: 0.75rem; background: #ffc107; color: #2c2c2c; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    Reschedule
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showCancelModal() {
+    document.getElementById('cancelModal').style.display = 'block';
+}
+
+function hideCancelModal() {
+    document.getElementById('cancelModal').style.display = 'none';
+}
+
+function showRescheduleModal() {
+    document.getElementById('rescheduleModal').style.display = 'block';
+}
+
+function hideRescheduleModal() {
+    document.getElementById('rescheduleModal').style.display = 'none';
+}
+
+// Close modals with Esc key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        hideCancelModal();
+        hideRescheduleModal();
+    }
+});
+</script>
+
 @endsection
+
