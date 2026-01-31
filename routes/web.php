@@ -77,6 +77,10 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [BookingManagementController::class, 'index'])->name('admin.bookings.index');
             Route::get('/{booking}', [BookingManagementController::class, 'show'])->name('admin.bookings.show');
             Route::put('/{booking}/status', [BookingManagementController::class, 'updateStatus'])->name('admin.bookings.updateStatus');
+            Route::get('/{booking}/final-billing', [BookingManagementController::class, 'finalBilling'])->name('admin.bookings.finalBilling');
+            Route::post('/{booking}/final-billing', [BookingManagementController::class, 'updateFinalBilling'])->name('admin.bookings.updateFinalBilling');
+            Route::post('/{booking}/cancel', [BookingManagementController::class, 'cancelBooking'])->name('admin.bookings.cancel');
+            Route::post('/{booking}/reschedule', [BookingManagementController::class, 'rescheduleBooking'])->name('admin.bookings.reschedule');
         });
         
         // Guest Management
@@ -123,6 +127,11 @@ Route::prefix('admin')->group(function () {
         Route::middleware('role:admin')->prefix('settings')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings.index');
             Route::put('/', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.settings.update');
+        });
+
+        // Activity Logs (Admin Only)
+        Route::middleware('role:admin')->prefix('activity-logs')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('admin.activity-logs.index');
         });
     });
 });
