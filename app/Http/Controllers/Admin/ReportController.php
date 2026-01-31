@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Room;
+use App\Models\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -87,6 +88,12 @@ class ReportController extends Controller
 
         // Average occupancy rate
         $avgOccupancyRate = collect($occupancyData)->avg('rate');
+
+        // Log report generation
+        ActivityLog::log(
+            'report_generate',
+            'Generated occupancy report for ' . Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y')
+        );
 
         return view('admin.reports.occupancy', compact(
             'occupancyData',
