@@ -27,9 +27,9 @@ class AuthController extends Controller
             // Log the login activity
             ActivityLog::log(
                 'login',
-                auth()->user()->name . ' logged in to admin panel',
+                Auth::user()->name . ' logged in to admin panel',
                 'App\Models\User',
-                auth()->id()
+                Auth::id()
             );
             
             return redirect()->intended(route('admin.dashboard'));
