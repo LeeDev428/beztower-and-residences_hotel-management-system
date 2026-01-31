@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Booking extends Model
 {
@@ -82,9 +83,9 @@ class Booking extends Model
     {
         // New date must be within 1 month from original booking date
         $originalCheckIn = $this->original_check_in_date ?? $this->check_in_date;
-        $maxRescheduleDate = $originalCheckIn->copy()->addMonth();
+        $maxRescheduleDate = \Carbon\Carbon::parse($originalCheckIn)->addMonth();
         
-        return $newDate->lessThanOrEqualTo($maxRescheduleDate);
+        return \Carbon\Carbon::parse($newDate)->lessThanOrEqualTo($maxRescheduleDate);
     }
 
     public function guest()
