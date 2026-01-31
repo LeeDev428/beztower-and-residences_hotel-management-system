@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,6 +23,15 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            
+            // Log the login activity
+            ActivityLog::log(
+                'login',
+                auth()->user()->name . ' logged in to admin panel',
+                'App\Models\User',
+                auth()->id()
+            );
+            
             return redirect()->intended(route('admin.dashboard'));
         }
 
