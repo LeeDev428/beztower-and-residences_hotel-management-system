@@ -1,6 +1,6 @@
 # 🏨 BezTower and Residences - Hotel Management System
 
-A comprehensive hotel management system built with Laravel 11, featuring role-based access control, room management, booking system, payment verification, housekeeping management, and detailed reporting.
+A comprehensive hotel management system built with Laravel 11/12, featuring role-based access control, room management, booking system, payment verification, housekeeping management, and detailed reporting.
 
 ## 📋 Table of Contents
 
