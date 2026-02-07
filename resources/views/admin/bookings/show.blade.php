@@ -166,61 +166,14 @@
                     <option value="confirmed" {{ $booking->status === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
                     <option value="checked_in" {{ $booking->status === 'checked_in' ? 'selected' : '' }}>Checked In</option>
                     <option value="checked_out" {{ $booking->status === 'checked_out' ? 'selected' : '' }}>Checked Out</option>
+                    <option value="rescheduled" {{ $booking->status === 'rescheduled' ? 'selected' : '' }}>Rescheduled</option>
                     <option value="cancelled" {{ $booking->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
                 <div style="width: 100%;">
                     <x-admin.button type="primary">Update Status</x-admin.button>
                 </div>
             </form>
-
-            <!-- Cancel Booking Button -->
-            @if($booking->status !== 'cancelled' && $booking->status !== 'checked_out')
-            <div style="margin-bottom: 1rem;">
-                <button type="button" class="btn-danger" onclick="showCancelModal()" style="display: block; width: 100%; padding: 0.75rem; background: #dc3545; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                    <i class="fas fa-times-circle"></i> Cancel Booking
-                </button>
-            </div>
-            @endif
-
-            <!-- Reschedule Button -->
-            @if($booking->status === 'cancelled' && $booking->canReschedule())
-            <div style="margin-bottom: 1rem;">
-                <button type="button" class="btn-warning" onclick="showRescheduleModal()" style="display: block; width: 100%; padding: 0.75rem; background: #ffc107; color: #2c2c2c; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                    <i class="fas fa-calendar-alt"></i> Reschedule Booking
-                </button>
-            </div>
-            @endif
         </x-admin.card>
-    </div>
-</div>
-
-<!-- Cancel Booking Modal -->
-<div id="cancelModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
-    <div style="position: relative; max-width: 500px; margin: 5% auto; background: white; padding: 2rem; border-radius: 12px;">
-        <h3 style="margin-bottom: 1.5rem;">Cancel Booking</h3>
-        <form method="POST" action="{{ route('admin.bookings.cancel', $booking) }}">
-            @csrf
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Cancellation Reason</label>
-                <textarea name="cancellation_reason" required class="form-control" rows="4" placeholder="Enter reason for cancellation..." style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;"></textarea>
-            </div>
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Refund Status</label>
-                <select name="refund_status" required class="form-select" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;">
-                    <option value="unpaid">Unpaid (No refund needed)</option>
-                    <option value="partially_paid">Partially Paid</option>
-                    <option value="paid">Paid (Full refund)</option>
-                </select>
-            </div>
-            <div style="display: flex; gap: 1rem;">
-                <button type="button" onclick="hideCancelModal()" class="btn-secondary" style="flex: 1; padding: 0.75rem; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                    Cancel
-                </button>
-                <button type="submit" class="btn-danger" style="flex: 1; padding: 0.75rem; background: #dc3545; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                    Confirm Cancellation
-                </button>
-            </div>
-        </form>
     </div>
 </div>
 
