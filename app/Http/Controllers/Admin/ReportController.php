@@ -129,72 +129,110 @@ class ReportController extends Controller
 
         $filename = 'revenue_report_' . Carbon::now()->format('Y-m-d_His') . '.xlsx';
         
-        $headers = [
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Set headers
+        $sheet->setCellValue('A1', 'Date');
+        $sheet->setCellValue('B1', 'Reference');
+        $sheet->setCellValue('C1', 'Guest');
+        $sheet->setCellValue('D1', 'Room');
+        $sheet->setCellValue('E1', 'Payment Type');
+        $sheet->setCellValue('F1', 'Check-in');
+        $sheet->setCellValue('G1', 'Check-out');
+        $sheet->setCellValue('H1', 'Amount');
+        
+        // Style headers
+        $sheet->getStyle('A1:H1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:H1')->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setARGB('FFD4AF37');
+        
+        // Add data
+        $row = 2;
+        foreach ($payments as $payment) {
+            $sheet->setCellValue('A' . $row, $payment->created_at->format('Y-m-d'));
+            $sheet->setCellValue('B' . $row, $payment->booking->booking_reference);
+            $sheet->setCellValue('C' . $row, $payment->booking->guest->name);
+            $sheet->setCellValue('D' . $row, $payment->booking->room->room_number);
+            $sheet->setCellValue('E' . $row, ucfirst(str_replace('_', ' ', $payment->payment_type)));
+            $sheet->setCellValue('F' . $row, $payment->booking->check_in_date->format('Y-m-d'));
+            $sheet->setCellValue('G' . $row, $payment->booking->check_out_date->format('Y-m-d'));
+            $sheet->setCellValue('H' . $row, $payment->amount);
+            $row++;
+        }
+        
+        // Auto-size columns
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        // Create writer and output
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        return response()->streamDownload(function() use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function() use ($payments) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['Date', 'Reference', 'Guest', 'Room', 'Payment Type', 'Check-in', 'Check-out', 'Amount']);
-
-            foreach ($payments as $payment) {
-                fputcsv($file, [
-                    $payment->created_at->format('Y-m-d'),
-                    $payment->booking->booking_reference,
-                    $payment->booking->guest->name,
-                    $payment->booking->room->room_number,
-                    ucfirst(str_replace('_', ' ', $payment->payment_type)),
-                    $payment->booking->check_in_date->format('Y-m-d'),
-                    $payment->booking->check_out_date->format('Y-m-d'),
-                    $payment->amount,
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        ]);
     }
 
     private function exportOccupancy($startDate, $endDate)
     {
         $totalRooms = Room::count();
-        $filename = 'occupancy_report_' . Carbon::now()->format('Y-m-d_His') . '.csv';
+        $filename = 'occupancy_report_' . Carbon::now()->format('Y-m-d_His') . '.xlsx';
         
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Set headers
+        $sheet->setCellValue('A1', 'Date');
+        $sheet->setCellValue('B1', 'Total Rooms');
+        $sheet->setCellValue('C1', 'Occupied');
+        $sheet->setCellValue('D1', 'Available');
+        $sheet->setCellValue('E1', 'Occupancy Rate (%)');
+        
+        // Style headers
+        $sheet->getStyle('A1:E1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:E1')->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setARGB('FFD4AF37');
+        
+        // Add data
+        $currentDate = Carbon::parse($startDate);
+        $row = 2;
+        
+        while ($currentDate <= Carbon::parse($endDate)) {
+            $occupiedRooms = Booking::where('check_in_date', '<=', $currentDate)
+                ->where('check_out_date', '>', $currentDate)
+                ->where('status', 'confirmed')
+                ->count();
+            
+            $occupancyRate = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100, 2) : 0;
 
-        $callback = function() use ($startDate, $endDate, $totalRooms) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['Date', 'Total Rooms', 'Occupied', 'Available', 'Occupancy Rate (%)']);
+            $sheet->setCellValue('A' . $row, $currentDate->format('Y-m-d'));
+            $sheet->setCellValue('B' . $row, $totalRooms);
+            $sheet->setCellValue('C' . $row, $occupiedRooms);
+            $sheet->setCellValue('D' . $row, $totalRooms - $occupiedRooms);
+            $sheet->setCellValue('E' . $row, $occupancyRate);
 
-            $currentDate = Carbon::parse($startDate);
-            while ($currentDate <= Carbon::parse($endDate)) {
-                $occupiedRooms = Booking::where('check_in_date', '<=', $currentDate)
-                    ->where('check_out_date', '>', $currentDate)
-                    ->where('status', 'confirmed')
-                    ->count();
-                
-                $occupancyRate = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100, 2) : 0;
-
-                fputcsv($file, [
-                    $currentDate->format('Y-m-d'),
-                    $totalRooms,
-                    $occupiedRooms,
-                    $totalRooms - $occupiedRooms,
-                    $occupancyRate,
-                ]);
-
-                $currentDate->addDay();
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+            $currentDate->addDay();
+            $row++;
+        }
+        
+        // Auto-size columns
+        foreach (range('A', 'E') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        // Create writer and output
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        return response()->streamDownload(function() use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     private function exportBookings($startDate, $endDate)
@@ -203,36 +241,59 @@ class ReportController extends Controller
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
 
-        $filename = 'bookings_report_' . Carbon::now()->format('Y-m-d_His') . '.csv';
+        $filename = 'bookings_report_' . Carbon::now()->format('Y-m-d_His') . '.xlsx';
         
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function() use ($bookings) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['Date', 'Reference', 'Guest', 'Email', 'Phone', 'Room', 'Check-in', 'Check-out', 'Guests', 'Amount', 'Status']);
-
-            foreach ($bookings as $booking) {
-                fputcsv($file, [
-                    $booking->created_at->format('Y-m-d H:i'),
-                    $booking->booking_reference,
-                    $booking->guest->name,
-                    $booking->guest->email,
-                    $booking->guest->phone,
-                    $booking->room->room_number,
-                    $booking->check_in_date->format('Y-m-d'),
-                    $booking->check_out_date->format('Y-m-d'),
-                    $booking->number_of_guests,
-                    $booking->total_amount,
-                    $booking->status,
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Set headers
+        $sheet->setCellValue('A1', 'Date');
+        $sheet->setCellValue('B1', 'Reference');
+        $sheet->setCellValue('C1', 'Guest');
+        $sheet->setCellValue('D1', 'Email');
+        $sheet->setCellValue('E1', 'Phone');
+        $sheet->setCellValue('F1', 'Room');
+        $sheet->setCellValue('G1', 'Check-in');
+        $sheet->setCellValue('H1', 'Check-out');
+        $sheet->setCellValue('I1', 'Guests');
+        $sheet->setCellValue('J1', 'Amount');
+        $sheet->setCellValue('K1', 'Status');
+        
+        // Style headers
+        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:K1')->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setARGB('FFD4AF37');
+        
+        // Add data
+        $row = 2;
+        foreach ($bookings as $booking) {
+            $sheet->setCellValue('A' . $row, $booking->created_at->format('Y-m-d H:i'));
+            $sheet->setCellValue('B' . $row, $booking->booking_reference);
+            $sheet->setCellValue('C' . $row, $booking->guest->name);
+            $sheet->setCellValue('D' . $row, $booking->guest->email);
+            $sheet->setCellValue('E' . $row, $booking->guest->phone);
+            $sheet->setCellValue('F' . $row, $booking->room->room_number);
+            $sheet->setCellValue('G' . $row, $booking->check_in_date->format('Y-m-d'));
+            $sheet->setCellValue('H' . $row, $booking->check_out_date->format('Y-m-d'));
+            $sheet->setCellValue('I' . $row, $booking->number_of_guests);
+            $sheet->setCellValue('J' . $row, $booking->total_amount);
+            $sheet->setCellValue('K' . $row, $booking->status);
+            $row++;
+        }
+        
+        // Auto-size columns
+        foreach (range('A', 'K') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        // Create writer and output
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        return response()->streamDownload(function() use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 }
