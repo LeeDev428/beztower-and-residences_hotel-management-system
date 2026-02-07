@@ -7,7 +7,7 @@
     <ul class="nav-links">
         <li><a href="{{ route('home') }}">Home</a></li>
         <li><a href="{{ route('home') }}#about">About</a></li>
-        <li><a href="{{ route('home') }}#rooms">Rooms</a></li>
+        <li><a href="{{ route('rooms.index') }}">Rooms</a></li>
         <li><a href="{{ route('home') }}#services">Services</a></li>
         <li><a href="{{ route('home') }}#contact">Contact</a></li>
     </ul>
@@ -17,9 +17,6 @@
             <i class="fas fa-phone"></i>
             (02) 88075046 or 09171221429
         </div> --}}
-        <a href="{{ route('home') }}#rooms" class="check-now-btn">
-            <i class="fas fa-search"></i> Check Now
-        </a>
     </div>
 </nav>
 
