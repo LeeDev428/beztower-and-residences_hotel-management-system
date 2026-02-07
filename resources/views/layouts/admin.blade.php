@@ -439,7 +439,7 @@
                     @if($notifCount > 0)
                     <span class="notification-badge"></span>
                     @endif
-                </button>
+                </a>
 
                 <div class="user-menu">
                     <div class="user-avatar">
