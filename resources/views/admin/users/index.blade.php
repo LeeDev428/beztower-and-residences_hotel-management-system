@@ -43,11 +43,11 @@
                                 Edit
                             </x-admin.button>
                             @if($user->id !== auth()->id())
-                            <form method="POST" action="{{ route('admin.users.destroy', $user) }}" style="display: inline;" onsubmit="return confirm('Delete this user?');">
+                            <form method="POST" action="{{ route('admin.users.destroy', $user) }}" style="display: inline;" onsubmit="return confirm('Archive this user? They will no longer be able to log in.');">
                                 @csrf
                                 @method('DELETE')
                                 <x-admin.button type="danger" size="sm">
-                                    Delete
+                                    Archive
                                 </x-admin.button>
                             </form>
                             @endif
