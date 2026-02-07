@@ -69,16 +69,6 @@
         </div>
 
         <div class="filters-grid">
-            <!-- Price Range -->
-            <div class="filter-group">
-                <label><i class="fas fa-dollar-sign"></i> Price Range</label>
-                <div class="price-inputs">
-                    <input type="number" id="minPrice" placeholder="Min" min="0" step="100">
-                    <span>-</span>
-                    <input type="number" id="maxPrice" placeholder="Max" min="0" step="100">
-                </div>
-            </div>
-
             <!-- Room Type -->
             <div class="filter-group">
                 <label><i class="fas fa-bed"></i> Room Type</label>
@@ -88,38 +78,6 @@
                         <option value="{{ $type->id }}">{{ $type->name }}</option>
                     @endforeach
                 </select>
-            </div>
-
-            <!-- Guests -->
-            <div class="filter-group">
-                <label><i class="fas fa-users"></i> Guests</label>
-                <select id="guests">
-                    <option value="">Any</option>
-                    <option value="1">1 Guest</option>
-                    <option value="2">2 Guests</option>
-                    <option value="3">3 Guests</option>
-                    <option value="4">4+ Guests</option>
-                </select>
-            </div>
-
-            <!-- Amenities -->
-            <div class="filter-group">
-                <label><i class="fas fa-star"></i> Amenities</label>
-                <div class="amenities-dropdown">
-                    <button type="button" class="amenities-btn" id="amenitiesBtn">
-                        <span id="amenitiesCount">Select Amenities</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="amenities-list" id="amenitiesList">
-                        @foreach($amenities as $amenity)
-                            <label class="amenity-checkbox">
-                                <input type="checkbox" name="amenities[]" value="{{ $amenity->id }}">
-                                <i class="{{ $amenity->icon }}"></i>
-                                <span>{{ $amenity->name }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
             </div>
 
             <!-- Sorting -->
@@ -189,12 +147,6 @@
         </div>
     </div>
 </div>
-
-<!-- Floating Calendar Button -->
-<button class="floating-calendar-btn" id="showCalendar">
-    <i class="fas fa-calendar-check"></i>
-    <span>Check Availability</span>
-</button>
 
 <style>
     /* Filters Section */
