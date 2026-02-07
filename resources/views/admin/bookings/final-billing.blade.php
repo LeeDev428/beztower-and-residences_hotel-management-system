@@ -199,34 +199,37 @@
                             <div class="p-3 bg-light rounded">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="fw-bold">Discount Amount:</span>
-                                <h4 class="text-success mb-0" id="pwdDiscountAmount">-₱{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</h4>
+                                    <h4 class="text-success mb-0" id="pwdDiscountAmount">-₱{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</h4>
+                                </div>
                             </div>
                             <input type="hidden" name="pwd_senior_discount" id="pwdSeniorDiscountInput" value="{{ $booking->pwd_senior_discount ?? 0 }}">
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
+        <div class="row mb-4">
             <!-- Manual Adjustment -->
-            <div class="col-lg-6">
-                <div class="card shadow-sm mb-4">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-secondary text-white">
                         <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Manual Adjustment</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label">Adjustment Amount</label>
+                            <label class="form-label fw-semibold">Adjustment Amount</label>
                             <div class="input-group">
                                 <span class="input-group-text">₱</span>
                                 <input type="number" class="form-control" name="manual_adjustment" id="manualAdjustment" 
                                     value="{{ $booking->manual_adjustment ?? 0 }}" step="0.01" onchange="calculateTotal()">
                             </div>
-                            <small class="text-muted">Positive for additional charges, negative for discounts</small>
+                            <small class="form-text text-muted">Positive for additional charges, negative for discounts</small>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Reason for Adjustment</label>
-                            <textarea class="form-control" name="adjustment_reason" rows="3" 
+                        <div class="mb-0">
+                            <label class="form-label fw-semibold">Reason for Adjustment</label>
+                            <textarea class="form-control" name="adjustment_reason" rows="4" 
                                 placeholder="Explain the reason for manual adjustment...">{{ $booking->adjustment_reason }}</textarea>
                         </div>
                     </div>
@@ -235,21 +238,22 @@
 
             <!-- Payment Method -->
             <div class="col-lg-6">
-                <div class="card shadow-sm mb-4">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Method for Additional Charges</h5>
+                        <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Method</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Select Payment Method</label>
-                            <div class="form-check">
+                            <label class="form-label fw-bold">Select Payment Method for Additional Charges</label>
+                            <div class="form-check mb-2">
                                 <input class="form-check-input" type="radio" name="payment_method" id="paymentCash" 
                                     value="cash" checked onchange="toggleGcashQR()">
                                 <label class="form-check-label" for="paymentCash">
                                     <i class="fas fa-money-bill-wave me-2"></i>Cash
                                 </label>
                             </div>
-                            <div class="form-check">
+                            </div>
+                            <div class="form-check mb-2">
                                 <input class="form-check-input" type="radio" name="payment_method" id="paymentGcash" 
                                     value="gcash" onchange="toggleGcashQR()">
                                 <label class="form-check-label" for="paymentGcash">
@@ -261,12 +265,16 @@
                         <!-- GCash QR Code -->
                         <div id="gcashQRSection" style="display: none;">
                             <div class="text-center p-3 border rounded bg-light">
-                                <p class="mb-2"><strong>Scan to Pay via GCash</strong></p>
-                                <img src="{{ asset('images/gcash-qr.png') }}" alt="GCash QR Code" class="img-fluid" style="max-width: 200px;">
-                                <p class="small text-muted mt-2 mb-0">
-                                    GCash Number: 0917-123-4567<br>
-                                    Account Name: Bez Tower and Residences
-                                </p>
+                                <p class="mb-3 fw-bold"><i class="fas fa-qrcode me-2"></i>Scan to Pay via GCash</p>
+                                <img src="{{ asset('images/gcash-qr.png') }}" alt="GCash QR Code" class="img-fluid mb-3" style="max-width: 200px; border: 2px solid #007bff; border-radius: 8px;">
+                                <div class="text-start">
+                                    <p class="small text-muted mb-1">
+                                        <strong>GCash Number:</strong> 0917-123-4567
+                                    </p>
+                                    <p class="small text-muted mb-0">
+                                        <strong>Account Name:</strong> Bez Tower and Residences
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -277,11 +285,14 @@
         <!-- Submit Button -->
         <div class="row">
             <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-body text-center">
+                <div class="card shadow-sm border-primary">
+                    <div class="card-body text-center py-4">
                         <button type="submit" class="btn btn-success btn-lg px-5">
                             <i class="fas fa-save me-2"></i>Save Final Billing
                         </button>
+                        <div class="mt-3">
+                            <small class="text-muted">All changes will be saved to the booking record</small>
+                        </div>
                     </div>
                 </div>
             </div>
