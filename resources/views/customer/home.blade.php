@@ -100,10 +100,17 @@
 
         .booking-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
             align-items: end;
             overflow: visible;
+        }
+
+        .booking-grid .book-now-btn {
+            grid-column: 1 / -1;
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
         }
 
         .form-group {
@@ -1072,11 +1079,7 @@
                 <p>Secure parking facilities available for all our guests.</p>
             </div>
             
-            <div class="service-card">
-                <div class="service-icon"><i class="fas fa-luggage-cart"></i></div>
-                <h3>Luggage Storage</h3>
-                <p>Complimentary luggage storage service for your convenience.</p>
-            </div>
+
             
             <div class="service-card">
                 <div class="service-icon"><i class="fas fa-broom"></i></div>
@@ -1119,7 +1122,8 @@
         
         <div class="contact-form-container">
             <h3>Send Us a Message</h3>
-            <form class="contact-form">
+            <form class="contact-form" action="{{ route('contact') }}" method="POST">
+                @csrf
                 <div class="form-row">
                     <div class="form-group-contact">
                         <label>Name</label>
