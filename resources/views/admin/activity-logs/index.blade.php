@@ -35,7 +35,6 @@
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">User</th>
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Action</th>
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Description</th>
-                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">IP Address</th>
                 </tr>
             </thead>
             <tbody>
@@ -60,11 +59,10 @@
                         </span>
                     </td>
                     <td style="padding: 1rem 0.75rem;">{{ $log->description }}</td>
-                    <td style="padding: 1rem 0.75rem; color: var(--text-muted); font-size: 0.875rem;">{{ $log->ip_address }}</td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <td colspan="4" style="text-align: center; padding: 3rem; color: var(--text-muted);">
                         No activity logs found.
                     </td>
                 </tr>
