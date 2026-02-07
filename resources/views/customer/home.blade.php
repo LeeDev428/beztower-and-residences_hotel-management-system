@@ -967,6 +967,9 @@
                         </div>
                     </div>
                     
+                    <!-- Hidden input for total guests -->
+                    <input type="hidden" name="guests" id="totalGuests" value="1">
+                    
                     <button type="submit" class="book-now-btn">
                         <i class="fas fa-search"></i> BOOK NOW
                     </button>
@@ -1682,6 +1685,19 @@
             var childText = children === 0 ? '0 Child' : children === 1 ? '1 Child' : children + ' Children';
 
             document.getElementById('guestCount').textContent = roomText + ', ' + adultText + ', ' + childText;
+            
+            // Update total guests hidden field
+            document.getElementById('totalGuests').value = adults + children;
+        }
+
+        // Update total guests on form submit
+        var bookingForm = document.getElementById('heroBookingForm');
+        if (bookingForm) {
+            bookingForm.addEventListener('submit', function() {
+                var adults = parseInt(document.getElementById('adults').value) || 0;
+                var children = parseInt(document.getElementById('children').value) || 0;
+                document.getElementById('totalGuests').value = adults + children;
+            });
         }
 
         // Close when clicking outside
