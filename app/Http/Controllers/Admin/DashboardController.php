@@ -18,15 +18,15 @@ class DashboardController extends Controller
     {
         $today = Carbon::today();
         
-        // Arrivals Today - bookings where check_in_date is today and status is confirmed
+        // Arrivals Today - bookings where check_in_date is today
         $arrivalsToday = Booking::whereDate('check_in_date', $today)
-            ->where('status', 'confirmed')
+            ->whereIn('status', ['confirmed', 'checked_in'])
             ->with(['guest', 'room'])
             ->get();
 
-        // Departures Today - bookings where check_out_date is today and status is confirmed
+        // Departures Today - bookings where check_out_date is today
         $departuresToday = Booking::whereDate('check_out_date', $today)
-            ->where('status', 'confirmed')
+            ->whereIn('status', ['confirmed', 'checked_in', 'checked_out'])
             ->with(['guest', 'room'])
             ->get();
 
