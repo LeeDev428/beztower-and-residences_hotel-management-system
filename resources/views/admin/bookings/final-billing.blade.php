@@ -17,44 +17,44 @@
 
     <!-- Booking Details Card -->
     <div class="row mb-4">
-        <div class="col-lg-6">
-            <div class="card shadow-sm">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="card shadow-sm h-100">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Booking Details</h5>
                 </div>
                 <div class="card-body">
-                    <table class="table table-sm">
+                    <table class="table table-sm table-borderless">
                         <tr>
-                            <th width="40%">Reference</th>
-                            <td>{{ $booking->booking_reference }}</td>
+                            <th width="40%" class="text-muted">Reference</th>
+                            <td class="fw-bold">{{ $booking->booking_reference }}</td>
                         </tr>
                         <tr>
-                            <th>Guest</th>
-                            <td>{{ $booking->guest->name }}</td>
+                            <th class="text-muted">Guest</th>
+                            <td class="fw-bold">{{ $booking->guest->name }}</td>
                         </tr>
                         <tr>
-                            <th>Room</th>
-                            <td>{{ $booking->room->room_number }} - {{ $booking->roomType->name }}</td>
+                            <th class="text-muted">Room</th>
+                            <td class="fw-bold">{{ $booking->room->room_number }} - {{ $booking->roomType->name }}</td>
                         </tr>
                         <tr>
-                            <th>Check-in</th>
-                            <td>{{ \Carbon\Carbon::parse($booking->check_in_date)->format('M d, Y') }}</td>
+                            <th class="text-muted">Check-in</th>
+                            <td class="fw-bold">{{ \Carbon\Carbon::parse($booking->check_in_date)->format('M d, Y') }}</td>
                         </tr>
                         <tr>
-                            <th>Check-out</th>
-                            <td>{{ \Carbon\Carbon::parse($booking->check_out_date)->format('M d, Y') }}</td>
+                            <th class="text-muted">Check-out</th>
+                            <td class="fw-bold">{{ \Carbon\Carbon::parse($booking->check_out_date)->format('M d, Y') }}</td>
                         </tr>
                         <tr>
-                            <th>Nights</th>
-                            <td>{{ $booking->number_of_nights }}</td>
+                            <th class="text-muted">Nights</th>
+                            <td class="fw-bold">{{ $booking->number_of_nights }}</td>
                         </tr>
                         <tr>
-                            <th>Guests</th>
-                            <td>{{ $booking->number_of_guests }}</td>
+                            <th class="text-muted">Guests</th>
+                            <td class="fw-bold">{{ $booking->number_of_guests }}</td>
                         </tr>
                         <tr>
-                            <th class="text-primary">Room Total</th>
-                            <td class="text-primary fw-bold">₱{{ number_format($booking->total_amount, 2) }}</td>
+                            <th class="text-primary pt-3">Room Total</th>
+                            <td class="text-primary fw-bold pt-3 fs-5">₱{{ number_format($booking->total_amount, 2) }}</td>
                         </tr>
                     </table>
                 </div>
@@ -62,37 +62,37 @@
         </div>
 
         <div class="col-lg-6">
-            <div class="card shadow-sm border-success">
+            <div class="card shadow-sm border-success h-100">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Final Total</h5>
                 </div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-3">
                         <h4 class="mb-0">Grand Total:</h4>
                         <h3 class="mb-0 text-success fw-bold" id="grandTotal">₱{{ number_format($booking->final_total ?? $booking->total_amount, 2) }}</h3>
                     </div>
                     <div class="mt-3">
-                        <div class="d-flex justify-content-between text-muted small">
+                        <div class="d-flex justify-content-between text-muted mb-2">
                             <span>Room Charges</span>
-                            <span>₱{{ number_format($booking->total_amount, 2) }}</span>
+                            <span class="fw-semibold">₱{{ number_format($booking->total_amount, 2) }}</span>
                         </div>
-                        <div class="d-flex justify-content-between text-muted small">
+                        <div class="d-flex justify-content-between text-muted mb-2">
                             <span>Early Check-in</span>
-                            <span id="earlyCheckinDisplay">₱{{ number_format($booking->early_checkin_charge ?? 0, 2) }}</span>
+                            <span class="fw-semibold" id="earlyCheckinDisplay">₱{{ number_format($booking->early_checkin_charge ?? 0, 2) }}</span>
                         </div>
-                        <div class="d-flex justify-content-between text-muted small">
+                        <div class="d-flex justify-content-between text-muted mb-2">
                             <span>Late Checkout</span>
-                            <span id="lateCheckoutDisplay">₱{{ number_format($booking->late_checkout_charge ?? 0, 2) }}</span>
+                            <span class="fw-semibold" id="lateCheckoutDisplay">₱{{ number_format($booking->late_checkout_charge ?? 0, 2) }}</span>
                         </div>
-                        <div class="d-flex justify-content-between text-success small">
-                            <span>PWD/Senior Discount</span>
-                            <span id="pwdDiscountDisplay">-₱{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</span>
+                        <div class="d-flex justify-content-between text-success mb-2">
+                            <span class="fw-semibold">PWD/Senior Discount</span>
+                            <span class="fw-bold" id="pwdDiscountDisplay">-₱{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</span>
                         </div>
-                        <div class="d-flex justify-content-between text-muted small">
+                        <div class="d-flex justify-content-between text-muted mb-2">
                             <span>Manual Adjustment</span>
-                            <span id="manualAdjustmentDisplay">₱{{ number_format($booking->manual_adjustment ?? 0, 2) }}</span>
+                            <span class="fw-semibold" id="manualAdjustmentDisplay">₱{{ number_format($booking->manual_adjustment ?? 0, 2) }}</span>
                         </div>
-                        <hr>
+                        <hr class="my-3">
                     </div>
                 </div>
             </div>
@@ -103,10 +103,10 @@
     <form action="{{ route('admin.bookings.updateFinalBilling', $booking) }}" method="POST" id="billingForm">
         @csrf
 
-        <div class="row">
+        <div class="row mb-4">
             <!-- Early Check-in & Late Checkout -->
-            <div class="col-lg-6">
-                <div class="card shadow-sm mb-4">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-info text-white">
                         <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Additional Time Charges</h5>
                     </div>
@@ -114,20 +114,20 @@
                         <!-- Early Check-in -->
                         <div class="mb-4">
                             <label class="form-label fw-bold">Early Check-in (Max 5 hours)</label>
-                            <div class="d-flex align-items-center gap-3">
-                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="decrementCounter('earlyCheckin')">
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-danger" onclick="decrementCounter('earlyCheckin')">
                                     <i class="fas fa-minus"></i>
                                 </button>
                                 <input type="number" name="early_checkin_hours" id="earlyCheckinHours" 
-                                    class="form-control text-center" value="{{ $booking->early_checkin_hours ?? 0 }}" 
+                                    class="form-control text-center fw-bold" value="{{ $booking->early_checkin_hours ?? 0 }}" 
                                     min="0" max="5" readonly style="width: 80px;">
-                                <button type="button" class="btn btn-outline-success btn-sm" onclick="incrementCounter('earlyCheckin')">
+                                <button type="button" class="btn btn-outline-success" onclick="incrementCounter('earlyCheckin')">
                                     <i class="fas fa-plus"></i>
                                 </button>
-                                <span class="ms-3">
-                                    <strong id="earlyCheckinCharge">₱{{ number_format(($booking->early_checkin_charge ?? 0), 2) }}</strong>
-                                    <small class="text-muted d-block">Rate: ₱{{ $hourlyRate }}/hour</small>
-                                </span>
+                                <div class="ms-3 flex-grow-1">
+                                    <div class="fw-bold text-success fs-5" id="earlyCheckinCharge">₱{{ number_format(($booking->early_checkin_charge ?? 0), 2) }}</div>
+                                    <small class="text-muted">Rate: ₱{{ $hourlyRate }}/hour</small>
+                                </div>
                             </div>
                             <input type="hidden" name="early_checkin_charge" id="earlyCheckinChargeInput" value="{{ $booking->early_checkin_charge ?? 0 }}">
                         </div>
@@ -135,27 +135,27 @@
                         <!-- Late Checkout -->
                         <div class="mb-3">
                             <label class="form-label fw-bold">Late Checkout (Max 5 hours)</label>
-                            <div class="d-flex align-items-center gap-3">
-                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="decrementCounter('lateCheckout')">
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-danger" onclick="decrementCounter('lateCheckout')">
                                     <i class="fas fa-minus"></i>
                                 </button>
                                 <input type="number" name="late_checkout_hours" id="lateCheckoutHours" 
-                                    class="form-control text-center" value="{{ $booking->late_checkout_hours ?? 0 }}" 
+                                    class="form-control text-center fw-bold" value="{{ $booking->late_checkout_hours ?? 0 }}" 
                                     min="0" max="5" readonly style="width: 80px;">
-                                <button type="button" class="btn btn-outline-success btn-sm" onclick="incrementCounter('lateCheckout')">
+                                <button type="button" class="btn btn-outline-success" onclick="incrementCounter('lateCheckout')">
                                     <i class="fas fa-plus"></i>
                                 </button>
-                                <span class="ms-3">
-                                    <strong id="lateCheckoutCharge">₱{{ number_format(($booking->late_checkout_charge ?? 0), 2) }}</strong>
-                                    <small class="text-muted d-block">Rate: ₱{{ $hourlyRate }}/hour</small>
-                                </span>
+                                <div class="ms-3 flex-grow-1">
+                                    <div class="fw-bold text-success fs-5" id="lateCheckoutCharge">₱{{ number_format(($booking->late_checkout_charge ?? 0), 2) }}</div>
+                                    <small class="text-muted">Rate: ₱{{ $hourlyRate }}/hour</small>
+                                </div>
                             </div>
                             <input type="hidden" name="late_checkout_charge" id="lateCheckoutChargeInput" value="{{ $booking->late_checkout_charge ?? 0 }}">
                         </div>
 
-                        <div class="alert alert-info small mb-0">
+                        <div class="alert alert-info mb-0">
                             <i class="fas fa-info-circle me-2"></i>
-                            Maximum 5 hours allowed for each service
+                            <small>Maximum 5 hours allowed for each service</small>
                         </div>
                     </div>
                 </div>
@@ -163,7 +163,7 @@
 
             <!-- PWD/Senior Discount -->
             <div class="col-lg-6">
-                <div class="card shadow-sm mb-4">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-warning text-dark">
                         <h5 class="mb-0"><i class="fas fa-percentage me-2"></i>PWD / Senior Citizen Discount</h5>
                     </div>
@@ -180,7 +180,7 @@
 
                         <div id="pwdSeniorSection" style="display: {{ $booking->has_pwd_senior ? 'block' : 'none' }};">
                             <div class="mb-3">
-                                <label class="form-label">Number of PWD/Senior Citizens</label>
+                                <label class="form-label fw-semibold">Number of PWD/Senior Citizens</label>
                                 <select class="form-select" name="pwd_senior_count" id="pwdSeniorCount" onchange="calculatePwdDiscount()">
                                     <option value="0">Select count</option>
                                     @for($i = 1; $i <= $booking->number_of_guests; $i++)
@@ -191,13 +191,14 @@
                                 </select>
                             </div>
 
-                            <div class="alert alert-warning small mb-3">
+                            <div class="alert alert-warning mb-3">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                Discount applies to individual's share only (20% of total ÷ guests)
+                                <small>Discount applies to individual's share only (20% of total ÷ guests)</small>
                             </div>
 
                             <div class="p-3 bg-light rounded">
-                                <strong>Discount Amount:</strong>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">Discount Amount:</span>
                                 <h4 class="text-success mb-0" id="pwdDiscountAmount">-₱{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</h4>
                             </div>
                             <input type="hidden" name="pwd_senior_discount" id="pwdSeniorDiscountInput" value="{{ $booking->pwd_senior_discount ?? 0 }}">
