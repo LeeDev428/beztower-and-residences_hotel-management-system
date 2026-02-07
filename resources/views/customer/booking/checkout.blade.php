@@ -489,7 +489,24 @@
                         
                         <div>
                             <label class="form-label">Country</label>
-                            <input type="text" name="country" class="form-input" placeholder="e.g., Philippines">
+                            <select name="country" class="form-select">
+                                <option value="">Select Country</option>
+                                <option value="Philippines" selected>Philippines</option>
+                                <option value="United States">United States</option>
+                                <option value="Canada">Canada</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Japan">Japan</option>
+                                <option value="South Korea">South Korea</option>
+                                <option value="China">China</option>
+                                <option value="Singapore">Singapore</option>
+                                <option value="Malaysia">Malaysia</option>
+                                <option value="Thailand">Thailand</option>
+                                <option value="Indonesia">Indonesia</option>
+                                <option value="Vietnam">Vietnam</option>
+                                <option value="India">India</option>
+                                <option value="Other">Other</option>
+                            </select>
                         </div>
                         
                         <div>
@@ -610,7 +627,7 @@
                                     <span>Down Payment (30%)</span>
                                 </div>
                                 <p class="payment-card-desc">Pay 30% now, settle remaining 70% upon check-in.</p>
-                                <div class="payment-amount" id="downPaymentAmount">₱{{ number_format($room->roomType->base_price * 1.12 * 0.30, 2) }}</div>
+                                <div class="payment-amount" id="downPaymentAmount">₱{{ number_format($room->roomType->base_price * 0.30, 2) }}</div>
                             </div>
                         </label>
                         
@@ -622,7 +639,7 @@
                                     <span>Full Payment (100%)</span>
                                 </div>
                                 <p class="payment-card-desc">Pay the full amount now for hassle-free check-in.</p>
-                                <div class="payment-amount" id="fullPaymentAmount">₱{{ number_format($room->roomType->base_price * 1.12, 2) }}</div>
+                                <div class="payment-amount" id="fullPaymentAmount">₱{{ number_format($room->roomType->base_price, 2) }}</div>
                             </div>
                         </label>
                     </div>
@@ -675,13 +692,13 @@
                     </div>
                     
                     <div class="price-row">
-                        <span class="price-label">Tax (12%)</span>
-                        <span class="price-value" id="taxDisplay">₱{{ number_format($room->roomType->base_price * 0.12, 2) }}</span>
+                        <span class="price-label">Tax (12% - Included)</span>
+                        <span class="price-value" id="taxDisplay">₱{{ number_format($room->roomType->base_price * (0.12/1.12), 2) }}</span>
                     </div>
                     
                     <div class="price-row">
                         <span class="price-label">Total</span>
-                        <span class="price-value" id="totalDisplay">₱{{ number_format($room->roomType->base_price * 1.12, 2) }}</span>
+                        <span class="price-value" id="totalDisplay">₱{{ number_format($room->roomType->base_price, 2) }}</span>
                     </div>
                 </div>
             </div>
@@ -690,7 +707,7 @@
 
     <script>
         const basePrice = {{ $room->roomType->base_price }};
-        const taxRate = 0.12;
+        const taxRate = 0.12 / 1.12; // Tax is included in base price
 
         // Calculate nights
         function calculateNights() {
@@ -752,8 +769,9 @@
                 extrasTotal += price * quantity;
             });
             
+            // Tax is included in base price, calculate it for display only
             const taxAmount = (subtotal + extrasTotal) * taxRate;
-            const total = subtotal + extrasTotal + taxAmount;
+            const total = subtotal + extrasTotal; // Tax already included in prices
             
             // Update displays
             document.getElementById('subtotalDisplay').textContent = '₱' + subtotal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
