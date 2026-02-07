@@ -127,10 +127,10 @@ class ReportController extends Controller
             ->whereIn('payment_status', ['verified', 'completed'])
             ->get();
 
-        $filename = 'revenue_report_' . Carbon::now()->format('Y-m-d_His') . '.csv';
+        $filename = 'revenue_report_' . Carbon::now()->format('Y-m-d_His') . '.xlsx';
         
         $headers = [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
