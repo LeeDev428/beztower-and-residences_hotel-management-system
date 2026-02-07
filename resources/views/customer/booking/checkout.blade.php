@@ -533,13 +533,19 @@
                         <div>
                             <label class="form-label">Check-In Date <span class="required">*</span></label>
                             <input type="date" name="check_in_date" class="form-input" id="checkInDate" 
-                                   min="{{ date('Y-m-d') }}" value="{{ request('check_in') }}" required onchange="calculateNights()">
+                                   min="{{ date('Y-m-d') }}" value="{{ request('check_in') }}" required onchange="calculateCheckout()">
+                        </div>
+
+                        <div>
+                            <label class="form-label">Number of Nights <span class="required">*</span></label>
+                            <input type="number" name="total_nights" class="form-input" id="totalNights" 
+                                   min="1" max="30" value="1" required onchange="calculateCheckout()">
                         </div>
                         
                         <div>
-                            <label class="form-label">Check-Out Date <span class="required">*</span></label>
+                            <label class="form-label">Check-Out Date (Automatic)</label>
                             <input type="date" name="check_out_date" class="form-input" id="checkOutDate" 
-                                   min="{{ date('Y-m-d', strtotime('+1 day')) }}" value="{{ request('check_out') }}" required onchange="calculateNights()">
+                                   readonly style="background: #f0f0f0; cursor: not-allowed;" required>
                         </div>
                         
                         <div>
