@@ -32,7 +32,7 @@ class PaymentConfirmation extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Payment Confirmed - Beztower & Residences',
+            subject: 'Booking Confirmed - Beztower & Residences',
         );
     }
 
