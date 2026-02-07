@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Reports')
-@section('page-title', 'Reports & Analytics')
+@section('page-title', 'Reports')
 
 @section('content')
 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
@@ -26,12 +26,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Export Data</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Download booking data as CSV</p>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Download booking data as Excel</p>
             <form method="GET" action="{{ route('admin.reports.export', 'bookings') }}">
                 <input type="date" name="start_date" value="{{ now()->startOfMonth()->format('Y-m-d') }}" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid var(--border-gray); border-radius: 6px;">
                 <input type="date" name="end_date" value="{{ now()->format('Y-m-d') }}" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid var(--border-gray); border-radius: 6px;">
                 <x-admin.button type="info">
-                    Export CSV
+                    Export Excel
                 </x-admin.button>
             </form>
         </div>
