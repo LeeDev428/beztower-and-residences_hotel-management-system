@@ -20,18 +20,6 @@
         </x-admin.stat-card>
 
         <x-admin.stat-card 
-            title="Occupancy Rate"
-            :value="$occupancyRate . '%'"
-            color="linear-gradient(135deg, #28a745 0%, #20873a 100%)">
-            <x-slot name="icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 48px; height: 48px;">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-            </x-slot>
-            <x-slot name="subtitle">{{ $occupiedRooms }}/{{ $totalRooms }} rooms occupied</x-slot>
-        </x-admin.stat-card>
-
-        <x-admin.stat-card 
             title="Arrivals Today"
             :value="$arrivalsToday->count()"
             color="linear-gradient(135deg, #17a2b8 0%, #138496 100%)">
@@ -160,14 +148,10 @@
         <canvas id="revenueChart" style="max-height: 300px;"></canvas>
     </x-admin.card>
 
-    <!-- Bookings & Occupancy Charts -->
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+    <!-- Bookings Chart -->
+    <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
         <x-admin.card title="Booking Trends (Last 12 Months)">
             <canvas id="bookingsChart" style="max-height: 250px;"></canvas>
-        </x-admin.card>
-
-        <x-admin.card title="Occupancy Rate Trends (Last 12 Months)">
-            <canvas id="occupancyChart" style="max-height: 250px;"></canvas>
         </x-admin.card>
     </div>
 </div>
