@@ -724,8 +724,11 @@
             if (checkIn && nights > 0) {
                 const checkInDate = new Date(checkIn + 'T00:00:00');
                 checkInDate.setDate(checkInDate.getDate() + nights);
-                const checkOutDate = checkInDate.toISOString().split('T')[0];
-                document.getElementById('checkOutDate').value = checkOutDate;
+                // Use local date components to avoid UTC offset shifting the date
+                const yyyy = checkInDate.getFullYear();
+                const mm = String(checkInDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(checkInDate.getDate()).padStart(2, '0');
+                document.getElementById('checkOutDate').value = `${yyyy}-${mm}-${dd}`;
             }
             if (document.getElementById('nightsCount')) {
                 document.getElementById('nightsCount').textContent = nights;
