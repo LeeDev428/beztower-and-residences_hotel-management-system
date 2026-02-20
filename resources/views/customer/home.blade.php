@@ -912,7 +912,7 @@
         <div class="hero-overlay"></div>
         
         <div class="hero-content">
-            <div class="hero-label">BEZTOWER AND RESIDENCES</div>
+            {{-- <div class="hero-label">BEZTOWER AND RESIDENCES</div> --}}
             {{-- <h1 class="hero-title">ENJOY A LUXURY<br>EXPERIENCE</h1> --}}
         </div>
         
