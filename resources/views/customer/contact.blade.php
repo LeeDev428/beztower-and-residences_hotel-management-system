@@ -49,7 +49,6 @@
                 @endforeach
             </div>
         @endif
-
         <form class="contact-form" action="{{ route('contact.send') }}" method="POST">
             @csrf
             <div class="form-row">
@@ -185,4 +184,37 @@
         }
     }
 </style>
+@endsection
+
+@section('scripts')
+<div id="toastContainer" style="position:fixed;top:1.25rem;right:1.25rem;z-index:99999;display:flex;flex-direction:column;gap:0.6rem;pointer-events:none;max-width:380px;"></div>
+<script>
+function showContactToast(message, type) {
+    const configs = {
+        success: { bg:'#d4edda', border:'#28a745', icon:'✓', text:'#155724', label:'Success' },
+        error:   { bg:'#f8d7da', border:'#dc3545', icon:'✕', text:'#721c24', label:'Error' },
+        warning: { bg:'#fff3cd', border:'#ffc107', icon:'⚠', text:'#856404', label:'Warning' },
+    };
+    const c = configs[type] || configs.success;
+    const t = document.createElement('div');
+    t.style.cssText = 'pointer-events:all;background:'+c.bg+';border-left:5px solid '+c.border+';border-radius:10px;padding:1rem 1.25rem;display:flex;align-items:flex-start;gap:0.75rem;box-shadow:0 8px 24px rgba(0,0,0,0.18);transform:translateX(120%);transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s ease;opacity:0;max-width:380px;width:100%;';
+    t.innerHTML = '<div style="width:30px;height:30px;border-radius:50%;background:'+c.border+';color:white;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;flex-shrink:0;">'+c.icon+'</div><div style="flex:1;"><div style="font-weight:700;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.5px;color:'+c.border+';margin-bottom:0.2rem;">'+c.label+'</div><div style="color:'+c.text+';font-size:0.9rem;line-height:1.4;">'+message+'</div></div><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:'+c.text+';font-size:1.2rem;padding:0;flex-shrink:0;opacity:0.6;">&times;</button>';
+    document.getElementById('toastContainer').appendChild(t);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{t.style.transform='translateX(0)';t.style.opacity='1';}));
+    setTimeout(()=>{t.style.transform='translateX(120%)';t.style.opacity='0';setTimeout(()=>t.remove(),350);}, 5000);
+}
+document.addEventListener('DOMContentLoaded', function() {
+    @if(session('success'))
+        showContactToast('{{ addslashes(session('success')) }}', 'success');
+    @endif
+    @if(session('warning'))
+        showContactToast('{{ addslashes(session('warning')) }}', 'warning');
+    @endif
+    @if($errors->any())
+        @foreach($errors->all() as $error)
+        showContactToast('{{ addslashes($error) }}', 'error');
+        @endforeach
+    @endif
+});
+</script>
 @endsection
