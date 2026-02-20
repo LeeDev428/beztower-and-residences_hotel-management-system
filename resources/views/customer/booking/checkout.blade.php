@@ -457,6 +457,12 @@
                     <p>Please fill in your details to complete the booking</p>
                 </div>
 
+                @if ($errors->has('error'))
+                    <div style="background:#fee2e2;border:1px solid #f87171;color:#991b1b;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:0.95rem;">
+                        <strong>Booking Limit Reached:</strong> {{ $errors->first('error') }}
+                    </div>
+                @endif
+
                 <form action="{{ route('booking.create') }}" method="POST" id="bookingForm" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="room_id" value="{{ $room->id }}">
