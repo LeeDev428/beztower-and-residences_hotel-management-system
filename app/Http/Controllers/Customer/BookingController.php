@@ -153,6 +153,9 @@ class BookingController extends Controller
                 Log::error('Failed to send booking acknowledgement email: ' . $e->getMessage());
             }
 
+            // Reset booking attempt counter on successful booking
+            $request->session()->forget('booking_attempts');
+
             // Redirect to payment page instead of confirmation
             return redirect()->route('booking.payment', ['reference' => $bookingReference])
                 ->with('success', 'Booking created! Please complete the down payment to confirm your reservation.');
