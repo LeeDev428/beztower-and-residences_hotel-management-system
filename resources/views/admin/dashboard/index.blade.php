@@ -150,9 +150,9 @@
 
     <!-- Bookings Chart -->
     <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
-        <x-admin.card title="Booking Trends (Last 12 Months)">
+        {{-- <x-admin.card title="Booking Trends (Last 12 Months)">
             <canvas id="bookingsChart" style="max-height: 250px;"></canvas>
-        </x-admin.card>
+        </x-admin.card> --}}
     </div>
 </div>
 
