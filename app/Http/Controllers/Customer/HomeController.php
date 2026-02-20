@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class HomeController extends Controller
 {
@@ -37,6 +38,27 @@ class HomeController extends Controller
     public function contact()
     {
         return view('customer.contact');
+    }
+
+    public function sendContact(Request $request)
+    {
+        $validated = $request->validate([
+            'name'    => 'required|string|max:255',
+            'email'   => 'required|email|max:255',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string|max:5000',
+        ]);
+
+        Mail::raw(
+            "Name: {$validated['name']}\nEmail: {$validated['email']}\n\nMessage:\n{$validated['message']}",
+            function ($mail) use ($validated) {
+                $mail->to(config('mail.from.address'))
+                     ->replyTo($validated['email'], $validated['name'])
+                     ->subject('Contact Form: ' . $validated['subject']);
+            }
+        );
+
+        return back()->with('success', 'Your message has been sent! We will get back to you soon.');
     }
 }
 
