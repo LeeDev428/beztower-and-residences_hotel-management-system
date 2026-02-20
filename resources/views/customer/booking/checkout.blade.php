@@ -490,7 +490,7 @@
                         
                         <div>
                             <label class="form-label">Phone <span class="required">*</span></label>
-                            <input type="tel" name="phone" class="form-input" required>
+                            <input type="tel" name="phone" class="form-input" required maxlength="11" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)" placeholder="09XXXXXXXXX">
                         </div>
                         
                         <div>
@@ -814,7 +814,7 @@
             
             if (roomTypeName.toLowerCase().includes('deluxe')) {
                 if (guestCount === 4 && roomMaxGuests >= 4) {
-                    message = 'For 4 guests, we <strong>strongly recommend</strong> adding an extra bed (₱600/stay). Select "Extra Bedding" for optimal comfort.';
+                    message = 'For 4 guests, we <strong>strongly recommend</strong> adding an extra bed (₱800/stay). Select "Extra Bedding" below for optimal comfort.';
                     showBox = true;
                 }
             }
