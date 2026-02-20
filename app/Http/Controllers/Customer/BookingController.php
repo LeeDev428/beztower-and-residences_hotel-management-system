@@ -50,14 +50,18 @@ class BookingController extends Controller
             'extra_quantities.*' => 'integer|min:1|max:50'
         ]);
 
-        // Booking attempt limit: max 2 per session (per device)
-        $attempts = $request->session()->get('booking_attempts', 0);
-        if ($attempts >= 2) {
-            return back()->withErrors([
-                'error' => 'You have reached the maximum of 2 booking attempts per session. Please contact us directly to make a reservation.'
-            ])->withInput();
+        // Booking limit: max 3 active bookings per email
+        $existingGuest = Guest::where('email', $validated['email'])->first();
+        if ($existingGuest) {
+            $activeCount = Booking::where('guest_id', $existingGuest->id)
+                ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
+                ->count();
+            if ($activeCount >= 3) {
+                return back()->withErrors([
+                    'error' => 'You already have 3 active bookings under this email address. You cannot make more than 3 bookings at a time. Please contact us if you need further assistance.'
+                ])->withInput();
+            }
         }
-        $request->session()->put('booking_attempts', $attempts + 1);
 
         try {
             DB::beginTransaction();
@@ -153,10 +157,7 @@ class BookingController extends Controller
                 Log::error('Failed to send booking acknowledgement email: ' . $e->getMessage());
             }
 
-            // Reset booking attempt counter on successful booking
-            $request->session()->forget('booking_attempts');
-
-            // Redirect to payment page instead of confirmation
+            // Redirect to payment page
             return redirect()->route('booking.payment', ['reference' => $bookingReference])
                 ->with('success', 'Booking created! Please complete the down payment to confirm your reservation.');
 
