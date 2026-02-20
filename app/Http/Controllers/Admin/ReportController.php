@@ -20,6 +20,60 @@ class ReportController extends Controller
         return view('admin.reports.index');
     }
 
+    public function generatePdf(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate   = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+
+        // Stats
+        $totalBookings  = Booking::whereBetween('created_at', [$startDate, $endDate])->count();
+        $totalGuests    = Guest::whereBetween('created_at', [$startDate, $endDate])->count();
+        $totalRooms     = Room::count();
+        $totalRevenue   = Payment::whereIn('payment_status', ['verified', 'completed'])
+                            ->whereBetween('created_at', [$startDate, $endDate])
+                            ->sum('amount');
+
+        // Bookings breakdown by status
+        $bookingsByStatus = Booking::whereBetween('created_at', [$startDate, $endDate])
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        // Payments in range
+        $recentBookings = Booking::with(['guest', 'room', 'roomType'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->latest()
+            ->take(50)
+            ->get();
+
+        // Revenue by room type
+        $revenueByType = Payment::whereIn('payment_status', ['verified', 'completed'])
+            ->whereBetween('payments.created_at', [$startDate, $endDate])
+            ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
+            ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
+            ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
+            ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
+            ->groupBy('room_types.name')
+            ->get();
+
+        // Log activity
+        ActivityLog::log(
+            'report_generate',
+            'Generated PDF report for ' . Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y')
+        );
+
+        $pdf = Pdf::loadView('admin.reports.pdf', compact(
+            'startDate', 'endDate',
+            'totalBookings', 'totalGuests', 'totalRooms', 'totalRevenue',
+            'bookingsByStatus', 'recentBookings', 'revenueByType'
+        ))->setPaper('a4', 'portrait');
+
+        $filename = 'hotel_report_' . Carbon::parse($startDate)->format('Ymd') . '_to_' . Carbon::parse($endDate)->format('Ymd') . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
     public function revenue(Request $request)
     {
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth());
