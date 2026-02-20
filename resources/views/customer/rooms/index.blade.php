@@ -99,6 +99,11 @@
         </div>
     </div>
 
+    <!-- Hidden booking context passed from home page -->
+    <input type="hidden" id="ctxCheckIn"  value="{{ request('check_in') }}">
+    <input type="hidden" id="ctxCheckOut" value="{{ request('check_out') }}">
+    <input type="hidden" id="ctxGuests"   value="{{ request('guests') }}">
+
     <!-- Results Counter -->
     <div class="results-info">
         <span id="resultsCount">Showing {{ $rooms->count() }} of {{ $rooms->total() }} rooms</span>
@@ -944,6 +949,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const sortBy = sortBySelect.value;
             if (sortBy) params.append('sort', sortBy);
+            
+            // Pass booking context (check_in/check_out/guests) so Learn More links stay populated
+            const ctxCheckIn  = document.getElementById('ctxCheckIn').value;
+            const ctxCheckOut = document.getElementById('ctxCheckOut').value;
+            const ctxGuests   = document.getElementById('ctxGuests').value;
+            if (ctxCheckIn)  params.append('check_in', ctxCheckIn);
+            if (ctxCheckOut) params.append('check_out', ctxCheckOut);
+            // Use ctxGuests as fallback when no guests filter UI is present
+            if (!guests && ctxGuests) params.append('guests', ctxGuests);
             
             if (amenityCheckboxes.length > 0) {
                 const selectedAmenities = Array.from(amenityCheckboxes)
