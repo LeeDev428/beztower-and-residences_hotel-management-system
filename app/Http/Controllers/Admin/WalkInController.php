@@ -10,6 +10,7 @@ use App\Models\Room;
 use App\Models\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class WalkInController extends Controller
@@ -51,25 +52,28 @@ class WalkInController extends Controller
         $subtotal    = $room->roomType->base_price * $nights;
         $totalAmount = $subtotal;
 
-        // Create or find guest (match by phone)
-        $guest = Guest::firstOrCreate(
+        // Always update guest info with what admin entered (match by phone)
+        $guest = Guest::updateOrCreate(
             ['phone' => $validated['phone']],
             [
-                'first_name' => $validated['first_name'],
-                'last_name'  => $validated['last_name'],
-                'email'      => $validated['email'] ?? null,
-                'address'    => $validated['address'] ?? null,
+                'first_name'  => $validated['first_name'],
+                'last_name'   => $validated['last_name'],
+                'email'       => $validated['email'] ?? null,
+                'address'     => $validated['address'] ?? null,
                 'preferences' => $validated['id_type'] ? 'ID Type: ' . $validated['id_type'] : null,
             ]
         );
 
-        // Generate booking reference
+        // Generate unique booking reference
         $reference = 'WI-' . strtoupper(Str::random(8));
 
         // Determine payment amount
         $paymentAmount = $validated['payment_type'] === 'down_payment'
             ? round($totalAmount * 0.30, 2)
             : $totalAmount;
+
+        DB::beginTransaction();
+        try {
 
         // Create booking (walk-ins are immediately checked-in)
         $booking = Booking::create([
@@ -94,17 +98,25 @@ class WalkInController extends Controller
 
         // Record payment
         Payment::create([
-            'booking_id'      => $booking->id,
-            'payment_type'    => $validated['payment_type'],
-            'payment_method'  => $validated['payment_method'],
-            'amount'          => $paymentAmount,
-            'percentage'      => $validated['payment_type'] === 'down_payment' ? 30.00 : 100.00,
-            'payment_status'  => 'completed',
-            'payment_date'    => now(),
-            'payment_notes'   => 'Walk-in booking. Recorded by admin.',
-            'verified_at'     => now(),
-            'verified_by'     => auth()->id(),
+            'booking_id'        => $booking->id,
+            'payment_type'      => $validated['payment_type'],
+            'payment_method'    => $validated['payment_method'],
+            'payment_reference' => $reference,
+            'amount'            => $paymentAmount,
+            'percentage'        => $validated['payment_type'] === 'down_payment' ? 30.00 : 100.00,
+            'payment_status'    => 'completed',
+            'payment_date'      => now(),
+            'payment_notes'     => 'Walk-in booking. Recorded by admin.',
+            'verified_at'       => now(),
+            'verified_by'       => auth()->id(),
         ]);
+
+        DB::commit();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to create walk-in booking: ' . $e->getMessage()])->withInput();
+        }
 
         // Log activity
         ActivityLog::log(
