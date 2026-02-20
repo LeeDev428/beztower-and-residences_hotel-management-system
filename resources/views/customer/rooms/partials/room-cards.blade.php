@@ -45,7 +45,15 @@
                         <span class="price-period">/night</span>
                     @endif
                 </div>
-                <a href="{{ route('rooms.show', $room) }}" class="book-btn">Learn More</a>
+                @php
+                    $learnMoreUrl = route('rooms.show', $room);
+                    $lcParams = [];
+                    if (request('check_in'))  $lcParams['check_in']  = request('check_in');
+                    if (request('check_out')) $lcParams['check_out'] = request('check_out');
+                    if (request('guests'))    $lcParams['guests']    = request('guests');
+                    if ($lcParams) $learnMoreUrl .= '?' . http_build_query($lcParams);
+                @endphp
+                <a href="{{ $learnMoreUrl }}" class="book-btn">Learn More</a>
             </div>
         </div>
     </div>
