@@ -1037,7 +1037,15 @@
 
                 <!-- Action Buttons -->
                 <div class="action-section">
-                    <a href="{{ route('booking.checkout', $room->id) }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
+                    @php
+                        $checkoutUrl = route('booking.checkout', $room->id);
+                        $ctParams = [];
+                        if (request('check_in'))  $ctParams['check_in']  = request('check_in');
+                        if (request('check_out')) $ctParams['check_out'] = request('check_out');
+                        if (request('guests'))    $ctParams['guests']    = request('guests');
+                        if ($ctParams) $checkoutUrl .= '?' . http_build_query($ctParams);
+                    @endphp
+                    <a href="{{ $checkoutUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
                         <i class="fas fa-calendar-check"></i> Book Now
                     </a>
                 </div>
