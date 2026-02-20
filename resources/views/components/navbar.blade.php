@@ -11,13 +11,6 @@
         <li><a href="{{ route('home') }}#services">Services</a></li>
         <li><a href="{{ route('home') }}#contact">Contact</a></li>
     </ul>
-    
-    <div class="nav-right">
-        {{-- <div class="contact-number">
-            <i class="fas fa-phone"></i>
-            (02) 88075046 or 09171221429
-        </div> --}}
-    </div>
 </nav>
 
 <style>
