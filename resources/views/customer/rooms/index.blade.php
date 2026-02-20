@@ -87,7 +87,6 @@
                     <option value="">Default</option>
                     <option value="price_low">Price: Low to High</option>
                     <option value="price_high">Price: High to Low</option>
-                    <option value="name">Name: A-Z</option>
                 </select>
             </div>
 
@@ -884,8 +883,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const amenitiesBtn = document.getElementById('amenitiesBtn');
     const amenitiesList = document.getElementById('amenitiesList');
     const amenityCheckboxes = document.querySelectorAll('input[name="amenities[]"]');
-    const roomsGrid = document.getElementById('roomsGrid');
-    const paginationWrapper = document.getElementById('paginationWrapper');
     const resultsCount = document.getElementById('resultsCount');
     const loadingSpinner = document.getElementById('loadingSpinner');
     const calendarModal = document.getElementById('calendarModal');
@@ -895,6 +892,31 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextMonthBtn = document.getElementById('nextMonth');
     const calendarGrid = document.getElementById('calendarGrid');
     const calendarMonthYear = document.getElementById('calendarMonthYear');
+
+    // roomsGrid and paginationWrapper may not exist if no rooms found yet
+    let roomsGrid = document.getElementById('roomsGrid');
+    let paginationWrapper = document.getElementById('paginationWrapper');
+
+    // Ensure containers exist for AJAX results
+    function ensureContainers() {
+        if (!roomsGrid) {
+            const noRooms = document.getElementById('noRoomsMessage');
+            // Create a rooms grid container if missing
+            roomsGrid = document.createElement('div');
+            roomsGrid.className = 'rooms-grid';
+            roomsGrid.id = 'roomsGrid';
+            if (noRooms) {
+                noRooms.parentNode.insertBefore(roomsGrid, noRooms);
+            }
+        }
+        if (!paginationWrapper) {
+            paginationWrapper = document.createElement('div');
+            paginationWrapper.className = 'pagination-wrapper';
+            paginationWrapper.id = 'paginationWrapper';
+            const section = document.querySelector('.content-section');
+            if (section) section.appendChild(paginationWrapper);
+        }
+    }
 
     // Filter function with debounce
     function applyFilters(page = 1) {
