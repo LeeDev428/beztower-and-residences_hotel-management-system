@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\GuestManagementController;
 use App\Http\Controllers\Admin\HousekeepingController;
 use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\WalkInController;
 
 // Customer Routes (Public - No Login Required)
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -77,6 +78,8 @@ Route::prefix('admin')->group(function () {
         // Booking Management
         Route::prefix('bookings')->group(function () {
             Route::get('/', [BookingManagementController::class, 'index'])->name('admin.bookings.index');
+            Route::get('/walk-in', [WalkInController::class, 'create'])->name('admin.bookings.walkIn');
+            Route::post('/walk-in', [WalkInController::class, 'store'])->name('admin.bookings.walkIn.store');
             Route::get('/{booking}', [BookingManagementController::class, 'show'])->name('admin.bookings.show');
             Route::put('/{booking}/status', [BookingManagementController::class, 'updateStatus'])->name('admin.bookings.updateStatus');
             Route::get('/{booking}/final-billing', [BookingManagementController::class, 'finalBilling'])->name('admin.bookings.finalBilling');
