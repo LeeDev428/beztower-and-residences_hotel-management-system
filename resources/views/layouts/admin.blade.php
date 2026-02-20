@@ -480,21 +480,76 @@
 
         <!-- Main Content -->
         <main class="content">
-            @if(session('success'))
-            <div style="padding: 1rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; margin-bottom: 1.5rem; color: #155724;">
-                {{ session('success') }}
-            </div>
-            @endif
-
-            @if(session('error'))
-            <div style="padding: 1rem; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; margin-bottom: 1.5rem; color: #721c24;">
-                {{ session('error') }}
-            </div>
-            @endif
-
             @yield('content')
         </main>
     </div>
+
+    <!-- Toast Notification System -->
+    <div id="toastContainer" style="position: fixed; top: 1.25rem; right: 1.25rem; z-index: 99999; display: flex; flex-direction: column; gap: 0.6rem; pointer-events: none; max-width: 380px;"></div>
+
+    @if(session('success'))
+    <script>document.addEventListener('DOMContentLoaded',function(){showToast('{{ addslashes(session('success')) }}','success');});</script>
+    @endif
+    @if(session('error'))
+    <script>document.addEventListener('DOMContentLoaded',function(){showToast('{{ addslashes(session('error')) }}','error');});</script>
+    @endif
+    @if(session('warning'))
+    <script>document.addEventListener('DOMContentLoaded',function(){showToast('{{ addslashes(session('warning')) }}','warning');});</script>
+    @endif
+    @if(session('info'))
+    <script>document.addEventListener('DOMContentLoaded',function(){showToast('{{ addslashes(session('info')) }}','info');});</script>
+    @endif
+
+    <script>
+    function showToast(message, type = 'success') {
+        const colors = {
+            success: { bg: '#d4edda', border: '#28a745', icon: '✓', text: '#155724', label: 'Success' },
+            error:   { bg: '#f8d7da', border: '#dc3545', icon: '✕', text: '#721c24', label: 'Error' },
+            warning: { bg: '#fff3cd', border: '#ffc107', icon: '⚠', text: '#856404', label: 'Warning' },
+            info:    { bg: '#d1ecf1', border: '#17a2b8', icon: 'ℹ', text: '#0c5460', label: 'Info' },
+        };
+        const c = colors[type] || colors.success;
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            pointer-events: all;
+            background: ${c.bg};
+            border-left: 5px solid ${c.border};
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease;
+            opacity: 0;
+            max-width: 380px;
+            width: 100%;
+        `;
+        toast.innerHTML = `
+            <div style="width:30px;height:30px;border-radius:50%;background:${c.border};color:white;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;flex-shrink:0;">${c.icon}</div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.5px;color:${c.border};margin-bottom:0.2rem;">${c.label}</div>
+                <div style="color:${c.text};font-size:0.9rem;line-height:1.4;">${message}</div>
+            </div>
+            <button onclick="dismissToast(this.parentElement)" style="background:none;border:none;cursor:pointer;color:${c.text};font-size:1.1rem;padding:0;flex-shrink:0;opacity:0.6;" title="Dismiss">&times;</button>
+        `;
+        document.getElementById('toastContainer').appendChild(toast);
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                toast.style.transform = 'translateX(0)';
+                toast.style.opacity = '1';
+            });
+        });
+        setTimeout(() => dismissToast(toast), 5000);
+    }
+    function dismissToast(toast) {
+        if (!toast || !toast.parentElement) return;
+        toast.style.transform = 'translateX(120%)';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 350);
+    }
+    </script>
 
     <script>
         // Mobile Menu Toggle
