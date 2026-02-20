@@ -55,19 +55,7 @@
         </div>
     </x-admin.card>
 
-    <!-- Occupancy Export -->
-    <x-admin.card title="Occupancy Report">
-        <div style="text-align: center; padding: 2rem 0;">
-            <svg style="width: 80px; height: 80px; margin: 0 auto 1rem; color: var(--success);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-            </svg>
-            <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Occupancy Report</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">View room occupancy rates by date range</p>
-            <x-admin.button type="success" href="{{ route('admin.reports.occupancy') }}">
-                View Occupancy
-            </x-admin.button>
-        </div>
-    </x-admin.card>
+
 </div>
 
 <!-- Quick Stats -->
