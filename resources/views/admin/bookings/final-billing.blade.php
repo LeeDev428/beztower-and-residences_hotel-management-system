@@ -355,16 +355,6 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 @endsection
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1 class="h3 mb-0">Final Billing</h1>
-                <a href="{{ route('admin.bookings.show', $booking) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Booking
-                </a>
-            </div>
-        </div>
-    </div>
 
     <!-- Booking Details Card -->
     <div class="row mb-4">
