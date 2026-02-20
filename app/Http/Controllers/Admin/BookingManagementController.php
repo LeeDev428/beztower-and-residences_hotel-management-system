@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Payment;
 use App\Models\ActivityLog;
 use App\Mail\CheckoutReminder;
 use App\Mail\BookingCancelled;
@@ -65,7 +66,7 @@ class BookingManagementController extends Controller
     public function updateStatus(Request $request, Booking $booking)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,confirmed,checked_in,checked_out,cancelled',
+            'status' => 'required|in:pending,confirmed,checked_in,checked_out,cancelled,rescheduled,rejected_payment',
         ]);
 
         // Load guest relationship for emails
@@ -74,10 +75,33 @@ class BookingManagementController extends Controller
         $booking->update(['status' => $validated['status']]);
 
         // Update room status based on booking status
-        if ($validated['status'] === 'checked_in') {
+        if ($validated['status'] === 'rejected_payment') {
+            // Free up room when payment is rejected
+            $booking->room->update(['status' => 'available']);
+        } elseif ($validated['status'] === 'checked_in') {
             $booking->room->update(['status' => 'occupied']);
         } elseif ($validated['status'] === 'checked_out') {
             $booking->room->update(['status' => 'maintenance']);
+
+            // Auto-record remaining balance as revenue
+            $amountPaid = $booking->payments()
+                ->whereIn('payment_status', ['verified', 'completed'])
+                ->sum('amount');
+            $finalTotal = $booking->final_total ?? $booking->total_amount;
+            $remainingBalance = round($finalTotal - $amountPaid, 2);
+            if ($remainingBalance > 0) {
+                Payment::create([
+                    'booking_id' => $booking->id,
+                    'payment_type' => 'remaining_balance',
+                    'payment_method' => 'cash',
+                    'amount' => $remainingBalance,
+                    'payment_status' => 'completed',
+                    'payment_date' => now(),
+                    'payment_notes' => 'Auto-recorded remaining balance on checkout.',
+                    'verified_at' => now(),
+                    'verified_by' => auth()->id(),
+                ]);
+            }
             
             // Create or update housekeeping record
             \App\Models\Housekeeping::updateOrCreate(
