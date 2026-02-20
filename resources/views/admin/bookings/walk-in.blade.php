@@ -204,8 +204,8 @@
                         <!-- GCash QR Section -->
                         <div id="gcashInfo" style="display: none; margin-top: 1rem; background: #e8f4ff; border: 1px solid #bee0ff; border-radius: 8px; padding: 1rem; text-align: center;">
                             <p style="font-weight: 600; margin-bottom: 0.5rem;"><i class="fas fa-qrcode"></i> GCash QR Code</p>
-                            <img src="{{ asset('images/gcash-qr.png') }}" alt="GCash QR" style="max-width: 150px; border: 2px solid #0070E0; border-radius: 8px; margin-bottom: 0.5rem;">
-                            <p style="font-size: 0.8rem; color: #555;">Number: <strong>0917-123-4567</strong></p>
+                            {{-- <img src="{{ asset('images/gcash-qr.png') }}" alt="GCash QR" style="max-width: 150px; border: 2px solid #0070E0; border-radius: 8px; margin-bottom: 0.5rem;"> --}}
+                            <p style="font-size: 0.8rem; color: #555;">Number: <strong>+63 912 345 6789</strong></p>
                             <p style="font-size: 0.8rem; color: #555;">Name: <strong>Bez Tower and Residences</strong></p>
                         </div>
                     </div>
