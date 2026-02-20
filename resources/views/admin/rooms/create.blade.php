@@ -35,7 +35,7 @@
                         </option>
                         @endforeach
                     </select>
-                    <button type="button" onclick="openRoomTypesModal()" class="btn-view-details">View Details</button>
+                    <button type="button" onclick="openRoomTypesModal()" class="btn-view-details">Learn More</button>
                 </div>
                 @error('room_type_id')
                 <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
@@ -75,7 +75,7 @@
         <div style="margin-bottom: 1.5rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                 <label style="font-weight: 600;">Amenities</label>
-                <button type="button" onclick="openAmenitiesModal()" class="btn-view-details">View Details</button>
+                <button type="button" onclick="openAmenitiesModal()" class="btn-view-details">Learn More</button>
             </div>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; padding: 1rem; background: var(--light-gray); border-radius: 8px;" id="amenitiesContainer">
                 @foreach($amenities as $amenity)
