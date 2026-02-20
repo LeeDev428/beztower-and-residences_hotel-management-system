@@ -293,12 +293,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Ensure check-out is always after check-in
     document.getElementById('checkInDate').addEventListener('change', function() {
-        const ci = new Date(this.value);
+        const ci = new Date(this.value + 'T00:00:00');
         const co = document.getElementById('checkOutDate');
-        if (co.value && new Date(co.value) <= ci) {
+        if (co.value && new Date(co.value + 'T00:00:00') <= ci) {
             const nextDay = new Date(ci);
             nextDay.setDate(nextDay.getDate() + 1);
-            co.value = nextDay.toISOString().split('T')[0];
+            const yyyy = nextDay.getFullYear();
+            const mm = String(nextDay.getMonth() + 1).padStart(2, '0');
+            const dd = String(nextDay.getDate()).padStart(2, '0');
+            co.value = `${yyyy}-${mm}-${dd}`;
         }
         co.min = this.value;
         calculateTotal();
