@@ -39,7 +39,7 @@
                 </tr>
                 <tr>
                     <td style="padding: 7px 0; color: var(--text-muted);">Room</td>
-                    <td style="padding: 7px 0; font-weight: 700;">{{ $booking->room->room_number }} €” {{ $booking->roomType->name }}</td>
+                    <td style="padding: 7px 0; font-weight: 700;">{{ $booking->room->room_number }} — {{ $booking->roomType->name }}</td>
                 </tr>
                 <tr>
                     <td style="padding: 7px 0; color: var(--text-muted);">Check-in</td>
@@ -59,7 +59,7 @@
                 </tr>
                 <tr>
                     <td style="padding: 10px 0 0; color: var(--primary-gold); font-weight: 700; border-top: 1px solid var(--border-gray);">Room Total</td>
-                    <td style="padding: 10px 0 0; font-weight: 800; font-size: 1.1rem; color: var(--primary-gold); border-top: 1px solid var(--border-gray);">‚±{{ number_format($booking->total_amount, 2) }}</td>
+                    <td style="padding: 10px 0 0; font-weight: 800; font-size: 1.1rem; color: var(--primary-gold); border-top: 1px solid var(--border-gray);">₱{{ number_format($booking->total_amount, 2) }}</td>
                 </tr>
             </table>
         </x-admin.card>
@@ -68,28 +68,28 @@
         <x-admin.card title="Final Total">
             <div style="background: linear-gradient(135deg, #2c2c2c, #3a3a3a); border-radius: 10px; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
                 <span style="color: #ccc; font-size: 1rem; font-weight: 600;">Grand Total:</span>
-                <span style="font-size: 1.75rem; font-weight: 800; color: var(--primary-gold);" id="grandTotal">‚±{{ number_format($booking->final_total ?? $booking->total_amount, 2) }}</span>
+                <span style="font-size: 1.75rem; font-weight: 800; color: var(--primary-gold);" id="grandTotal">₱{{ number_format($booking->final_total ?? $booking->total_amount, 2) }}</span>
             </div>
             <div style="font-size: 0.9rem;">
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--text-muted);">Room Charges</span>
-                    <span style="font-weight: 600;">‚±{{ number_format($booking->total_amount, 2) }}</span>
+                    <span style="font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--text-muted);">Early Check-in</span>
-                    <span style="font-weight: 600;" id="earlyCheckinDisplay">‚±{{ number_format($booking->early_checkin_charge ?? 0, 2) }}</span>
+                    <span style="font-weight: 600;" id="earlyCheckinDisplay">₱{{ number_format($booking->early_checkin_charge ?? 0, 2) }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--text-muted);">Late Checkout</span>
-                    <span style="font-weight: 600;" id="lateCheckoutDisplay">‚±{{ number_format($booking->late_checkout_charge ?? 0, 2) }}</span>
+                    <span style="font-weight: 600;" id="lateCheckoutDisplay">₱{{ number_format($booking->late_checkout_charge ?? 0, 2) }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--success); font-weight: 600;">PWD/Senior Discount</span>
-                    <span style="font-weight: 700; color: var(--success);" id="pwdDiscountDisplay">-‚±{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</span>
+                    <span style="font-weight: 700; color: var(--success);" id="pwdDiscountDisplay">-₱{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; padding: 5px 0;">
                     <span style="color: var(--text-muted);">Manual Adjustment</span>
-                    <span style="font-weight: 600;" id="manualAdjustmentDisplay">‚±{{ number_format($booking->manual_adjustment ?? 0, 2) }}</span>
+                    <span style="font-weight: 600;" id="manualAdjustmentDisplay">₱{{ number_format($booking->manual_adjustment ?? 0, 2) }}</span>
                 </div>
             </div>
         </x-admin.card>
@@ -121,8 +121,8 @@
                             <i class="fas fa-plus"></i>
                         </button>
                         <div style="flex: 1;">
-                            <div style="font-size: 1.2rem; font-weight: 800; color: var(--success);" id="earlyCheckinCharge">‚±{{ number_format($booking->early_checkin_charge ?? 0, 2) }}</div>
-                            <div style="font-size: 0.78rem; color: var(--text-muted);">Rate: ‚±{{ $hourlyRate }}/hour</div>
+                            <div style="font-size: 1.2rem; font-weight: 800; color: var(--success);" id="earlyCheckinCharge">₱{{ number_format($booking->early_checkin_charge ?? 0, 2) }}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">Rate: ₱{{ $hourlyRate }}/hour</div>
                         </div>
                     </div>
                     <input type="hidden" name="early_checkin_charge" id="earlyCheckinChargeInput" value="{{ $booking->early_checkin_charge ?? 0 }}">
@@ -144,8 +144,8 @@
                             <i class="fas fa-plus"></i>
                         </button>
                         <div style="flex: 1;">
-                            <div style="font-size: 1.2rem; font-weight: 800; color: var(--success);" id="lateCheckoutCharge">‚±{{ number_format($booking->late_checkout_charge ?? 0, 2) }}</div>
-                            <div style="font-size: 0.78rem; color: var(--text-muted);">Rate: ‚±{{ $hourlyRate }}/hour</div>
+                            <div style="font-size: 1.2rem; font-weight: 800; color: var(--success);" id="lateCheckoutCharge">₱{{ number_format($booking->late_checkout_charge ?? 0, 2) }}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">Rate: ₱{{ $hourlyRate }}/hour</div>
                         </div>
                     </div>
                     <input type="hidden" name="late_checkout_charge" id="lateCheckoutChargeInput" value="{{ $booking->late_checkout_charge ?? 0 }}">
@@ -187,7 +187,7 @@
                     </div>
                     <div style="background: var(--light-gray); border-radius: 10px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-weight: 700; font-size: 0.95rem;">Discount Amount:</span>
-                        <span style="font-size: 1.4rem; font-weight: 800; color: var(--success);" id="pwdDiscountAmount">-‚±{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</span>
+                        <span style="font-size: 1.4rem; font-weight: 800; color: var(--success);" id="pwdDiscountAmount">-₱{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</span>
                     </div>
                     <input type="hidden" name="pwd_senior_discount" id="pwdSeniorDiscountInput" value="{{ $booking->pwd_senior_discount ?? 0 }}">
                 </div>
@@ -202,7 +202,7 @@
                 <div style="margin-bottom: 1.25rem;">
                     <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Adjustment Amount</label>
                     <div style="display: flex; align-items: center; border: 1px solid var(--border-gray); border-radius: 8px; overflow: hidden;">
-                        <span style="padding: 0.65rem 0.85rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.9rem;">‚±</span>
+                        <span style="padding: 0.65rem 0.85rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.9rem;">₱</span>
                         <input type="number" name="manual_adjustment" id="manualAdjustment"
                             value="{{ $booking->manual_adjustment ?? 0 }}" step="0.01"
                             style="flex: 1; border: none; outline: none; padding: 0.65rem 0.85rem; font-size: 0.9rem;"
@@ -281,13 +281,13 @@ function calculateCharge(type) {
     const hours = parseInt(document.getElementById(type + 'Hours').value);
     const charge = hours * hourlyRate;
 
-    document.getElementById(type + 'Charge').textContent = '‚±' + charge.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById(type + 'Charge').textContent = '₱' + charge.toLocaleString('en-PH', {minimumFractionDigits: 2});
     document.getElementById(type + 'ChargeInput').value = charge;
 
     if (type === 'earlyCheckin') {
-        document.getElementById('earlyCheckinDisplay').textContent = '‚±' + charge.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        document.getElementById('earlyCheckinDisplay').textContent = '₱' + charge.toLocaleString('en-PH', {minimumFractionDigits: 2});
     } else {
-        document.getElementById('lateCheckoutDisplay').textContent = '‚±' + charge.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        document.getElementById('lateCheckoutDisplay').textContent = '₱' + charge.toLocaleString('en-PH', {minimumFractionDigits: 2});
     }
 
     calculateTotal();
@@ -303,8 +303,8 @@ function togglePwdSenior() {
     } else {
         section.style.display = 'none';
         document.getElementById('pwdSeniorDiscountInput').value = 0;
-        document.getElementById('pwdDiscountAmount').textContent = '-‚±0.00';
-        document.getElementById('pwdDiscountDisplay').textContent = '-‚±0.00';
+        document.getElementById('pwdDiscountAmount').textContent = '-₱0.00';
+        document.getElementById('pwdDiscountDisplay').textContent = '-₱0.00';
         calculateTotal();
     }
 }
@@ -316,8 +316,8 @@ function calculatePwdDiscount() {
     const count = parseInt(document.getElementById('pwdSeniorCount').value);
     if (count === 0) {
         document.getElementById('pwdSeniorDiscountInput').value = 0;
-        document.getElementById('pwdDiscountAmount').textContent = '-‚±0.00';
-        document.getElementById('pwdDiscountDisplay').textContent = '-‚±0.00';
+        document.getElementById('pwdDiscountAmount').textContent = '-₱0.00';
+        document.getElementById('pwdDiscountDisplay').textContent = '-₱0.00';
         calculateTotal();
         return;
     }
@@ -326,8 +326,8 @@ function calculatePwdDiscount() {
     const discount = (individualShare * 0.20) * count;
 
     document.getElementById('pwdSeniorDiscountInput').value = discount.toFixed(2);
-    document.getElementById('pwdDiscountAmount').textContent = '-‚±' + discount.toLocaleString('en-PH', {minimumFractionDigits: 2});
-    document.getElementById('pwdDiscountDisplay').textContent = '-‚±' + discount.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('pwdDiscountAmount').textContent = '-₱' + discount.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('pwdDiscountDisplay').textContent = '-₱' + discount.toLocaleString('en-PH', {minimumFractionDigits: 2});
 
     calculateTotal();
 }
@@ -340,8 +340,8 @@ function calculateTotal() {
 
     const grandTotal = roomTotal + earlyCheckin + lateCheckout - pwdDiscount + manualAdjust;
 
-    document.getElementById('grandTotal').textContent = '‚±' + grandTotal.toLocaleString('en-PH', {minimumFractionDigits: 2});
-    document.getElementById('manualAdjustmentDisplay').textContent = '‚±' + manualAdjust.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('grandTotal').textContent = '₱' + grandTotal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('manualAdjustmentDisplay').textContent = '₱' + manualAdjust.toLocaleString('en-PH', {minimumFractionDigits: 2});
 }
 
 function toggleGcashQR() {
