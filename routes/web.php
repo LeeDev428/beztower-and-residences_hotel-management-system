@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\AmenityController;
 use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\GuestManagementController;
 use App\Http\Controllers\Admin\HousekeepingController;
+use App\Http\Controllers\Admin\ContactMessageController;
 
 // Customer Routes (Public - No Login Required)
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -96,6 +97,14 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [HousekeepingController::class, 'index'])->name('admin.housekeeping.index');
             Route::put('/{housekeeping}', [HousekeepingController::class, 'update'])->name('admin.housekeeping.update');
             Route::post('/assign', [HousekeepingController::class, 'assign'])->name('admin.housekeeping.assign')->middleware('role:admin,manager');
+        });
+
+        // Contact Messages
+        Route::prefix('contact-messages')->group(function () {
+            Route::get('/', [ContactMessageController::class, 'index'])->name('admin.contact-messages.index');
+            Route::patch('/{contactMessage}/mark-read', [ContactMessageController::class, 'markRead'])->name('admin.contact-messages.markRead');
+            Route::patch('/{contactMessage}/mark-unread', [ContactMessageController::class, 'markUnread'])->name('admin.contact-messages.markUnread');
+            Route::delete('/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('admin.contact-messages.destroy');
         });
 
         // Payment Verification
