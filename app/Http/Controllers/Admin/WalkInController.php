@@ -11,6 +11,7 @@ use App\Models\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class WalkInController extends Controller
@@ -33,7 +34,7 @@ class WalkInController extends Controller
             'email'           => 'nullable|email|max:255',
             'phone'           => 'required|string|max:11',
             'address'         => 'nullable|string|max:500',
-            'id_type'         => 'nullable|string|max:100',
+            'id_photo'         => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
             'room_id'         => 'required|exists:rooms,id',
             'check_in_date'   => 'required|date',
             'check_out_date'  => 'required|date|after:check_in_date',
@@ -52,17 +53,23 @@ class WalkInController extends Controller
         $subtotal    = $room->roomType->base_price * $nights;
         $totalAmount = $subtotal;
 
+        // Handle ID photo upload
+        $idPhotoPath = null;
+        if ($request->hasFile('id_photo')) {
+            $idPhotoPath = $request->file('id_photo')->store('guests/id_photos', 'public');
+        }
+
         // Always update guest info with what admin entered (match by phone)
-        $guest = Guest::updateOrCreate(
-            ['phone' => $validated['phone']],
-            [
-                'first_name'  => $validated['first_name'],
-                'last_name'   => $validated['last_name'],
-                'email'       => $validated['email'] ?? null,
-                'address'     => $validated['address'] ?? null,
-                'preferences' => $validated['id_type'] ? 'ID Type: ' . $validated['id_type'] : null,
-            ]
-        );
+        $guestData = [
+            'first_name' => $validated['first_name'],
+            'last_name'  => $validated['last_name'],
+            'email'      => $validated['email'] ?? null,
+            'address'    => $validated['address'] ?? null,
+        ];
+        if ($idPhotoPath) {
+            $guestData['id_photo'] = $idPhotoPath;
+        }
+        $guest = Guest::updateOrCreate(['phone' => $validated['phone']], $guestData);
 
         // Generate unique booking reference
         $reference = 'WI-' . strtoupper(Str::random(8));
