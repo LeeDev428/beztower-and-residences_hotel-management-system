@@ -45,7 +45,7 @@
                         <span class="price-period">/night</span>
                     @endif
                 </div>
-                <a href="{{ route('rooms.show', $room) }}" class="book-btn">View Details</a>
+                <a href="{{ route('rooms.show', $room) }}" class="book-btn">Learn More</a>
             </div>
         </div>
     </div>
