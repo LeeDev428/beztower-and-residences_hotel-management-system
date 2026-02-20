@@ -50,6 +50,15 @@ class BookingController extends Controller
             'extra_quantities.*' => 'integer|min:1|max:50'
         ]);
 
+        // Booking attempt limit: max 2 per session (per device)
+        $attempts = $request->session()->get('booking_attempts', 0);
+        if ($attempts >= 2) {
+            return back()->withErrors([
+                'error' => 'You have reached the maximum of 2 booking attempts per session. Please contact us directly to make a reservation.'
+            ])->withInput();
+        }
+        $request->session()->put('booking_attempts', $attempts + 1);
+
         try {
             DB::beginTransaction();
 
