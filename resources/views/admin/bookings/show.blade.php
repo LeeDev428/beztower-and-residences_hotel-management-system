@@ -167,6 +167,7 @@
                     <option value="checked_in" {{ $booking->status === 'checked_in' ? 'selected' : '' }}>Checked In</option>
                     <option value="checked_out" {{ $booking->status === 'checked_out' ? 'selected' : '' }}>Checked Out</option>
                     <option value="rescheduled" {{ $booking->status === 'rescheduled' ? 'selected' : '' }}>Rescheduled</option>
+                    <option value="rejected_payment" {{ $booking->status === 'rejected_payment' ? 'selected' : '' }}>Rejected Payment</option>
                     <option value="cancelled" {{ $booking->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
                 <div style="width: 100%;">
