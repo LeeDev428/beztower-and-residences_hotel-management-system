@@ -144,9 +144,9 @@
     </div>
 
     <!-- Monthly Revenue Chart -->
-    <x-admin.card title="Revenue Overview (Last 12 Months)">
+    {{-- <x-admin.card title="Revenue Overview (Last 12 Months)">
         <canvas id="revenueChart" style="max-height: 300px;"></canvas>
-    </x-admin.card>
+    </x-admin.card> --}}
 
     <!-- Bookings Chart -->
     <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
