@@ -35,24 +35,40 @@
     
     <div class="contact-form-container">
         <h3>Send Us a Message</h3>
-        <form class="contact-form">
+
+        @if(session('success'))
+            <div style="background: #d4edda; color: #155724; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #c3e6cb;">
+                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div style="background: #f8d7da; color: #721c24; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #f5c6cb;">
+                @foreach($errors->all() as $error)
+                    <p><i class="fas fa-exclamation-circle"></i> {{ $error }}</p>
+                @endforeach
+            </div>
+        @endif
+
+        <form class="contact-form" action="{{ route('contact.send') }}" method="POST">
+            @csrf
             <div class="form-row">
                 <div class="form-group-contact">
                     <label>Name</label>
-                    <input type="text" placeholder="Your Name" required>
+                    <input type="text" name="name" placeholder="Your Name" value="{{ old('name') }}" required>
                 </div>
                 <div class="form-group-contact">
                     <label>Email</label>
-                    <input type="email" placeholder="your@email.com" required>
+                    <input type="email" name="email" placeholder="your@email.com" value="{{ old('email') }}" required>
                 </div>
             </div>
             <div class="form-group-contact">
                 <label>Subject</label>
-                <input type="text" placeholder="Subject" required>
+                <input type="text" name="subject" placeholder="Subject" value="{{ old('subject') }}" required>
             </div>
             <div class="form-group-contact">
                 <label>Message</label>
-                <textarea rows="5" placeholder="Your message..." required></textarea>
+                <textarea name="message" rows="5" placeholder="Your message..." required>{{ old('message') }}</textarea>
             </div>
             <button type="submit" class="submit-btn">Send Message</button>
         </form>
