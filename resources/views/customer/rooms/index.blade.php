@@ -922,6 +922,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function applyFilters(page = 1) {
         clearTimeout(filterTimeout);
         filterTimeout = setTimeout(() => {
+            ensureContainers();
             loadingSpinner.style.display = 'inline-block';
 
             const params = new URLSearchParams();
@@ -929,25 +930,27 @@ document.addEventListener('DOMContentLoaded', function() {
             const searchValue = searchInput.value.trim();
             if (searchValue) params.append('search', searchValue);
             
-            const minPrice = minPriceInput.value;
+            const minPrice = minPriceInput ? minPriceInput.value : '';
             if (minPrice) params.append('min_price', minPrice);
             
-            const maxPrice = maxPriceInput.value;
+            const maxPrice = maxPriceInput ? maxPriceInput.value : '';
             if (maxPrice) params.append('max_price', maxPrice);
             
             const roomType = roomTypeSelect.value;
             if (roomType) params.append('room_type', roomType);
             
-            const guests = guestsSelect.value;
+            const guests = guestsSelect ? guestsSelect.value : '';
             if (guests) params.append('guests', guests);
             
             const sortBy = sortBySelect.value;
             if (sortBy) params.append('sort', sortBy);
             
-            const selectedAmenities = Array.from(amenityCheckboxes)
-                .filter(cb => cb.checked)
-                .map(cb => cb.value);
-            selectedAmenities.forEach(amenity => params.append('amenities[]', amenity));
+            if (amenityCheckboxes.length > 0) {
+                const selectedAmenities = Array.from(amenityCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+                selectedAmenities.forEach(amenity => params.append('amenities[]', amenity));
+            }
             
             params.append('page', page);
 
@@ -959,8 +962,12 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
+                ensureContainers();
                 roomsGrid.innerHTML = data.html;
                 paginationWrapper.innerHTML = data.pagination;
+                const noRooms = document.getElementById('noRoomsMessage');
+                if (noRooms) noRooms.style.display = data.total > 0 ? 'none' : 'block';
+                roomsGrid.style.display = data.total > 0 ? '' : 'none';
                 resultsCount.textContent = `Showing ${data.total > 0 ? '1-' + Math.min(6, data.total) : 0} of ${data.total} rooms`;
                 loadingSpinner.style.display = 'none';
                 
@@ -992,47 +999,49 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listeners
     searchInput.addEventListener('input', () => applyFilters());
-    minPriceInput.addEventListener('input', () => applyFilters());
-    maxPriceInput.addEventListener('input', () => applyFilters());
+    if (minPriceInput) minPriceInput.addEventListener('input', () => applyFilters());
+    if (maxPriceInput) maxPriceInput.addEventListener('input', () => applyFilters());
     roomTypeSelect.addEventListener('change', () => applyFilters());
-    guestsSelect.addEventListener('change', () => applyFilters());
+    if (guestsSelect) guestsSelect.addEventListener('change', () => applyFilters());
     sortBySelect.addEventListener('change', () => applyFilters());
     
     amenityCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
-            updateAmenitiesCount();
+            if (typeof updateAmenitiesCount === 'function') updateAmenitiesCount();
             applyFilters();
         });
     });
 
     // Amenities dropdown toggle
-    amenitiesBtn.addEventListener('click', () => {
-        amenitiesList.classList.toggle('active');
-        amenitiesBtn.classList.toggle('active');
-    });
+    if (amenitiesBtn) {
+        amenitiesBtn.addEventListener('click', () => {
+            amenitiesList.classList.toggle('active');
+            amenitiesBtn.classList.toggle('active');
+        });
 
-    // Close amenities dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!amenitiesBtn.contains(e.target) && !amenitiesList.contains(e.target)) {
-            amenitiesList.classList.remove('active');
-            amenitiesBtn.classList.remove('active');
-        }
-    });
+        // Close amenities dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!amenitiesBtn.contains(e.target) && amenitiesList && !amenitiesList.contains(e.target)) {
+                amenitiesList.classList.remove('active');
+                amenitiesBtn.classList.remove('active');
+            }
+        });
+    }
 
     // Update amenities count
     function updateAmenitiesCount() {
         const count = Array.from(amenityCheckboxes).filter(cb => cb.checked).length;
         const countSpan = document.getElementById('amenitiesCount');
-        countSpan.textContent = count > 0 ? `${count} Selected` : 'Select Amenities';
+        if (countSpan) countSpan.textContent = count > 0 ? `${count} Selected` : 'Select Amenities';
     }
 
     // Reset filters
     resetBtn.addEventListener('click', () => {
         searchInput.value = '';
-        minPriceInput.value = '';
-        maxPriceInput.value = '';
+        if (minPriceInput) minPriceInput.value = '';
+        if (maxPriceInput) maxPriceInput.value = '';
         roomTypeSelect.value = '';
-        guestsSelect.value = '';
+        if (guestsSelect) guestsSelect.value = '';
         sortBySelect.value = '';
         amenityCheckboxes.forEach(cb => cb.checked = false);
         updateAmenitiesCount();
@@ -1040,10 +1049,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Calendar functionality
-    showCalendarBtn.addEventListener('click', () => {
-        calendarModal.classList.add('active');
-        loadCalendar(currentMonth, currentYear);
-    });
+    if (showCalendarBtn) {
+        showCalendarBtn.addEventListener('click', () => {
+            calendarModal.classList.add('active');
+            loadCalendar(currentMonth, currentYear);
+        });
+    }
 
     closeCalendarBtn.addEventListener('click', () => {
         calendarModal.classList.remove('active');
