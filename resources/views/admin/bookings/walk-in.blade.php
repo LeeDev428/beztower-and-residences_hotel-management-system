@@ -17,7 +17,7 @@
         </a>
     </div>
 
-    <form method="POST" action="{{ route('admin.bookings.walkIn.store') }}" id="walkInForm">
+    <form method="POST" action="{{ route('admin.bookings.walkIn.store') }}" id="walkInForm" enctype="multipart/form-data">
         @csrf
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
@@ -69,22 +69,10 @@
                 </div>
 
                 <div>
-                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Valid ID Type</label>
-                    <select name="id_type"
-                        style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; outline: none; background: white; box-sizing: border-box;">
-                        <option value="">— Select ID Type —</option>
-                        <option value="Driver's License" {{ old('id_type') === "Driver's License" ? 'selected' : '' }}>Driver's License</option>
-                        <option value="Passport" {{ old('id_type') === 'Passport' ? 'selected' : '' }}>Passport</option>
-                        <option value="SSS ID" {{ old('id_type') === 'SSS ID' ? 'selected' : '' }}>SSS ID</option>
-                        <option value="PhilHealth ID" {{ old('id_type') === 'PhilHealth ID' ? 'selected' : '' }}>PhilHealth ID</option>
-                        <option value="UMID" {{ old('id_type') === 'UMID' ? 'selected' : '' }}>UMID</option>
-                        <option value="Voter's ID" {{ old('id_type') === "Voter's ID" ? 'selected' : '' }}>Voter's ID</option>
-                        <option value="National ID" {{ old('id_type') === 'National ID' ? 'selected' : '' }}>National ID</option>
-                        <option value="Postal ID" {{ old('id_type') === 'Postal ID' ? 'selected' : '' }}>Postal ID</option>
-                        <option value="Senior Citizen ID" {{ old('id_type') === 'Senior Citizen ID' ? 'selected' : '' }}>Senior Citizen ID</option>
-                        <option value="PWD ID" {{ old('id_type') === 'PWD ID' ? 'selected' : '' }}>PWD ID</option>
-                        <option value="Other" {{ old('id_type') === 'Other' ? 'selected' : '' }}>Other</option>
-                    </select>
+                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Valid ID Photo <span style="color: var(--text-muted); font-weight: 400;">(JPG, PNG, PDF — max 5MB)</span></label>
+                    <input type="file" name="id_photo" accept="image/jpeg,image/png,image/jpg,application/pdf"
+                        style="width: 100%; padding: 0.55rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; outline: none; background: white; box-sizing: border-box; cursor: pointer;">
+                    @error('id_photo')<div style="font-size:0.8rem;color:var(--danger);margin-top:0.3rem;">{{ $message }}</div>@enderror
                 </div>
             </x-admin.card>
 
