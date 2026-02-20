@@ -118,6 +118,7 @@ Route::prefix('admin')->group(function () {
         // Reports
         Route::prefix('reports')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('admin.reports.index');
+            Route::get('/pdf', [\App\Http\Controllers\Admin\ReportController::class, 'generatePdf'])->name('admin.reports.pdf')->middleware('role:admin,manager');
             Route::get('/revenue', [\App\Http\Controllers\Admin\ReportController::class, 'revenue'])->name('admin.reports.revenue')->middleware('role:admin,manager');
             Route::get('/occupancy', [\App\Http\Controllers\Admin\ReportController::class, 'occupancy'])->name('admin.reports.occupancy');
             Route::get('/export/{type}', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('admin.reports.export')->middleware('role:admin,manager');
