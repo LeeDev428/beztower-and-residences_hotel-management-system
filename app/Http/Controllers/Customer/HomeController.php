@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Room;
+use App\Models\ContactMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
@@ -45,18 +46,29 @@ class HomeController extends Controller
         $validated = $request->validate([
             'name'    => 'required|string|max:255',
             'email'   => 'required|email|max:255',
+            'phone'   => 'nullable|string|max:20',
             'subject' => 'required|string|max:255',
             'message' => 'required|string|max:5000',
         ]);
 
-        Mail::raw(
-            "Name: {$validated['name']}\nEmail: {$validated['email']}\n\nMessage:\n{$validated['message']}",
-            function ($mail) use ($validated) {
-                $mail->to(config('mail.from.address'))
-                     ->replyTo($validated['email'], $validated['name'])
-                     ->subject('Contact Form: ' . $validated['subject']);
-            }
-        );
+        // Always save to database so admin can view it
+        ContactMessage::create($validated);
+
+        // Also send email notification (non-blocking)
+        try {
+            Mail::raw(
+                "Name: {$validated['name']}\nEmail: {$validated['email']}\n" .
+                (!empty($validated['phone']) ? "Phone: {$validated['phone']}\n" : '') .
+                "\nMessage:\n{$validated['message']}",
+                function ($mail) use ($validated) {
+                    $mail->to(config('mail.from.address'))
+                         ->replyTo($validated['email'], $validated['name'])
+                         ->subject('Contact Form: ' . $validated['subject']);
+                }
+            );
+        } catch (\Exception $e) {
+            // Email failure does not prevent the message from being saved
+        }
 
         return back()->with('success', 'Your message has been sent! We will get back to you soon.');
     }
