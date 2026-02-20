@@ -88,7 +88,7 @@ class ReportController extends Controller
             ->get();
 
         // Revenue by room type
-        $revenueByType = Payment::whereBetween('created_at', [$startDate, $endDate])
+        $revenueByType = Payment::whereBetween('payments.created_at', [$startDate, $endDate])
             ->whereIn('payment_status', ['verified', 'completed'])
             ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
             ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
