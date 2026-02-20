@@ -110,15 +110,15 @@
                     <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.75rem; color: #333;">Early Check-in <span style="font-weight: 400; color: var(--text-muted);">(Max 5 hours)</span></label>
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                         <button type="button" onclick="decrementCounter('earlyCheckin')"
-                            style="width: 38px; height: 38px; background: white; border: 2px solid var(--danger); color: var(--danger); border-radius: 8px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fas fa-minus"></i>
+                            style="width: 38px; height: 38px; background: white; border: 2px solid var(--danger); color: var(--danger); border-radius: 8px; font-size: 1.4rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1;">
+                            &minus;
                         </button>
                         <input type="number" name="early_checkin_hours" id="earlyCheckinHours"
                             value="{{ $booking->early_checkin_hours ?? 0 }}" min="0" max="5" readonly
                             style="width: 70px; text-align: center; padding: 0.5rem; border: 1px solid var(--border-gray); border-radius: 8px; font-weight: 700; font-size: 1rem;">
                         <button type="button" onclick="incrementCounter('earlyCheckin')"
-                            style="width: 38px; height: 38px; background: white; border: 2px solid var(--success); color: var(--success); border-radius: 8px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fas fa-plus"></i>
+                            style="width: 38px; height: 38px; background: white; border: 2px solid var(--success); color: var(--success); border-radius: 8px; font-size: 1.4rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1;">
+                            &plus;
                         </button>
                         <div style="flex: 1;">
                             <div style="font-size: 1.2rem; font-weight: 800; color: var(--success);" id="earlyCheckinCharge">₱{{ number_format($booking->early_checkin_charge ?? 0, 2) }}</div>
@@ -133,15 +133,15 @@
                     <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.75rem; color: #333;">Late Checkout <span style="font-weight: 400; color: var(--text-muted);">(Max 5 hours)</span></label>
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                         <button type="button" onclick="decrementCounter('lateCheckout')"
-                            style="width: 38px; height: 38px; background: white; border: 2px solid var(--danger); color: var(--danger); border-radius: 8px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fas fa-minus"></i>
+                            style="width: 38px; height: 38px; background: white; border: 2px solid var(--danger); color: var(--danger); border-radius: 8px; font-size: 1.4rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1;">
+                            &minus;
                         </button>
                         <input type="number" name="late_checkout_hours" id="lateCheckoutHours"
                             value="{{ $booking->late_checkout_hours ?? 0 }}" min="0" max="5" readonly
                             style="width: 70px; text-align: center; padding: 0.5rem; border: 1px solid var(--border-gray); border-radius: 8px; font-weight: 700; font-size: 1rem;">
                         <button type="button" onclick="incrementCounter('lateCheckout')"
-                            style="width: 38px; height: 38px; background: white; border: 2px solid var(--success); color: var(--success); border-radius: 8px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <i class="fas fa-plus"></i>
+                            style="width: 38px; height: 38px; background: white; border: 2px solid var(--success); color: var(--success); border-radius: 8px; font-size: 1.4rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1;">
+                            &plus;
                         </button>
                         <div style="flex: 1;">
                             <div style="font-size: 1.2rem; font-weight: 800; color: var(--success);" id="lateCheckoutCharge">₱{{ number_format($booking->late_checkout_charge ?? 0, 2) }}</div>
