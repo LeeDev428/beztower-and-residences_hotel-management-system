@@ -18,7 +18,7 @@ class WalkInController extends Controller
     {
         $availableRooms = Room::with('roomType')
             ->where('status', 'available')
-            ->whereNull('deleted_at')
+            ->whereNull('archived_at')
             ->get();
 
         return view('admin.bookings.walk-in', compact('availableRooms'));
