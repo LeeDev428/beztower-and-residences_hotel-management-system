@@ -101,7 +101,7 @@
 
                 <div style="margin-top: 1rem;">
                     <x-admin.button type="outline" size="sm" href="{{ route('admin.bookings.show', $booking) }}">
-                        View Details
+                      Learn More
                     </x-admin.button>
                 </div>
             </div>
