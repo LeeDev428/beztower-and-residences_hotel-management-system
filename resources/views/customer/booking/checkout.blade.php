@@ -567,11 +567,6 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <div>
-                            <label class="form-label">Total Nights</label>
-                            <input type="number" name="total_nights" class="form-input" id="totalNights" readonly value="1">
-                        </div>
                     </div>
                     
                     <!-- Additional Services -->
@@ -713,23 +708,23 @@
 
     <script>
         const basePrice = {{ $room->roomType->base_price }};
-        const taxRate = 0.12 / 1.12; // Tax is included in base price
+        const taxRate = 0.12 / 1.12;
 
-        // Calculate nights
-        function calculateNights() {
+        // Calculate check-out date from check-in + number of nights
+        function calculateCheckout() {
             const checkIn = document.getElementById('checkInDate').value;
-            const checkOut = document.getElementById('checkOutDate').value;
-            
-            if (checkIn && checkOut) {
-                const date1 = new Date(checkIn);
-                const date2 = new Date(checkOut);
-                const diffTime = Math.abs(date2 - date1);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                document.getElementById('totalNights').value = diffDays;
-                document.getElementById('nightsCount').textContent = diffDays;
-                updateTotal();
+            const nights = parseInt(document.getElementById('totalNights').value) || 1;
+
+            if (checkIn && nights > 0) {
+                const checkInDate = new Date(checkIn + 'T00:00:00');
+                checkInDate.setDate(checkInDate.getDate() + nights);
+                const checkOutDate = checkInDate.toISOString().split('T')[0];
+                document.getElementById('checkOutDate').value = checkOutDate;
             }
+            if (document.getElementById('nightsCount')) {
+                document.getElementById('nightsCount').textContent = nights;
+            }
+            updateTotal();
         }
 
         // Toggle extra quantity controls
@@ -828,23 +823,24 @@
 
         // Set minimum check-out date
         document.getElementById('checkInDate').addEventListener('change', function() {
-            const checkInDate = new Date(this.value);
-            checkInDate.setDate(checkInDate.getDate() + 1);
-            const minCheckOut = checkInDate.toISOString().split('T')[0];
-            document.getElementById('checkOutDate').min = minCheckOut;
-            
-            if (document.getElementById('checkOutDate').value && 
-                document.getElementById('checkOutDate').value <= this.value) {
-                document.getElementById('checkOutDate').value = minCheckOut;
-            }
-            calculateNights();
+            calculateCheckout();
         });
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            calculateNights();
+        // Initialize on page load - auto-fill if URL has check_in/check_out params
+        (function init() {
+            @if(request('check_in') && request('check_out'))
+                const preCheckIn = '{{ request('check_in') }}';
+                const preCheckOut = '{{ request('check_out') }}';
+                const d1 = new Date(preCheckIn + 'T00:00:00');
+                const d2 = new Date(preCheckOut + 'T00:00:00');
+                const nights = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+                if (nights > 0) {
+                    document.getElementById('totalNights').value = nights;
+                }
+            @endif
+            calculateCheckout();
             showGuestRecommendation();
-        });
+        })();
     </script>
 </body>
 </html>
