@@ -92,12 +92,11 @@
                     </div>
                     <div style="font-weight:600;color:var(--text-dark);margin-bottom:0.4rem;font-size:0.95rem;">{{ $msg->subject }}</div>
                     <div style="color:var(--text-muted);font-size:0.875rem;line-height:1.5;word-break:break-word;">
-                        {{ Str::limit($msg->message, 200) }}
                         @if(strlen($msg->message) > 200)
-                            <span style="color:var(--primary-gold);cursor:pointer;" onclick="toggleMessage({{ $msg->id }})"> Show more</span>
-                            <span id="full-msg-{{ $msg->id }}" style="display:none;">{{ substr($msg->message, 200) }}
-                                <span style="color:var(--primary-gold);cursor:pointer;" onclick="toggleMessage({{ $msg->id }})"> Show less</span>
-                            </span>
+                            <span id="preview-{{ $msg->id }}">{{ Str::limit($msg->message, 200) }}<span style="color:var(--primary-gold);cursor:pointer;" onclick="toggleMessage({{ $msg->id }})"> Show more</span></span>
+                            <span id="full-msg-{{ $msg->id }}" style="display:none;">{{ $msg->message }}<span style="color:var(--primary-gold);cursor:pointer;" onclick="toggleMessage({{ $msg->id }})"> Show less</span></span>
+                        @else
+                            {{ $msg->message }}
                         @endif
                     </div>
                 </div>
@@ -148,8 +147,15 @@
 
 <script>
     function toggleMessage(id) {
+        const preview = document.getElementById('preview-' + id);
         const full = document.getElementById('full-msg-' + id);
-        full.style.display = full.style.display === 'none' ? 'inline' : 'none';
+        if (full.style.display === 'none') {
+            preview.style.display = 'none';
+            full.style.display = 'inline';
+        } else {
+            preview.style.display = 'inline';
+            full.style.display = 'none';
+        }
     }
 </script>
 @endsection
