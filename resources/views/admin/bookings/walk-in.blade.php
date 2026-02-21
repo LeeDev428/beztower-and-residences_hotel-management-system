@@ -89,7 +89,7 @@
                             data-price="{{ $room->roomType->base_price }}"
                             data-type="{{ $room->roomType->name }}"
                             {{ old('room_id') == $room->id ? 'selected' : '' }}>
-                            Room {{ $room->room_number }} — {{ $room->roomType->name }} (₱{{ number_format($room->roomType->base_price, 0) }}/night)
+                            {{ $room->roomType->name }} (₱{{ number_format($room->roomType->base_price, 0) }}/night)
                         </option>
                         @endforeach
                     </select>
