@@ -92,7 +92,7 @@ class BookingManagementController extends Controller
             if ($remainingBalance > 0) {
                 Payment::create([
                     'booking_id' => $booking->id,
-                    'payment_type' => 'remaining_balance',
+                    'payment_type' => 'remaining_payment',
                     'payment_method' => 'cash',
                     'amount' => $remainingBalance,
                     'payment_status' => 'completed',
