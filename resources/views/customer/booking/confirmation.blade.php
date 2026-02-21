@@ -498,10 +498,10 @@
                             <span class="info-label">Room Type</span>
                             <span class="info-value">{{ $booking->room->roomType->name }}</span>
                         </div>
-                        <div class="info-item">
+                        {{-- <div class="info-item">
                             <span class="info-label">Room Number</span>
                             <span class="info-value">#{{ $booking->room->room_number }}</span>
-                        </div>
+                        </div> --}}
                         <div class="info-item">
                             <span class="info-label">Check-In Date</span>
                             <span class="info-value">{{ $booking->check_in_date->format('F d, Y') }}</span>
