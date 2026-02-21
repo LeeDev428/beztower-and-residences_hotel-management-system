@@ -46,14 +46,26 @@
                     @endif
                 </div>
                 @php
-                    $learnMoreUrl = route('rooms.show', $room);
-                    $lcParams = [];
-                    if (request('check_in'))  $lcParams['check_in']  = request('check_in');
-                    if (request('check_out')) $lcParams['check_out'] = request('check_out');
-                    if (request('guests'))    $lcParams['guests']    = request('guests');
-                    if ($lcParams) $learnMoreUrl .= '?' . http_build_query($lcParams);
+                    $checkIn  = request('check_in');
+                    $checkOut = request('check_out');
+                    $guests   = request('guests');
+                    $hasContext = $checkIn && $checkOut;
+
+                    if ($hasContext && $room->status === 'available') {
+                        $btnParams = ['check_in' => $checkIn, 'check_out' => $checkOut];
+                        if ($guests) $btnParams['guests'] = $guests;
+                        $btnUrl  = route('booking.checkout', $room) . '?' . http_build_query($btnParams);
+                        $btnText = 'Book Now';
+                    } else {
+                        $lcParams = [];
+                        if ($checkIn)  $lcParams['check_in']  = $checkIn;
+                        if ($checkOut) $lcParams['check_out'] = $checkOut;
+                        if ($guests)   $lcParams['guests']    = $guests;
+                        $btnUrl  = route('rooms.show', $room) . ($lcParams ? '?' . http_build_query($lcParams) : '');
+                        $btnText = 'Learn More';
+                    }
                 @endphp
-                <a href="{{ $learnMoreUrl }}" class="book-btn">Learn More</a>
+                <a href="{{ $btnUrl }}" class="book-btn">{{ $btnText }}</a>
             </div>
         </div>
     </div>
