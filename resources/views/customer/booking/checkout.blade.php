@@ -543,14 +543,14 @@
                         </div>
 
                         <div>
-                            <label class="form-label">Number of Nights <span class="required">*</span></label>
-                            <input type="number" name="total_nights" class="form-input" id="totalNights" 
-                                   min="1" max="30" value="1" required onchange="calculateCheckout()">
+                            <label class="form-label">Check-Out Date <span class="required">*</span></label>
+                            <input type="date" name="check_out_date" class="form-input" id="checkOutDate" 
+                                   required onchange="calculateCheckout()">
                         </div>
                         
                         <div>
-                            <label class="form-label">Check-Out Date (Automatic)</label>
-                            <input type="date" name="check_out_date" class="form-input" id="checkOutDate" 
+                            <label class="form-label">Number of Nights (Auto-calculated)</label>
+                            <input type="number" name="total_nights" class="form-input" id="totalNights" 
                                    readonly style="background: #f0f0f0; cursor: not-allowed;" required>
                         </div>
                         
@@ -699,8 +699,8 @@
                     </div>
                     
                     <div class="price-row">
-                        <span class="price-label">Tax (12% - Included)</span>
-                        <span class="price-value" id="taxDisplay">₱{{ number_format($room->roomType->base_price * (0.12/1.12), 2) }}</span>
+                        <span class="price-label">Tax (12%)</span>
+                        <span class="price-value" id="taxDisplay">₱{{ number_format($room->roomType->base_price * 0.12, 2) }}</span>
                     </div>
                     
                     <div class="price-row">
@@ -714,26 +714,25 @@
 
     <script>
         const basePrice = {{ $room->roomType->base_price }};
-        const taxRate = 0.12 / 1.12;
+        const taxRate = 0.12;
 
-        // Calculate check-out date from check-in + number of nights
+        // Calculate number of nights from check-in and check-out dates
         function calculateCheckout() {
             const checkIn = document.getElementById('checkInDate').value;
-            const nights = parseInt(document.getElementById('totalNights').value) || 1;
+            const checkOut = document.getElementById('checkOutDate').value;
 
-            if (checkIn && nights > 0) {
-                const checkInDate = new Date(checkIn + 'T00:00:00');
-                checkInDate.setDate(checkInDate.getDate() + nights);
-                // Use local date components to avoid UTC offset shifting the date
-                const yyyy = checkInDate.getFullYear();
-                const mm = String(checkInDate.getMonth() + 1).padStart(2, '0');
-                const dd = String(checkInDate.getDate()).padStart(2, '0');
-                document.getElementById('checkOutDate').value = `${yyyy}-${mm}-${dd}`;
+            if (checkIn && checkOut) {
+                const d1 = new Date(checkIn + 'T00:00:00');
+                const d2 = new Date(checkOut + 'T00:00:00');
+                const nights = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+                document.getElementById('totalNights').value = nights > 0 ? nights : '';
+                if (document.getElementById('nightsCount')) {
+                    document.getElementById('nightsCount').textContent = nights > 0 ? nights : 0;
+                }
+                if (nights > 0) updateTotal();
+            } else {
+                document.getElementById('totalNights').value = '';
             }
-            if (document.getElementById('nightsCount')) {
-                document.getElementById('nightsCount').textContent = nights;
-            }
-            updateTotal();
         }
 
         // Toggle extra quantity controls
@@ -781,7 +780,7 @@
             
             // Tax is included in base price, calculate it for display only
             const taxAmount = (subtotal + extrasTotal) * taxRate;
-            const total = subtotal + extrasTotal; // Tax already included in prices
+            const total = subtotal + extrasTotal + taxAmount; // Tax added on top
             
             // Update displays
             document.getElementById('subtotalDisplay').textContent = '₱' + subtotal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
@@ -838,14 +837,8 @@
         // Initialize on page load - auto-fill if URL has check_in/check_out params
         (function init() {
             @if(request('check_in') && request('check_out'))
-                const preCheckIn = '{{ request('check_in') }}';
-                const preCheckOut = '{{ request('check_out') }}';
-                const d1 = new Date(preCheckIn + 'T00:00:00');
-                const d2 = new Date(preCheckOut + 'T00:00:00');
-                const nights = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
-                if (nights > 0) {
-                    document.getElementById('totalNights').value = nights;
-                }
+                document.getElementById('checkInDate').value = '{{ request('check_in') }}';
+                document.getElementById('checkOutDate').value = '{{ request('check_out') }}';
             @endif
             calculateCheckout();
             showGuestRecommendation();
