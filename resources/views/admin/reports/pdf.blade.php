@@ -57,7 +57,7 @@
     <!-- Header -->
     <div class="header">
         <h1><span class="gold">Beztower</span> & Residences</h1>
-        <div class="subtitle">Hotel Management System â€” Official Report</div>
+        <div class="subtitle">Hotel Management System &mdash; Official Report</div>
         <div class="period">{{ \Carbon\Carbon::parse($startDate)->format('F d, Y') }} &mdash; {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}</div>
         <div class="generated">Generated: {{ \Carbon\Carbon::now()->format('F d, Y \a\t h:i A') }}</div>
     </div>
@@ -80,7 +80,7 @@
                     <div class="label">Total Rooms</div>
                 </td>
                 <td class="stat-box">
-                    <div class="value" style="font-size: 18px;">₱{{ number_format($totalRevenue, 0) }}</div>
+                    <div class="value" style="font-size: 18px;">&#8369;{{ number_format($totalRevenue, 0) }}</div>
                     <div class="label">Revenue</div>
                 </td>
             </tr>
@@ -128,7 +128,7 @@
                         @forelse($revenueByType as $rt)
                         <tr>
                             <td>{{ $rt->name }}</td>
-                            <td style="text-align: right; font-weight: 600;">₱{{ number_format($rt->revenue, 2) }}</td>
+                            <td style="text-align: right; font-weight: 600;">&#8369;{{ number_format($rt->revenue, 2) }}</td>
                         </tr>
                         @empty
                         <tr><td colspan="2" style="text-align: center; color: #999;">No revenue data</td></tr>
@@ -136,7 +136,7 @@
                         @if($revenueByType->isNotEmpty())
                         <tr style="border-top: 2px solid #d4af37;">
                             <td style="font-weight: 700;">Total</td>
-                            <td style="text-align: right; font-weight: 700; color: #d4af37;">₱{{ number_format($revenueByType->sum('revenue'), 2) }}</td>
+                            <td style="text-align: right; font-weight: 700; color: #d4af37;">&#8369;{{ number_format($revenueByType->sum('revenue'), 2) }}</td>
                         </tr>
                         @endif
                     </tbody>
@@ -168,11 +168,11 @@
                     <td>{{ $i + 1 }}</td>
                     <td style="font-weight: 600; color: #d4af37;">{{ $booking->booking_reference }}</td>
                     <td>{{ $booking->guest->name ?? 'N/A' }}</td>
-                    <td>{{ $booking->room->room_number ?? 'N/A' }} â€” {{ $booking->roomType->name ?? '' }}</td>
+                    <td>{{ $booking->room->room_number ?? 'N/A' }} &mdash; {{ $booking->roomType->name ?? '' }}</td>
                     <td>{{ \Carbon\Carbon::parse($booking->check_in_date)->format('M d, Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($booking->check_out_date)->format('M d, Y') }}</td>
                     <td style="text-align: center;">{{ $booking->total_nights ?? $booking->number_of_nights ?? '-' }}</td>
-                    <td style="text-align: right; font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</td>
+                    <td style="text-align: right; font-weight: 600;">&#8369;{{ number_format($booking->total_amount, 2) }}</td>
                     <td><span class="badge badge-{{ $booking->status }}">{{ str_replace('_', ' ', $booking->status) }}</span></td>
                 </tr>
                 @empty
