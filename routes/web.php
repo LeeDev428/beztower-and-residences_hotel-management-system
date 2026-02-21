@@ -48,8 +48,8 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [RoomManagementController::class, 'index'])->name('admin.rooms.index');
             Route::get('/create', [RoomManagementController::class, 'create'])->name('admin.rooms.create')->middleware('role:admin,manager');
             Route::post('/', [RoomManagementController::class, 'store'])->name('admin.rooms.store')->middleware('role:admin,manager');
-            Route::get('/{room}/edit', [RoomManagementController::class, 'edit'])->name('admin.rooms.edit')->middleware('role:admin,manager');
-            Route::put('/{room}', [RoomManagementController::class, 'update'])->name('admin.rooms.update')->middleware('role:admin,manager');
+            Route::get('/{room}/edit', [RoomManagementController::class, 'edit'])->name('admin.rooms.edit')->middleware('role:admin,manager,receptionist');
+            Route::put('/{room}', [RoomManagementController::class, 'update'])->name('admin.rooms.update')->middleware('role:admin,manager,receptionist');
             Route::delete('/{room}', [RoomManagementController::class, 'destroy'])->name('admin.rooms.destroy')->middleware('role:admin');
             Route::post('/{room}/restore', [RoomManagementController::class, 'restore'])->name('admin.rooms.restore')->middleware('role:admin');
             Route::post('/{room}/upload-photo', [RoomManagementController::class, 'uploadPhoto'])->name('admin.rooms.uploadPhoto')->middleware('role:admin,manager');
