@@ -778,7 +778,7 @@
                 extrasTotal += price * quantity;
             });
             
-            // Tax is included in base price, calculate it for display only
+            // Calculate 12% tax on subtotal + extras
             const taxAmount = (subtotal + extrasTotal) * taxRate;
             const total = subtotal + extrasTotal + taxAmount; // Tax added on top
             
