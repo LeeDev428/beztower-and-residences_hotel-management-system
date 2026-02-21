@@ -291,6 +291,9 @@ function calculateCharge(type) {
     }
 
     calculateTotal();
+    if (document.getElementById('hasPwdSenior') && document.getElementById('hasPwdSenior').checked) {
+        calculatePwdDiscount();
+    }
 }
 
 function togglePwdSenior() {
@@ -322,7 +325,9 @@ function calculatePwdDiscount() {
         return;
     }
 
-    const individualShare = roomTotal / numberOfGuests;
+    const earlyCheckinAmt = parseFloat(document.getElementById('earlyCheckinChargeInput').value) || 0;
+    const lateCheckoutAmt = parseFloat(document.getElementById('lateCheckoutChargeInput').value) || 0;
+    const individualShare = (roomTotal + earlyCheckinAmt + lateCheckoutAmt) / numberOfGuests;
     const discount = (individualShare * 0.20) * count;
 
     document.getElementById('pwdSeniorDiscountInput').value = discount.toFixed(2);
