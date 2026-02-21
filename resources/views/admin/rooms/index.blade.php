@@ -62,8 +62,10 @@
                     </td>
                     <td style="padding: 1rem 0.75rem; text-align: right;">
                         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                            @if(auth()->user()->role === 'admin')
+                            @if(in_array(auth()->user()->role, ['admin', 'manager', 'receptionist']))
                                 <x-admin.button type="outline" size="sm" href="{{ route('admin.rooms.edit', $room) }}">Edit</x-admin.button>
+                            @endif
+                            @if(auth()->user()->role === 'admin')
                                 @if($room->isArchived())
                                     <form method="POST" action="{{ route('admin.rooms.restore', $room) }}" onsubmit="return confirm('Are you sure you want to restore this room?');">
                                         @csrf
@@ -76,8 +78,6 @@
                                         <x-admin.button type="warning" size="sm">Archive</x-admin.button>
                                     </form>
                                 @endif
-                            @else
-                                <span style="color: var(--text-muted); font-size: 0.875rem; font-style: italic;">View Only</span>
                             @endif
                         </div>
                     </td>
