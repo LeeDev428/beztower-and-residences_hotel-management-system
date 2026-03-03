@@ -210,7 +210,7 @@
             </div>
 
             {{-- <div class="highlight">
-                <strong>⚠️ Important:</strong> Please proceed with the payment within 48 hours to confirm your reservation.
+                <strong>⚠️ Important:</strong> Please proceed with the payment within 8 hours to confirm your reservation.
             </div> --}}
 
             {{-- <div class="info-box">

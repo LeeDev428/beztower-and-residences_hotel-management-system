@@ -411,7 +411,7 @@
                     <i class="fas fa-info-circle"></i>
                     <div>
                         <strong>Payment Instructions</strong>
-                        <p>Please complete the 30% down payment within 48 hours to confirm your booking. Your reservation will be cancelled if payment is not received within the deadline.</p>
+                        <p>Please complete the 30% down payment within 8 hours to confirm your booking. Your reservation will be cancelled if payment is not received within the deadline.</p>
                     </div>
                 </div>
 
@@ -484,7 +484,7 @@
 
                         <div class="deadline-notice">
                             <strong><i class="fas fa-clock"></i> Payment Deadline</strong>
-                            <p>Payment must be made within 48 hours or booking will be cancelled.</p>
+                            <p>Payment must be made within 8 hours or booking will be cancelled.</p>
                         </div>
                     </div>
 

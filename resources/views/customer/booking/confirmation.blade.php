@@ -456,7 +456,7 @@
                         <i class="fas fa-exclamation-triangle"></i>
                         <div>
                             <strong>Payment Required</strong>
-                            <p style="margin: 0.5rem 0 0 0;">Please complete your down payment to confirm this booking. Payment deadline is within 48 hours from booking creation.</p>
+                            <p style="margin: 0.5rem 0 0 0;">Please complete your down payment to confirm this booking. Payment deadline is within 8 hours from booking creation.</p>
                         </div>
                     </div>
                 @endif
