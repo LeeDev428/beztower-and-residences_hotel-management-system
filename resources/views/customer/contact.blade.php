@@ -28,7 +28,7 @@
             <div class="contact-icon"><i class="fas fa-envelope"></i></div>
             <div class="contact-details">
                 <h4>Email</h4>
-                <p>beztower05@gmail.com</p>
+                <p>beztowerresidences@gmail.com</p>
             </div>
         </div>
     </div>

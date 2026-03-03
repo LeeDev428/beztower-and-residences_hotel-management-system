@@ -17,7 +17,7 @@
 
             <div>
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Contact Email</label>
-                <input type="email" name="contact_email" value="beztower05@gmail.com" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                <input type="email" name="contact_email" value="beztowerresidences@gmail.com" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
             </div>
 
             <div>

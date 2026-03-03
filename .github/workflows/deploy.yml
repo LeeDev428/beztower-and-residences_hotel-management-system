@@ -33,10 +33,13 @@ jobs:
       - name: Build Vite assets
         run: npm run build
 
+      - name: Write production .env
+        run: echo "${{ secrets.ENV_PRODUCTION }}" > .env
+
       - name: Deploy to server via rsync
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avzr --delete --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='.env' --exclude='storage/logs/*' --exclude='storage/framework/cache/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*'
+          switches: -avzr --delete --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='storage/logs/*' --exclude='storage/framework/cache/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*'
           path: ./
           remote_path: /home/${{ secrets.SSH_USERNAME }}/beztower/
           remote_host: ${{ secrets.SSH_HOST }}

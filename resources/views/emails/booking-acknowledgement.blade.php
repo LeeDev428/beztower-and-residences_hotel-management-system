@@ -203,7 +203,7 @@
                 <p style="margin:15px 0 0 0; font-size:14px; color:#666;">Scan this QR code to make your payment via GCash</p>
                 <div style="background:#fff3cd; padding:12px; border-radius:5px; margin-top:15px;">
                     <p style="margin:0; font-size:13px;"><strong>📱 After payment, please send your proof of payment to:</strong></p>
-                    <p style="margin:5px 0 0 0;">📧 Email: <strong>beztower05@gmail.com</strong></p>
+                    <p style="margin:5px 0 0 0;">📧 Email: <strong>beztowerresidences@gmail.com</strong></p>
                     <p style="margin:3px 0 0 0;">💬 WhatsApp: <strong>09171221429</strong></p>
                     <p style="margin:10px 0 0 0; font-size:12px; color:#666;"><em>Include your booking reference: {{ $booking->booking_reference }}</em></p>
                 </div>
@@ -255,7 +255,7 @@
 
             <p>If you have any questions or need to make changes to your booking, please contact us:</p>
             <ul>
-                <li><strong>Email:</strong> beztower05@gmail.com</li>
+                <li><strong>Email:</strong> beztowerresidences@gmail.com</li>
                 <li><strong>Phone:</strong> (02) 88075046 or 09171221429</li>
             </ul>
 

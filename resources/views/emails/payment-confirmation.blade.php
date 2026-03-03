@@ -222,7 +222,7 @@
 
             <p>Should you have any questions or require assistance, please don't hesitate to contact us:</p>
             <ul>
-                <li><strong>Email:</strong> beztower05@gmail.com</li>
+                <li><strong>Email:</strong> beztowerresidences@gmail.com</li>
                 <li><strong>Phone:</strong> (02) 88075046 or 09171221429</li>
             </ul>
 
