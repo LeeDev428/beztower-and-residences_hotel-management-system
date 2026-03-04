@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beztower & Residences - Luxury Hotel</title>
+    <title>Beztower & Residences</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         * {
@@ -450,7 +450,7 @@
         <div class="hero-overlay"></div>
         
         <div class="hero-content">
-            <div class="hero-label">BEZTOWER LUXURY HOTEL</div>
+            <div class="hero-label">BEZTOWER HOTEL</div>
             {{-- <h1 class="hero-title">ENJOY A LUXURY<br>EXPERIENCE</h1> --}}
         </div>
         
