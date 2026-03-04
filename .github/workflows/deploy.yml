@@ -41,7 +41,7 @@ jobs:
       - name: Deploy to server via rsync
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avzr --delete --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='public/storage' --exclude='storage/logs/*' --exclude='storage/framework/cache/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*'
+          switches: -avzr --delete --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='public/storage' --exclude='storage/app/public' --exclude='storage/logs' --exclude='storage/framework/cache' --exclude='storage/framework/sessions' --exclude='storage/framework/views'
           path: ./
           remote_path: /home/${{ secrets.SSH_USERNAME }}/beztower/
           remote_host: ${{ secrets.SSH_HOST }}
@@ -58,6 +58,11 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd ~/beztower
+            mkdir -p storage/app/public/rooms
+            mkdir -p storage/app/public/guests/id_photos
+            mkdir -p storage/app/public/payments/proofs
+            chmod -R 755 storage/app/public
+            rm -f public/storage
             ln -sfn /home/u820901833/beztower/storage/app/public /home/u820901833/beztower/public/storage
             php artisan migrate --force
             php artisan config:cache
