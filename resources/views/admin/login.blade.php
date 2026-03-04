@@ -235,7 +235,7 @@
                 <i class="fas fa-gem logo-icon"></i>
             </div>
             <h1>BEZTOWER</h1>
-            <p>Luxury Hotel Management System</p>
+            <p>Hotel Management System</p>
         </div>
 
         <!-- Right Side - Login Form -->
