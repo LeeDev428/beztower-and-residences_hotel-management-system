@@ -56,7 +56,7 @@
 
 <section class="content-section">
     <div class="section-subtitle">ACCOMMODATION</div>
-    <h2 class="section-title">Our Luxury Rooms</h2>
+    <h2 class="section-title">Our Rooms</h2>
     <p class="section-description">
         Discover our collection of elegantly designed rooms and suites, each offering the perfect blend of comfort and sophistication.
     </p>

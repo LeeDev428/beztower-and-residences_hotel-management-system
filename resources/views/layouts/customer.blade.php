@@ -44,7 +44,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
                     <h3 class="text-xl font-bold mb-4">Beztower & Residences</h3>
-                    <p class="text-gray-400">Experience luxury and comfort at our premier hotel.</p>
+                    <p class="text-gray-400">Experience comfort and convenience at our premier hotel.</p>
                 </div>
                 <div>
                     <h3 class="text-xl font-bold mb-4">Contact</h3>

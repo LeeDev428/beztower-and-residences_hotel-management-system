@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beztower & Residences</title>
+    <title>Beztower & Residences Hotel</title>
+    <meta name="description" content="Beztower & Residences Hotel — Safe, secure accommodation in the heart of San Juan City. Located at 205 F. Blumentritt Street, Brgy. Pedro Cruz. Book your stay today.">
+    <meta property="og:title" content="Beztower & Residences Hotel">
+    <meta property="og:description" content="Beztower & Residences Hotel — Safe, secure accommodation in the heart of San Juan City. Located at 205 F. Blumentritt Street, Brgy. Pedro Cruz. Book your stay today.">
+    <meta property="og:type" content="website">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         * {
@@ -1031,7 +1035,7 @@
     <!-- Rooms Section -->
     <section class="content-section" id="rooms">
         <div class="section-subtitle">ACCOMMODATION</div>
-        <h2 class="section-title">Our Luxury Rooms</h2>
+        <h2 class="section-title">Our Rooms</h2>
         <p class="section-description">
             Discover our collection of elegantly designed rooms and suites, each offering the perfect blend of comfort and sophistication.
         </p>
