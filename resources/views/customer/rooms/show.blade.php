@@ -1046,7 +1046,7 @@
                         if ($ctParams) $checkoutUrl .= '?' . http_build_query($ctParams);
                     @endphp
                     <a href="{{ $checkoutUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
-                        <i class="fas fa-calendar-check"></i> Learn Now
+                        <i class="fas fa-calendar-check"></i> Book Now
                     </a>
                 </div>
 
