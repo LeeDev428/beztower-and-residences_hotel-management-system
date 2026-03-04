@@ -971,7 +971,7 @@
                     <input type="hidden" name="guests" id="totalGuests" value="1">
                     
                     <button type="submit" class="book-now-btn">
-                        <i class="fas fa-search"></i> BOOK NOW
+                        <i class="fas fa-search"></i> Learn Now
                     </button>
                 </div>
             </form>
