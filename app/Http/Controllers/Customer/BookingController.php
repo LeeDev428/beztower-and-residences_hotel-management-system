@@ -130,6 +130,7 @@ class BookingController extends Controller
                 'total_amount' => $totalAmount,
                 'payment_option' => $validated['payment_option'],
                 'status' => 'pending',
+                'expires_at' => now()->addHours(8),
                 'special_requests' => $validated['special_requests']
             ]);
 
