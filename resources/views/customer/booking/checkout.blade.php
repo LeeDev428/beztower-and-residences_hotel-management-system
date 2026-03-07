@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - {{ $room->roomType->name }} - Bez Tower & Residences</title>
+    <title>Booking Information - {{ $room->roomType->name }} - Bez Tower & Residences</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         * {
@@ -453,7 +453,7 @@
             <!-- Left: Checkout Form -->
             <div class="checkout-form-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-file-invoice"></i> Checkout</h2>
+                    <h2><i class="fas fa-file-invoice"></i> Booking Information</h2>
                     <p>Please fill in your details to complete the booking</p>
                 </div>
 
@@ -634,7 +634,7 @@
                                     <span>Down Payment (30%)</span>
                                 </div>
                                 <p class="payment-card-desc">Pay 30% now, settle remaining 70% upon check-in.</p>
-                                <div class="payment-amount" id="downPaymentAmount">₱{{ number_format($room->roomType->base_price * 0.30, 2) }}</div>
+                                <div class="payment-amount" id="downPaymentAmount">₱{{ number_format($room->effective_price * 1.12 * 0.30, 2) }}</div>
                             </div>
                         </label>
                         
@@ -646,7 +646,7 @@
                                     <span>Full Payment (100%)</span>
                                 </div>
                                 <p class="payment-card-desc">Pay the full amount now for hassle-free check-in.</p>
-                                <div class="payment-amount" id="fullPaymentAmount">₱{{ number_format($room->roomType->base_price, 2) }}</div>
+                                <div class="payment-amount" id="fullPaymentAmount">₱{{ number_format($room->effective_price * 1.12, 2) }}</div>
                             </div>
                         </label>
                     </div>
@@ -677,7 +677,12 @@
                     <div class="room-summary-content">
                         <div class="room-type-name">{{ $room->roomType->name }}</div>
                         <div class="room-price">
-                            ₱{{ number_format($room->roomType->base_price, 2) }}
+                            @if($room->effective_price < $room->roomType->base_price)
+                                <span style="text-decoration: line-through; color: #999; font-size: 0.9em; font-weight: normal;">₱{{ number_format($room->roomType->base_price, 2) }}</span>
+                                ₱{{ number_format($room->effective_price, 2) }}
+                            @else
+                                ₱{{ number_format($room->effective_price, 2) }}
+                            @endif
                             <span>/ night</span>
                         </div>
                     </div>
@@ -690,9 +695,21 @@
                     
                     <div class="price-row">
                         <span class="price-label">Room Rate × <span id="nightsCount">1</span> night</span>
-                        <span class="price-value" id="subtotalDisplay">₱{{ number_format($room->roomType->base_price, 2) }}</span>
+                        <span class="price-value" id="subtotalDisplay">₱{{ number_format($room->effective_price, 2) }}</span>
                     </div>
-                    
+
+                    @if($room->effective_price < $room->roomType->base_price)
+                    <div class="price-row" id="discountRow">
+                        <span class="price-label" style="color: #28a745;"><i class="fas fa-tag" style="font-size:0.8em;"></i> Discount Savings</span>
+                        <span class="price-value" style="color: #28a745;" id="discountDisplay">-₱{{ number_format($room->roomType->base_price - $room->effective_price, 2) }}</span>
+                    </div>
+                    @else
+                    <div class="price-row" id="discountRow" style="display:none;">
+                        <span class="price-label" style="color: #28a745;"><i class="fas fa-tag" style="font-size:0.8em;"></i> Discount Savings</span>
+                        <span class="price-value" style="color: #28a745;" id="discountDisplay">-₱0.00</span>
+                    </div>
+                    @endif
+
                     <div class="price-row">
                         <span class="price-label">Additional Services</span>
                         <span class="price-value" id="extrasDisplay">₱0.00</span>
@@ -700,12 +717,12 @@
                     
                     <div class="price-row">
                         <span class="price-label">Tax (12%)</span>
-                        <span class="price-value" id="taxDisplay">₱{{ number_format($room->roomType->base_price * 0.12, 2) }}</span>
+                        <span class="price-value" id="taxDisplay">₱{{ number_format($room->effective_price * 0.12, 2) }}</span>
                     </div>
                     
                     <div class="price-row">
                         <span class="price-label">Total</span>
-                        <span class="price-value" id="totalDisplay">₱{{ number_format($room->roomType->base_price, 2) }}</span>
+                        <span class="price-value" id="totalDisplay">₱{{ number_format($room->effective_price * 1.12, 2) }}</span>
                     </div>
                 </div>
             </div>
@@ -713,7 +730,8 @@
     </div>
 
     <script>
-        const basePrice = {{ $room->roomType->base_price }};
+        const basePrice = {{ $room->effective_price }};
+        const originalBasePrice = {{ $room->roomType->base_price }};
         const taxRate = 0.12;
 
         // Calculate number of nights from check-in and check-out dates
@@ -787,6 +805,15 @@
             document.getElementById('extrasDisplay').textContent = '₱' + extrasTotal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             document.getElementById('taxDisplay').textContent = '₱' + taxAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             document.getElementById('totalDisplay').textContent = '₱' + total.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+
+            // Update discount savings row
+            if (originalBasePrice > basePrice) {
+                const discountAmount = (originalBasePrice - basePrice) * nights;
+                document.getElementById('discountDisplay').textContent = '-₱' + discountAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+                document.getElementById('discountRow').style.display = '';
+            } else {
+                document.getElementById('discountRow').style.display = 'none';
+            }
             
             updatePaymentSummary();
         }
