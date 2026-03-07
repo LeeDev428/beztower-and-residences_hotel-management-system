@@ -14,7 +14,7 @@ class RoomController extends Controller
     public function index(Request $request)
     {
         $query = Room::with(['roomType', 'amenities', 'photos'])
-            ->whereIn('status', ['available', 'occupied']); // Exclude dirty and maintenance
+            ->where('status', 'available'); // Only show available rooms
         
         // Search functionality
         if ($request->filled('search')) {
