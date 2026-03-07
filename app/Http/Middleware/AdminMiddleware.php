@@ -21,6 +21,13 @@ class AdminMiddleware
             abort(403, 'Unauthorized. Admin access required.');
         }
 
+        if (!is_null(auth()->user()->deactivated_at)) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('admin.login')->with('error', 'Your account has been deactivated. Please contact the administrator.');
+        }
+
         return $next($request);
     }
 }
