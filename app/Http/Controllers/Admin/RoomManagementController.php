@@ -65,11 +65,11 @@ class RoomManagementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'room_number' => 'required|string|unique:rooms',
+            'room_number' => 'required|string|max:3|unique:rooms',
             'room_type_id' => 'required|exists:room_types,id',
-            'floor' => 'required|integer|min:1',
+            'floor' => 'required|integer|min:2|max:5',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
-            'status' => 'required|in:available,occupied,maintenance,blocked',
+            'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
             'description' => 'nullable|string',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
@@ -123,12 +123,20 @@ class RoomManagementController extends Controller
 
     public function update(Request $request, Room $room)
     {
+        // Manager/Receptionist can only update room status
+        if (in_array(auth()->user()->role, ['manager', 'receptionist'])) {
+            $validated = $request->validate(['status' => 'required|in:available,occupied,dirty,in_progress,maintenance']);
+            $room->update(['status' => $validated['status']]);
+            ActivityLog::log('room_status_update', 'Updated room #' . $room->room_number . ' status to ' . $validated['status'], 'App\Models\Room', $room->id);
+            return redirect()->route('admin.rooms.index')->with('success', 'Room status updated successfully!');
+        }
+
         $validated = $request->validate([
-            'room_number' => 'required|string|unique:rooms,room_number,' . $room->id,
+            'room_number' => 'required|string|max:3|unique:rooms,room_number,' . $room->id,
             'room_type_id' => 'required|exists:room_types,id',
-            'floor' => 'required|integer|min:1',
+            'floor' => 'required|integer|min:2|max:5',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
-            'status' => 'required|in:available,occupied,maintenance,blocked',
+            'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
             'description' => 'nullable|string',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
