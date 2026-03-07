@@ -128,6 +128,47 @@ class BookingManagementController extends Controller
         return back()->with('success', 'Booking status updated successfully!');
     }
 
+    /**
+     * Assign or transfer a room to a booking.
+     * The new room must be 'available'. If the booking already has a room
+     * and is not checked_in/checked_out, free the old room back to 'available'.
+     */
+    public function assignRoom(Request $request, Booking $booking)
+    {
+        $validated = $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+        ]);
+
+        $newRoom = Room::findOrFail($validated['room_id']);
+
+        if ($newRoom->status !== 'available') {
+            return back()->with('error', 'Selected room is not available. Only available rooms can be assigned.');
+        }
+
+        // Free old room if booking is pending/confirmed (not already checked in)
+        if ($booking->room_id && !in_array($booking->status, ['checked_in', 'checked_out'])) {
+            $booking->room->update(['status' => 'available']);
+        }
+
+        // Assign new room; if already checked in, mark new room occupied
+        $newRoomStatus = in_array($booking->status, ['checked_in']) ? 'occupied' : 'available';
+        if ($booking->status === 'checked_in') {
+            $newRoom->update(['status' => 'occupied']);
+        }
+
+        $booking->update(['room_id' => $newRoom->id]);
+
+        ActivityLog::log(
+            'room_assign',
+            'Assigned room #' . $newRoom->room_number . ' to booking #' . $booking->booking_reference,
+            'App\Models\Booking',
+            $booking->id,
+            ['room_number' => $newRoom->room_number]
+        );
+
+        return back()->with('success', 'Room #' . $newRoom->room_number . ' successfully assigned to this booking.');
+    }
+
     public function finalBilling(Booking $booking)
     {
         $booking->load(['guest', 'room', 'roomType']);
