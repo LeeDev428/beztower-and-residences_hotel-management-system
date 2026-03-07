@@ -39,7 +39,8 @@ class Booking extends Model
         'cancellation_reason',
         'refund_status',
         'rescheduled_at',
-        'original_check_in_date'
+        'original_check_in_date',
+        'expires_at',
     ];
 
     protected $casts = [
@@ -56,7 +57,8 @@ class Booking extends Model
         'manual_adjustment' => 'decimal:2',
         'has_pwd_senior' => 'boolean',
         'cancelled_at' => 'datetime',
-        'rescheduled_at' => 'datetime'
+        'rescheduled_at' => 'datetime',
+        'expires_at' => 'datetime',
     ];
 
     public function getFinalTotalAttribute()
