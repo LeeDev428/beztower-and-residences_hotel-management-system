@@ -12,11 +12,32 @@
     <form method="POST" action="{{ route('admin.rooms.update', $room) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')
-        
+
+        @if(in_array(auth()->user()->role, ['manager', 'receptionist']))
+        {{-- Manager / Receptionist: status update only --}}
+        <div style="margin-bottom: 1.5rem;">
+            <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.875rem;">Your role only allows updating the room status.</p>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Status *</label>
+            <select name="status" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                <option value="available" {{ old('status', $room->status) == 'available' ? 'selected' : '' }}>Available</option>
+                <option value="occupied" {{ old('status', $room->status) == 'occupied' ? 'selected' : '' }}>Occupied</option>
+                <option value="dirty" {{ old('status', $room->status) == 'dirty' ? 'selected' : '' }}>Dirty</option>
+                <option value="in_progress" {{ old('status', $room->status) == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                <option value="maintenance" {{ old('status', $room->status) == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+            </select>
+            @error('status')
+            <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
+            @enderror
+        </div>
+        <div>
+            <x-admin.button type="primary">Update Status</x-admin.button>
+        </div>
+        @else
+        {{-- Admin: full edit form --}}
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
             <div>
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Room Number *</label>
-                <input type="text" name="room_number" value="{{ old('room_number', $room->room_number) }}" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                <input type="text" name="room_number" value="{{ old('room_number', $room->room_number) }}" required maxlength="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                 @error('room_number')
                 <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                 @enderror
@@ -45,7 +66,8 @@
 
             <div>
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Floor *</label>
-                <input type="number" name="floor" value="{{ old('floor', $room->floor) }}" required min="1" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                <input type="number" name="floor" value="{{ old('floor', $room->floor) }}" required min="2" max="5" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                <small style="color: #666; font-size: 0.875rem;">Floors 2–5 only</small>
                 @error('floor')
                 <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                 @enderror
@@ -65,6 +87,8 @@
                 <select name="status" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                     <option value="available" {{ old('status', $room->status) == 'available' ? 'selected' : '' }}>Available</option>
                     <option value="occupied" {{ old('status', $room->status) == 'occupied' ? 'selected' : '' }}>Occupied</option>
+                    <option value="dirty" {{ old('status', $room->status) == 'dirty' ? 'selected' : '' }}>Dirty</option>
+                    <option value="in_progress" {{ old('status', $room->status) == 'in_progress' ? 'selected' : '' }}>In Progress</option>
                     <option value="maintenance" {{ old('status', $room->status) == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
                 </select>
                 @error('status')
@@ -140,6 +164,7 @@
             <x-admin.button type="primary">Update Room</x-admin.button>
             <x-admin.button type="outline" href="{{ route('admin.rooms.index') }}">Cancel</x-admin.button>
         </div>
+        @endif
     </form>
 </x-admin.card>
 
