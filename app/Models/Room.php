@@ -81,4 +81,17 @@ class Room extends Model
     {
         return $this->hasMany(BlockDate::class);
     }
+
+    // Effective price per night after applying room-type and room-level discounts
+    public function getEffectivePriceAttribute()
+    {
+        $price = $this->roomType->base_price;
+        if ($this->roomType->discount_percentage > 0) {
+            $price = $price * (1 - $this->roomType->discount_percentage / 100);
+        }
+        if ($this->discount_percentage > 0) {
+            $price = $price * (1 - $this->discount_percentage / 100);
+        }
+        return round($price, 2);
+    }
 }
