@@ -18,6 +18,7 @@
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Name</th>
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Email</th>
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Role</th>
+                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Status</th>
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Created</th>
                     <th style="text-align: right; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Actions</th>
                 </tr>
@@ -35,6 +36,17 @@
                         <x-admin.badge :status="$user->role" />
                     </td>
                     <td style="padding: 1rem 0.75rem;">
+                        @if($user->deactivated_at)
+                            <span style="display: inline-flex; align-items: center; padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: rgba(220,53,69,0.1); color: var(--danger);">
+                                Deactivated
+                            </span>
+                        @else
+                            <span style="display: inline-flex; align-items: center; padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: rgba(40,167,69,0.1); color: var(--success);">
+                                Active
+                            </span>
+                        @endif
+                    </td>
+                    <td style="padding: 1rem 0.75rem;">
                         {{ $user->created_at->format('M d, Y') }}
                     </td>
                     <td style="padding: 1rem 0.75rem; text-align: right;">
@@ -43,20 +55,29 @@
                                 Edit
                             </x-admin.button>
                             @if($user->id !== auth()->id())
-                            <form method="POST" action="{{ route('admin.users.destroy', $user) }}" style="display: inline;" onsubmit="return confirm('Archive this user? They will no longer be able to log in.');">
-                                @csrf
-                                @method('DELETE')
-                                <x-admin.button type="danger" size="sm">
-                                    Archive
-                                </x-admin.button>
-                            </form>
+                                @if($user->deactivated_at)
+                                <form method="POST" action="{{ route('admin.users.activate', $user) }}" style="display: inline;">
+                                    @csrf
+                                    <x-admin.button type="primary" size="sm">
+                                        Activate
+                                    </x-admin.button>
+                                </form>
+                                @else
+                                <form method="POST" action="{{ route('admin.users.destroy', $user) }}" style="display: inline;" onsubmit="return confirm('Deactivate this user? They will no longer be able to log in.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <x-admin.button type="danger" size="sm">
+                                        Deactivate
+                                    </x-admin.button>
+                                </form>
+                                @endif
                             @endif
                         </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                    <td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-muted);">
                         No users found
                     </td>
                 </tr>
