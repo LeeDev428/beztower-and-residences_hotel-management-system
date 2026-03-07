@@ -86,6 +86,7 @@ Route::prefix('admin')->group(function () {
             Route::post('/{booking}/final-billing', [BookingManagementController::class, 'updateFinalBilling'])->name('admin.bookings.updateFinalBilling');
             Route::post('/{booking}/cancel', [BookingManagementController::class, 'cancelBooking'])->name('admin.bookings.cancel');
             Route::post('/{booking}/reschedule', [BookingManagementController::class, 'rescheduleBooking'])->name('admin.bookings.reschedule');
+            Route::post('/{booking}/assign-room', [BookingManagementController::class, 'assignRoom'])->name('admin.bookings.assignRoom');
         });
         
         // Guest Management
@@ -135,6 +136,13 @@ Route::prefix('admin')->group(function () {
             Route::get('/{user}/edit', [\App\Http\Controllers\Admin\UserController::class, 'edit'])->name('admin.users.edit');
             Route::put('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('admin.users.update');
             Route::delete('/{user}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.users.destroy');
+            Route::post('/{user}/activate', [\App\Http\Controllers\Admin\UserController::class, 'activate'])->name('admin.users.activate');
+        });
+
+        // Backup & Recovery (Admin Only)
+        Route::middleware('role:admin')->prefix('backup')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('admin.backup.index');
+            Route::get('/export/{table}', [\App\Http\Controllers\Admin\BackupController::class, 'export'])->name('admin.backup.export');
         });
 
         // Settings (Admin Only)
