@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\Room;
 use App\Models\ActivityLog;
 use App\Mail\CheckoutReminder;
 use App\Mail\BookingCancelled;
@@ -58,9 +59,18 @@ class BookingManagementController extends Controller
 
     public function show(Booking $booking)
     {
-        $booking->load(['guest', 'room', 'roomType']);
+        $booking->load(['guest', 'room.roomType', 'roomType']);
 
-        return view('admin.bookings.show', compact('booking'));
+        // Available rooms of the same type (for assign/transfer)
+        $availableRooms = Room::with('roomType')
+            ->where('status', 'available')
+            ->whereNull('archived_at')
+            ->when($booking->room, fn($q) => $q->where('room_type_id', $booking->room->room_type_id))
+            ->where('id', '!=', $booking->room_id)
+            ->orderBy('room_number')
+            ->get();
+
+        return view('admin.bookings.show', compact('booking', 'availableRooms'));
     }
 
     public function updateStatus(Request $request, Booking $booking)
@@ -81,7 +91,8 @@ class BookingManagementController extends Controller
         } elseif ($validated['status'] === 'checked_in') {
             $booking->room->update(['status' => 'occupied']);
         } elseif ($validated['status'] === 'checked_out') {
-            $booking->room->update(['status' => 'maintenance']);
+            // Room becomes dirty after checkout (needs cleaning)
+            $booking->room->update(['status' => 'dirty']);
 
             // Auto-record remaining balance as revenue
             $amountPaid = $booking->payments()
@@ -102,12 +113,6 @@ class BookingManagementController extends Controller
                     'verified_by' => auth()->id(),
                 ]);
             }
-            
-            // Create or update housekeeping record
-            \App\Models\Housekeeping::updateOrCreate(
-                ['room_id' => $booking->room_id],
-                ['status' => 'dirty', 'notes' => 'Room needs cleaning after checkout']
-            );
             
             // Send checkout confirmation email
             Log::info('About to send checkout email to: ' . $booking->guest->email);
