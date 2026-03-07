@@ -78,11 +78,18 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         if ($user->id === auth()->id()) {
-            return back()->with('error', 'You cannot delete your own account!');
+            return back()->with('error', 'You cannot deactivate your own account!');
         }
 
-        $user->delete();
+        $user->update(['deactivated_at' => now()]);
 
-        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully!');
+        return redirect()->route('admin.users.index')->with('success', 'User account deactivated successfully!');
+    }
+
+    public function activate(User $user)
+    {
+        $user->update(['deactivated_at' => null]);
+
+        return redirect()->route('admin.users.index')->with('success', 'User account activated successfully!');
     }
 }
