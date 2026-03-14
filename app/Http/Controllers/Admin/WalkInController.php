@@ -93,8 +93,6 @@ class WalkInController extends Controller
             return back()->withErrors(['room_ids' => 'One or more selected rooms are no longer available for the selected dates.'])->withInput();
         }
 
-        $rooms = Room::with('roomType')->whereIn('id', $selectedRoomIds)->get()->keyBy('id');
-
         $selectedExtras = [];
         $extrasTotal = 0;
         if (!empty($validated['extras'])) {
@@ -135,9 +133,10 @@ class WalkInController extends Controller
         try {
             $createdBookings = [];
             $overallTotal = 0;
+            $verifiedBy = auth()->user()?->id;
 
             foreach ($selectedRoomIds as $roomId) {
-                $room = $rooms->get($roomId);
+                $room = Room::with('roomType')->findOrFail($roomId);
                 $roomSubtotal = (float) $room->roomType->base_price * $nights;
                 $totalAmount = round($roomSubtotal + $extrasTotal, 2);
                 $reference = 'WI-' . strtoupper(Str::random(8));
@@ -184,7 +183,7 @@ class WalkInController extends Controller
                     'payment_date' => now(),
                     'payment_notes' => 'Walk-in booking. Recorded by admin.',
                     'verified_at' => now(),
-                    'verified_by' => auth()->id(),
+                    'verified_by' => $verifiedBy,
                 ]);
 
                 $createdBookings[] = $booking;
@@ -199,7 +198,7 @@ class WalkInController extends Controller
         }
 
         $firstBooking = $createdBookings[0];
-        $roomSummary = $rooms->whereIn('id', $selectedRoomIds)->pluck('room_number')->implode(', ');
+        $roomSummary = Room::whereIn('id', $selectedRoomIds)->orderBy('room_number')->pluck('room_number')->implode(', ');
 
         // Log activity
         ActivityLog::log(
