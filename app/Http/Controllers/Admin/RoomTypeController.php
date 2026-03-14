@@ -36,21 +36,12 @@ class RoomTypeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
-            'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'max_guests' => 'required|integer|min:1',
             'bed_type' => 'nullable|string',
             'size_sqm' => 'nullable|numeric|min:0'
         ]);
 
-        // Validate discount is divisible by 5
-        if (!empty($validated['discount_percentage'])) {
-            $discount = $validated['discount_percentage'];
-            if ($discount > 0 && fmod($discount, 5) != 0) {
-                return response()->json([
-                    'error' => 'Discount percentage must be divisible by 5'
-                ], 422);
-            }
-        }
+        $validated['discount_percentage'] = 0;
 
         $roomType = RoomType::create($validated);
 
@@ -66,21 +57,12 @@ class RoomTypeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
-            'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'max_guests' => 'required|integer|min:1',
             'bed_type' => 'nullable|string',
             'size_sqm' => 'nullable|numeric|min:0'
         ]);
 
-        // Validate discount is divisible by 5
-        if (!empty($validated['discount_percentage'])) {
-            $discount = $validated['discount_percentage'];
-            if ($discount > 0 && fmod($discount, 5) != 0) {
-                return response()->json([
-                    'error' => 'Discount percentage must be divisible by 5'
-                ], 422);
-            }
-        }
+        $validated['discount_percentage'] = 0;
 
         $roomType->update($validated);
 
