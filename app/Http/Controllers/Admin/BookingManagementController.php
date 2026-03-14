@@ -7,8 +7,8 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Room;
 use App\Models\ActivityLog;
-use App\Mail\CheckoutReminder;
 use App\Mail\BookingCancelled;
+use App\Mail\CheckoutThankYou;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -61,6 +61,10 @@ class BookingManagementController extends Controller
     {
         $booking->load(['guest', 'room.roomType', 'roomType']);
 
+        $allowedStatuses = $this->getAllowedStatusTransitions($booking->status);
+        $statusLocked = in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true);
+        $billingLocked = in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true);
+
         $verifiedPaymentsTotal = $booking->payments()
             ->whereIn('payment_status', ['verified', 'completed'])
             ->sum('amount');
@@ -77,7 +81,16 @@ class BookingManagementController extends Controller
             ->orderBy('room_number')
             ->get();
 
-        return view('admin.bookings.show', compact('booking', 'availableRooms', 'verifiedPaymentsTotal', 'balanceDue', 'grossTotal'));
+        return view('admin.bookings.show', compact(
+            'booking',
+            'availableRooms',
+            'verifiedPaymentsTotal',
+            'balanceDue',
+            'grossTotal',
+            'allowedStatuses',
+            'statusLocked',
+            'billingLocked'
+        ));
     }
 
     public function updateStatus(Request $request, Booking $booking)
@@ -86,18 +99,54 @@ class BookingManagementController extends Controller
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,cancelled,rescheduled,rejected_payment',
         ]);
 
+        $currentStatus = $booking->status;
+        $targetStatus = $validated['status'];
+
+        if (in_array($currentStatus, ['checked_out', 'cancelled', 'rejected_payment'], true)) {
+            return back()->with('error', 'Status is locked for this booking and can no longer be updated.');
+        }
+
+        if ($currentStatus === $targetStatus) {
+            return back()->with('success', 'Booking status remains ' . str_replace('_', ' ', $currentStatus) . '.');
+        }
+
+        $allowedTransitions = $this->getAllowedStatusTransitions($currentStatus);
+        if (!in_array($targetStatus, $allowedTransitions, true)) {
+            return back()->with('error', 'Invalid status transition from ' . str_replace('_', ' ', $currentStatus) . ' to ' . str_replace('_', ' ', $targetStatus) . '.');
+        }
+
+        if ($targetStatus === 'checked_in') {
+            $hasVerifiedPayment = $booking->payments()->whereIn('payment_status', ['verified', 'completed'])->exists();
+            if (!$hasVerifiedPayment) {
+                return back()->with('error', 'Check-in is not allowed until payment is verified in the Payment Module.');
+            }
+        }
+
         // Load guest relationship for emails
         $booking->load('guest');
 
-        $booking->update(['status' => $validated['status']]);
+        $updateData = ['status' => $targetStatus];
+        if ($targetStatus === 'cancelled' && !$booking->cancelled_at) {
+            $updateData['cancelled_at'] = now();
+            $updateData['cancellation_reason'] = $booking->cancellation_reason ?: 'Cancelled by admin via status update.';
+        }
+        $booking->update($updateData);
 
         // Update room status based on booking status
-        if ($validated['status'] === 'rejected_payment') {
+        if ($targetStatus === 'rejected_payment') {
             // Free up room when payment is rejected
             $booking->room->update(['status' => 'available']);
-        } elseif ($validated['status'] === 'checked_in') {
+        } elseif ($targetStatus === 'checked_in') {
             $booking->room->update(['status' => 'occupied']);
-        } elseif ($validated['status'] === 'checked_out') {
+        } elseif ($targetStatus === 'cancelled') {
+            $booking->room->update(['status' => 'available']);
+
+            try {
+                Mail::to($booking->guest->email)->send(new BookingCancelled($booking));
+            } catch (\Exception $e) {
+                Log::error('Failed to send cancellation email from status update: ' . $e->getMessage());
+            }
+        } elseif ($targetStatus === 'checked_out') {
             // Room becomes dirty after checkout (needs cleaning)
             $booking->room->update(['status' => 'dirty']);
 
@@ -121,18 +170,33 @@ class BookingManagementController extends Controller
                 ]);
             }
             
-            // Send checkout confirmation email
-            Log::info('About to send checkout email to: ' . $booking->guest->email);
+            // Send thank-you email after checkout
+            Log::info('About to send checkout thank-you email to: ' . $booking->guest->email);
             try {
-                Mail::to($booking->guest->email)->send(new CheckoutReminder($booking));
-                Log::info('Checkout email sent successfully to: ' . $booking->guest->email);
+                Mail::to($booking->guest->email)->send(new CheckoutThankYou($booking));
+                Log::info('Checkout thank-you email sent successfully to: ' . $booking->guest->email);
             } catch (\Exception $e) {
-                Log::error('Failed to send checkout email: ' . $e->getMessage());
+                Log::error('Failed to send checkout thank-you email: ' . $e->getMessage());
                 Log::error('Stack trace: ' . $e->getTraceAsString());
             }
         }
 
         return back()->with('success', 'Booking status updated successfully!');
+    }
+
+    private function getAllowedStatusTransitions(string $currentStatus): array
+    {
+        $map = [
+            'pending' => ['confirmed', 'cancelled'],
+            'confirmed' => ['checked_in', 'rescheduled', 'cancelled'],
+            'checked_in' => ['checked_out'],
+            'rescheduled' => ['checked_in', 'cancelled'],
+            'checked_out' => [],
+            'cancelled' => [],
+            'rejected_payment' => [],
+        ];
+
+        return $map[$currentStatus] ?? [];
     }
 
     /**
