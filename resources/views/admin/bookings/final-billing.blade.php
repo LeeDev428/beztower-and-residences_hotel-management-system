@@ -67,8 +67,8 @@
         <!-- Final Total Summary -->
         <x-admin.card title="Final Total">
             <div style="background: linear-gradient(135deg, #2c2c2c, #3a3a3a); border-radius: 10px; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
-                <span style="color: #ccc; font-size: 1rem; font-weight: 600;">Grand Total:</span>
-                <span style="font-size: 1.75rem; font-weight: 800; color: var(--primary-gold);" id="grandTotal">₱{{ number_format($booking->final_total ?? $booking->total_amount, 2) }}</span>
+                <span style="color: #ccc; font-size: 1rem; font-weight: 600;">Balance Due:</span>
+                <span style="font-size: 1.75rem; font-weight: 800; color: var(--primary-gold);" id="grandTotal">₱{{ number_format($balanceDue, 2) }}</span>
             </div>
             <div style="font-size: 0.9rem;">
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
@@ -86,6 +86,10 @@
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--success); font-weight: 600;">PWD/Senior Discount</span>
                     <span style="font-weight: 700; color: var(--success);" id="pwdDiscountDisplay">-₱{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
+                    <span style="color: var(--success); font-weight: 600;">Verified Payments</span>
+                    <span style="font-weight: 700; color: var(--success);" id="verifiedPaymentsDisplay">-₱{{ number_format($verifiedPaymentsTotal, 2) }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; padding: 5px 0;">
                     <span style="color: var(--text-muted);">Manual Adjustment</span>
@@ -235,7 +239,7 @@
 
                 <div id="gcashQRSection" style="display: none; text-align: center; padding: 1rem; border: 1px solid #bee0ff; border-radius: 8px; background: #e8f4ff;">
                     <p style="margin-bottom: 0.75rem; font-weight: 700;"><i class="fas fa-qrcode"></i> Scan to Pay via GCash</p>
-                    <img src="{{ asset('images/gcash-qr.png') }}" alt="GCash QR Code" style="max-width: 200px; border: 2px solid #007bff; border-radius: 8px; margin-bottom: 0.75rem;">
+                    <img src="{{ asset('images/gcash/gcash_v2.jpg') }}" alt="GCash QR Code" style="max-width: 200px; border: 2px solid #007bff; border-radius: 8px; margin-bottom: 0.75rem;">
                     <p style="font-size: 0.85rem; color: #555; margin: 0.2rem 0;"><strong>GCash Number:</strong> 0917-123-4567</p>
                     <p style="font-size: 0.85rem; color: #555; margin: 0.2rem 0;"><strong>Account Name:</strong> Bez Tower and Residences</p>
                 </div>
@@ -258,6 +262,7 @@
 const hourlyRate = {{ $hourlyRate }};
 const roomTotal = {{ $booking->total_amount }};
 const numberOfGuests = {{ $booking->number_of_guests }};
+const verifiedPaymentsTotal = {{ $verifiedPaymentsTotal }};
 
 function incrementCounter(type) {
     const input = document.getElementById(type + 'Hours');
@@ -343,9 +348,10 @@ function calculateTotal() {
     const pwdDiscount  = parseFloat(document.getElementById('pwdSeniorDiscountInput').value) || 0;
     const manualAdjust = parseFloat(document.getElementById('manualAdjustment').value) || 0;
 
-    const grandTotal = roomTotal + earlyCheckin + lateCheckout - pwdDiscount + manualAdjust;
+    const grossTotal = roomTotal + earlyCheckin + lateCheckout - pwdDiscount + manualAdjust;
+    const balanceDue = Math.max(grossTotal - verifiedPaymentsTotal, 0);
 
-    document.getElementById('grandTotal').textContent = '₱' + grandTotal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('grandTotal').textContent = '₱' + balanceDue.toLocaleString('en-PH', {minimumFractionDigits: 2});
     document.getElementById('manualAdjustmentDisplay').textContent = '₱' + manualAdjust.toLocaleString('en-PH', {minimumFractionDigits: 2});
 }
 
