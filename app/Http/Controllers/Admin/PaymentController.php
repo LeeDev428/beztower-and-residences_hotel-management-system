@@ -74,8 +74,8 @@ class PaymentController extends Controller
             'rejection_reason' => 'required|string|max:500',
         ]);
 
-        // Load relationships for emails
-        $payment->load('booking.guest');
+        // Load relationships for emails and booking status update
+        $payment->load('booking.guest', 'booking.room');
 
         $payment->update([
             'payment_status' => 'failed',
@@ -83,6 +83,17 @@ class PaymentController extends Controller
             'verified_at' => now(),
             'verified_by' => auth()->id(),
         ]);
+
+        // Keep booking status in sync with payment rejection.
+        if ($payment->booking) {
+            $payment->booking->update([
+                'status' => 'rejected_payment',
+            ]);
+
+            if ($payment->booking->room && $payment->booking->room->status !== 'available') {
+                $payment->booking->room->update(['status' => 'available']);
+            }
+        }
 
         // Send rejection email
         try {
