@@ -29,9 +29,6 @@
                         @foreach($roomTypes as $type)
                         <option value="{{ $type->id }}" {{ old('room_type_id') == $type->id ? 'selected' : '' }}>
                             {{ $type->name }} - ₱{{ number_format($type->base_price, 2) }}
-                            @if($type->discount_percentage > 0)
-                                ({{ $type->discount_percentage }}% OFF)
-                            @endif
                         </option>
                         @endforeach
                     </select>
@@ -47,15 +44,6 @@
                 <input type="number" name="floor" value="{{ old('floor') }}" required min="2" max="5" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                 <small style="color: #666; font-size: 0.875rem;">Floors 2–5 only</small>
                 @error('floor')
-                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Discount Percentage</label>
-                <input type="number" name="discount_percentage" value="{{ old('discount_percentage', 0) }}" min="0" max="100" step="5" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
-                <small style="color: #666; font-size: 0.875rem;">Must be divisible by 5 (e.g., 0%, 5%, 10%, 15%)</small>
-                @error('discount_percentage')
                 <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                 @enderror
             </div>
