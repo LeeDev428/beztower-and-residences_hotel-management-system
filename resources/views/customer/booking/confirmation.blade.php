@@ -576,10 +576,6 @@
                             </div>
                         @endif
                         <div class="price-row">
-                            <span>Tax (12%)</span>
-                            <span>₱{{ number_format($booking->tax_amount, 2) }}</span>
-                        </div>
-                        <div class="price-row">
                             <span>Total Amount</span>
                             <span>₱{{ number_format($booking->total_amount, 2) }}</span>
                         </div>
