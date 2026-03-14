@@ -28,8 +28,14 @@
             <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Export Data</h3>
             <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Download booking data as Excel</p>
             <form method="GET" action="{{ route('admin.reports.export', 'bookings') }}">
-                <input type="date" name="start_date" value="{{ now()->startOfMonth()->format('Y-m-d') }}" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid var(--border-gray); border-radius: 6px;">
-                <input type="date" name="end_date" value="{{ now()->format('Y-m-d') }}" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid var(--border-gray); border-radius: 6px;">
+                <select name="month" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid var(--border-gray); border-radius: 6px;">
+                    @for($i = 0; $i < 24; $i++)
+                        @php $monthValue = now()->startOfMonth()->subMonths($i); @endphp
+                        <option value="{{ $monthValue->format('Y-m') }}" {{ $i === 0 ? 'selected' : '' }}>
+                            {{ $monthValue->format('F Y') }}
+                        </option>
+                    @endfor
+                </select>
                 <x-admin.button type="info">
                     Export Excel
                 </x-admin.button>
@@ -44,10 +50,16 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
             </svg>
             <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">Generate PDF Report</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Full hotel report with bookings, revenue &amp; stats as PDF</p>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Monthly hotel report with bookings, revenue and stats as PDF</p>
             <form method="GET" action="{{ route('admin.reports.pdf') }}">
-                <input type="date" name="start_date" value="{{ now()->startOfMonth()->format('Y-m-d') }}" style="width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid var(--border-gray); border-radius: 6px;">
-                <input type="date" name="end_date" value="{{ now()->format('Y-m-d') }}" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid var(--border-gray); border-radius: 6px;">
+                <select name="month" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid var(--border-gray); border-radius: 6px;">
+                    @for($i = 0; $i < 24; $i++)
+                        @php $monthValue = now()->startOfMonth()->subMonths($i); @endphp
+                        <option value="{{ $monthValue->format('Y-m') }}" {{ $i === 0 ? 'selected' : '' }}>
+                            {{ $monthValue->format('F Y') }}
+                        </option>
+                    @endfor
+                </select>
                 <button type="submit" style="display: inline-block; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #dc3545, #c82333); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.95rem; text-decoration: none; width: 100%;">
                     <i class="fas fa-file-pdf"></i>&nbsp; Download PDF
                 </button>
