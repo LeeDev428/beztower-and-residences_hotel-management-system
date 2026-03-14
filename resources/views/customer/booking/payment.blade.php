@@ -449,10 +449,6 @@
                         </div>
                     @endif
                     <div class="summary-row">
-                        <span>Tax (12%)</span>
-                        <span>₱{{ number_format($booking->tax_amount, 2) }}</span>
-                    </div>
-                    <div class="summary-row">
                         <span><strong>Total Amount</strong></span>
                         <span><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></span>
                     </div>
@@ -473,7 +469,7 @@
                         <div class="qr-code-container">
                             <h3>Scan to Pay</h3>
                             <div class="qr-code-wrapper">
-                                <img src="{{ asset('images/gcash/gcash.png') }}" alt="GCash QR Code">
+                                <img src="{{ asset('images/gcash/gcash_v2.jpg') }}" alt="GCash QR Code">
                             </div>
                             <div class="gcash-info">
                                 <p><strong>Account Name:</strong> Bez Tower & Residences</p>
