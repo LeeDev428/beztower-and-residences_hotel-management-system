@@ -9,6 +9,7 @@ use App\Models\Amenity;
 use App\Models\RoomPhoto;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class RoomManagementController extends Controller
@@ -115,7 +116,7 @@ class RoomManagementController extends Controller
     public function update(Request $request, Room $room)
     {
         // Manager/Receptionist can only update room status
-        if (in_array(auth()->user()->role, ['manager', 'receptionist'])) {
+        if (in_array(Auth::user()?->role, ['manager', 'receptionist'])) {
             $validated = $request->validate(['status' => 'required|in:available,occupied,dirty,in_progress,maintenance']);
             $room->update(['status' => $validated['status']]);
             ActivityLog::log('room_status_update', 'Updated room #' . $room->room_number . ' status to ' . $validated['status'], 'App\Models\Room', $room->id);
