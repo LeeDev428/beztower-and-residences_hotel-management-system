@@ -174,6 +174,10 @@ class RoomManagementController extends Controller
 
     public function destroy(Room $room)
     {
+        if ($room->status === 'occupied') {
+            return redirect()->route('admin.rooms.index')->with('error', 'Occupied rooms cannot be archived. Please check out the booking first.');
+        }
+
         // Archive the room instead of deleting
         $room->archive();
 
