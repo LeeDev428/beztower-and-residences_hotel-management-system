@@ -88,7 +88,7 @@
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; color: #444;">Room Selection <span style="color: var(--danger);">*</span></label>
                     <div id="availabilityInfo" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">Checking available rooms...</div>
-                    <div id="roomSelectors"></div>
+                    <div id="roomOptions" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem;"></div>
                 </div>
 
                 <div style="margin-bottom: 1rem;">
@@ -225,16 +225,14 @@ function getNights() {
 }
 
 function getSelectedRoomIds() {
-    return Array.from(document.querySelectorAll('.walkin-room-select'))
-        .map((el) => el.value)
-        .filter((id) => id);
+    return Array.from(document.querySelectorAll('.walkin-room-checkbox:checked')).map((el) => el.value);
 }
 
 function renderRoomSelectors() {
-    const container = document.getElementById('roomSelectors');
+    const container = document.getElementById('roomOptions');
     const availabilityInfo = document.getElementById('availabilityInfo');
     const requestedRooms = Math.max(1, parseInt(document.getElementById('numberOfRooms').value || '1', 10));
-    const previousSelections = getSelectedRoomIds();
+    const selectedIds = new Set(getSelectedRoomIds());
 
     container.innerHTML = '';
 
@@ -250,64 +248,59 @@ function renderRoomSelectors() {
         availabilityInfo.innerHTML += ' <span style="color: var(--danger);">(Requested ' + requestedRooms + ', only ' + availableRooms.length + ' available)</span>';
     }
 
-    for (let i = 0; i < requestedRooms; i++) {
-        const wrapper = document.createElement('div');
-        wrapper.style.marginBottom = '0.55rem';
+    availableRooms.forEach((room) => {
+        const isChecked = selectedIds.has(String(room.id));
 
-        const select = document.createElement('select');
-        select.name = 'room_ids[]';
-        select.required = true;
-        select.className = 'walkin-room-select';
-        select.style.width = '100%';
-        select.style.padding = '0.65rem 0.85rem';
-        select.style.border = '1px solid var(--border-gray)';
-        select.style.borderRadius = '8px';
-        select.style.fontSize = '0.9rem';
-        select.style.background = 'white';
-        select.style.boxSizing = 'border-box';
+        const label = document.createElement('label');
+        label.style.display = 'flex';
+        label.style.alignItems = 'flex-start';
+        label.style.gap = '0.55rem';
+        label.style.cursor = 'pointer';
+        label.style.border = '1px solid var(--border-gray)';
+        label.style.borderRadius = '8px';
+        label.style.padding = '0.7rem';
+        label.style.background = '#fff';
 
-        const firstOpt = document.createElement('option');
-        firstOpt.value = '';
-        firstOpt.textContent = 'Select Room ' + (i + 1);
-        select.appendChild(firstOpt);
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.className = 'walkin-room-checkbox';
+        input.name = 'room_ids[]';
+        input.value = String(room.id);
+        input.checked = isChecked;
+        input.style.marginTop = '0.12rem';
+        input.style.accentColor = 'var(--primary-gold)';
 
-        availableRooms.forEach((room) => {
-            const opt = document.createElement('option');
-            opt.value = String(room.id);
-            opt.textContent = room.label;
-            if (previousSelections[i] && String(room.id) === previousSelections[i]) {
-                opt.selected = true;
+        input.addEventListener('change', () => {
+            const currentlySelected = getSelectedRoomIds();
+            if (currentlySelected.length > requestedRooms) {
+                input.checked = false;
+                alert('You can only select up to ' + requestedRooms + ' room(s).');
+                return;
             }
-            select.appendChild(opt);
-        });
-
-        select.addEventListener('change', () => {
-            syncRoomOptionAvailability();
             calculateTotal();
         });
 
-        wrapper.appendChild(select);
-        container.appendChild(wrapper);
-    }
+        const details = document.createElement('div');
+        details.style.flex = '1';
 
-    syncRoomOptionAvailability();
-    calculateTotal();
-}
+        const title = document.createElement('div');
+        title.style.fontWeight = '600';
+        title.textContent = room.room_type + ' - Room ' + room.room_number;
 
-function syncRoomOptionAvailability() {
-    const selects = Array.from(document.querySelectorAll('.walkin-room-select'));
-    const selected = selects.map((s) => s.value).filter(Boolean);
+        const price = document.createElement('div');
+        price.style.fontSize = '0.8rem';
+        price.style.color = 'var(--text-muted)';
+        price.textContent = formatPeso(room.price) + '/night';
 
-    selects.forEach((currentSelect) => {
-        Array.from(currentSelect.options).forEach((opt) => {
-            if (!opt.value) {
-                opt.disabled = false;
-                return;
-            }
-            const usedElsewhere = selected.includes(opt.value) && currentSelect.value !== opt.value;
-            opt.disabled = usedElsewhere;
-        });
+        details.appendChild(title);
+        details.appendChild(price);
+        label.appendChild(input);
+        label.appendChild(details);
+
+        container.appendChild(label);
     });
+
+    calculateTotal();
 }
 
 function calculateTotal() {
