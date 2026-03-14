@@ -39,21 +39,12 @@
                     $checkIn  = request('check_in');
                     $checkOut = request('check_out');
                     $guests   = request('guests');
-                    $hasContext = $checkIn && $checkOut;
-
-                    if ($hasContext && $room->status === 'available') {
-                        $btnParams = ['check_in' => $checkIn, 'check_out' => $checkOut];
-                        if ($guests) $btnParams['guests'] = $guests;
-                        $btnUrl  = route('booking.checkout', $room) . '?' . http_build_query($btnParams);
-                        $btnText = 'Book Now';
-                    } else {
-                        $lcParams = [];
-                        if ($checkIn)  $lcParams['check_in']  = $checkIn;
-                        if ($checkOut) $lcParams['check_out'] = $checkOut;
-                        if ($guests)   $lcParams['guests']    = $guests;
-                        $btnUrl  = route('rooms.show', $room) . ($lcParams ? '?' . http_build_query($lcParams) : '');
-                        $btnText = 'Learn More';
-                    }
+                    $lcParams = [];
+                    if ($checkIn)  $lcParams['check_in']  = $checkIn;
+                    if ($checkOut) $lcParams['check_out'] = $checkOut;
+                    if ($guests)   $lcParams['guests']    = $guests;
+                    $btnUrl  = route('rooms.show', $room) . ($lcParams ? '?' . http_build_query($lcParams) : '');
+                    $btnText = 'Learn More';
                 @endphp
                 <a href="{{ $btnUrl }}" class="book-btn">{{ $btnText }}</a>
             </div>
