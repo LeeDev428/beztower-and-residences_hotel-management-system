@@ -88,8 +88,8 @@ class BookingController extends Controller
             // Get room details
             $room = Room::with('roomType')->findOrFail($validated['room_id']);
 
-            // Calculate costs using effective price (accounts for room-type and room-level discounts)
-            $subtotal = $room->effective_price * $validated['total_nights'];
+            // Calculate costs using base room rate (discounts removed globally)
+            $subtotal = $room->roomType->base_price * $validated['total_nights'];
             $extrasTotal = 0;
 
             // Get selected extras with quantities
@@ -108,9 +108,9 @@ class BookingController extends Controller
                 }
             }
 
-            // Calculate tax (12%)
-            $taxAmount = ($subtotal + $extrasTotal) * 0.12;
-            $totalAmount = $subtotal + $extrasTotal + $taxAmount;
+            // VAT removed globally
+            $taxAmount = 0;
+            $totalAmount = $subtotal + $extrasTotal;
 
             // Generate unique booking reference
             $bookingReference = 'BEZ-' . strtoupper(Str::random(8));
