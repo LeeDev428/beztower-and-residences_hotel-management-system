@@ -364,6 +364,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const checkInEl = document.getElementById('checkInDate');
     const checkOutEl = document.getElementById('checkOutDate');
     const roomsCountEl = document.getElementById('numberOfRooms');
+    const formEl = document.getElementById('walkInForm');
 
     checkInEl.addEventListener('change', function() {
         const ci = new Date(this.value + 'T00:00:00');
@@ -385,6 +386,15 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('input[name^="extra_quantities"], .extra-checkbox').forEach((input) => {
         input.addEventListener('input', calculateTotal);
         input.addEventListener('change', calculateTotal);
+    });
+
+    formEl.addEventListener('submit', function (event) {
+        const requestedRooms = Math.max(1, parseInt(roomsCountEl.value || '1', 10));
+        const selectedRooms = getSelectedRoomIds().length;
+        if (selectedRooms !== requestedRooms) {
+            event.preventDefault();
+            alert('Please select exactly ' + requestedRooms + ' room(s).');
+        }
     });
 
     toggleGcash();
