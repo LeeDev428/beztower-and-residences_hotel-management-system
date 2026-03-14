@@ -22,8 +22,7 @@ class ReportController extends Controller
 
     public function generatePdf(Request $request)
     {
-        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $endDate   = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        [$startDate, $endDate, $selectedMonth] = $this->resolveMonthlyPeriod($request);
 
         // Stats
         $totalBookings  = Booking::whereBetween('created_at', [$startDate, $endDate])->count();
@@ -60,16 +59,16 @@ class ReportController extends Controller
         // Log activity
         ActivityLog::log(
             'report_generate',
-            'Generated PDF report for ' . Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y')
+            'Generated PDF report for ' . Carbon::parse($startDate)->format('F Y')
         );
 
         $pdf = Pdf::loadView('admin.reports.pdf', compact(
-            'startDate', 'endDate',
+            'startDate', 'endDate', 'selectedMonth',
             'totalBookings', 'totalGuests', 'totalRooms', 'totalRevenue',
             'bookingsByStatus', 'recentBookings', 'revenueByType'
         ))->setPaper('a4', 'portrait');
 
-        $filename = 'hotel_report_' . Carbon::parse($startDate)->format('Ymd') . '_to_' . Carbon::parse($endDate)->format('Ymd') . '.pdf';
+        $filename = 'hotel_report_' . Carbon::parse($startDate)->format('Y_m') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -162,8 +161,7 @@ class ReportController extends Controller
 
     public function export(Request $request, $type)
     {
-        $startDate = $request->input('start_date', Carbon::now()->startOfMonth());
-        $endDate = $request->input('end_date', Carbon::now()->endOfMonth());
+        [$startDate, $endDate] = $this->resolveMonthlyPeriod($request);
 
         if ($type === 'revenue') {
             return $this->exportRevenue($startDate, $endDate);
@@ -351,5 +349,22 @@ class ReportController extends Controller
         }, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
+    }
+
+    private function resolveMonthlyPeriod(Request $request): array
+    {
+        $month = $request->input('month');
+
+        if ($month && preg_match('/^\d{4}-\d{2}$/', $month)) {
+            $anchor = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        } else {
+            $anchor = Carbon::now()->startOfMonth();
+        }
+
+        return [
+            $anchor->copy()->startOfMonth()->format('Y-m-d'),
+            $anchor->copy()->endOfMonth()->format('Y-m-d'),
+            $anchor->format('Y-m'),
+        ];
     }
 }
