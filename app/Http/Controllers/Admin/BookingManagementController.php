@@ -12,6 +12,7 @@ use App\Mail\CheckoutThankYou;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class BookingManagementController extends Controller
@@ -166,7 +167,7 @@ class BookingManagementController extends Controller
                     'payment_date' => now(),
                     'payment_notes' => 'Auto-recorded remaining balance on checkout.',
                     'verified_at' => now(),
-                    'verified_by' => auth()->id(),
+                    'verified_by' => Auth::id(),
                 ]);
             }
             
