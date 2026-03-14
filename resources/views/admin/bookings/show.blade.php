@@ -175,9 +175,19 @@
                     <span>Room Rate ({{ $booking->number_of_nights }} nights)</span>
                     <span style="font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
                 </div>
+                @if(($booking->final_total ?? $booking->total_amount) != $booking->total_amount)
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Final Billing (Gross)</span>
+                    <span style="font-weight: 600;">₱{{ number_format($grossTotal, 2) }}</span>
+                </div>
+                @endif
+                <div style="display: flex; justify-content: space-between; color: #2e7d32;">
+                    <span>Verified Payments</span>
+                    <span style="font-weight: 700;">-₱{{ number_format($verifiedPaymentsTotal, 2) }}</span>
+                </div>
                 <div style="border-top: 2px solid var(--border-gray); padding-top: 1rem; display: flex; justify-content: space-between;">
-                    <span style="font-weight: 700;">Total</span>
-                    <span style="font-weight: 700; color: var(--primary-gold); font-size: 1.25rem;">₱{{ number_format($booking->total_amount, 2) }}</span>
+                    <span style="font-weight: 700;">Balance Due</span>
+                    <span style="font-weight: 700; color: var(--primary-gold); font-size: 1.25rem;">₱{{ number_format($balanceDue, 2) }}</span>
                 </div>
             </div>
         </x-admin.card>
