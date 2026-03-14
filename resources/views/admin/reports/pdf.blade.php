@@ -3,12 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotel Report - {{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}</title>
+    <title>Hotel Monthly Report - {{ \Carbon\Carbon::parse($startDate)->format('F Y') }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; color: #2c2c2c; line-height: 1.5; }
         
         .header { background: #2c2c2c; color: white; padding: 24px 30px; margin-bottom: 24px; }
+        .header-logo { width: 70px; height: 70px; object-fit: contain; border-radius: 8px; background: #fff; padding: 6px; margin-right: 14px; }
+        .header-wrap { display: table; width: 100%; }
+        .header-logo-cell { display: table-cell; width: 84px; vertical-align: middle; }
+        .header-text-cell { display: table-cell; vertical-align: middle; }
         .header h1 { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
         .header .gold { color: #d4af37; }
         .header .subtitle { font-size: 12px; color: #aaa; margin-top: 4px; }
@@ -55,11 +59,21 @@
 </head>
 <body>
     <!-- Header -->
+    @php $logoPath = public_path('images/logo/bezlogo.jpg'); @endphp
     <div class="header">
-        <h1><span class="gold">Beztower</span> & Residences</h1>
-        <div class="subtitle">Hotel Management System &mdash; Official Report</div>
-        <div class="period">{{ \Carbon\Carbon::parse($startDate)->format('F d, Y') }} &mdash; {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}</div>
-        <div class="generated">Generated: {{ \Carbon\Carbon::now()->format('F d, Y \a\t h:i A') }}</div>
+        <div class="header-wrap">
+            <div class="header-logo-cell">
+                @if(file_exists($logoPath))
+                    <img src="{{ $logoPath }}" alt="Beztower Logo" class="header-logo">
+                @endif
+            </div>
+            <div class="header-text-cell">
+                <h1><span class="gold">Beztower</span> & Residences</h1>
+                <div class="subtitle">Hotel Management System &mdash; Monthly Report</div>
+                <div class="period">{{ \Carbon\Carbon::parse($startDate)->format('F Y') }}</div>
+                <div class="generated">Generated: {{ \Carbon\Carbon::now()->format('F d, Y \a\t h:i A') }}</div>
+            </div>
+        </div>
     </div>
 
     <!-- Quick Stats -->
