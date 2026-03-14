@@ -200,13 +200,6 @@
                 </tr>
                 @endif
 
-                @if($booking->tax_amount > 0)
-                <tr>
-                    <td>Tax (12%):</td>
-                    <td style="text-align: right;">PHP {{ number_format($booking->tax_amount, 2) }}</td>
-                </tr>
-                @endif
-
                 <tr class="total-row">
                     <td>TOTAL AMOUNT:</td>
                     <td style="text-align: right;">PHP {{ number_format($booking->total_amount, 2) }}</td>
