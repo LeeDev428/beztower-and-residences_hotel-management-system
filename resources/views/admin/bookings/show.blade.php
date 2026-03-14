@@ -53,7 +53,7 @@
         </x-admin.card>
 
         <!-- Room Assignment -->
-        @if(!in_array($booking->status, ['checked_out', 'cancelled']))
+        @if(!in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment']))
         <x-admin.card title="Room Assignment / Transfer" style="margin-top: 1.5rem;">
             <div style="margin-bottom: 1rem;">
                 <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Currently Assigned Room</div>
@@ -196,9 +196,15 @@
         <x-admin.card title="Actions" style="margin-top: 1.5rem;">
             <!-- Final Billing Button -->
             <div style="margin-bottom: 1rem;">
-                <a href="{{ route('admin.bookings.finalBilling', $booking) }}" class="btn-success" style="display: block; padding: 0.75rem; background: linear-gradient(135deg, #4caf50, #45a049); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; text-align: center;">
-                    <i class="fas fa-calculator"></i> Final Billing & Charges
-                </a>
+                @if($billingLocked)
+                    <button type="button" disabled style="display: block; width: 100%; padding: 0.75rem; background: #d9d9d9; color: #6b6b6b; border: none; border-radius: 8px; font-weight: 600; text-align: center; cursor: not-allowed;" title="Final billing is locked for this booking status.">
+                        <i class="fas fa-calculator"></i> Final Billing & Charges
+                    </button>
+                @else
+                    <a href="{{ route('admin.bookings.finalBilling', $booking) }}" class="btn-success" style="display: block; padding: 0.75rem; background: linear-gradient(135deg, #4caf50, #45a049); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; text-align: center;">
+                        <i class="fas fa-calculator"></i> Final Billing & Charges
+                    </a>
+                @endif
             </div>
 
             <!-- Update Status Form -->
@@ -206,18 +212,24 @@
                 @csrf
                 @method('PUT')
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Update Status</label>
-                <select name="status" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px; margin-bottom: 1rem;">
-                    <option value="pending" {{ $booking->status === 'pending' ? 'selected' : '' }}>Pending</option>
-                    <option value="confirmed" {{ $booking->status === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-                    <option value="checked_in" {{ $booking->status === 'checked_in' ? 'selected' : '' }}>Checked In</option>
-                    <option value="checked_out" {{ $booking->status === 'checked_out' ? 'selected' : '' }}>Checked Out</option>
-                    <option value="rescheduled" {{ $booking->status === 'rescheduled' ? 'selected' : '' }}>Rescheduled</option>
-                    <option value="rejected_payment" {{ $booking->status === 'rejected_payment' ? 'selected' : '' }}>Rejected Payment</option>
-                    <option value="cancelled" {{ $booking->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                <select name="status" {{ $statusLocked ? 'disabled' : '' }} style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px; margin-bottom: 1rem; {{ $statusLocked ? 'background:#f3f3f3; color:#777;' : '' }}">
+                    <option value="{{ $booking->status }}" selected>{{ ucwords(str_replace('_', ' ', $booking->status)) }} (Current)</option>
+                    @foreach($allowedStatuses as $nextStatus)
+                        <option value="{{ $nextStatus }}">{{ ucwords(str_replace('_', ' ', $nextStatus)) }}</option>
+                    @endforeach
                 </select>
                 <div style="width: 100%;">
-                    <x-admin.button type="primary">Update Status</x-admin.button>
+                    @if($statusLocked)
+                        <button type="button" disabled style="width: 100%; padding: 0.75rem; border: none; border-radius: 8px; background: #d9d9d9; color: #6b6b6b; font-weight: 600; cursor: not-allowed;">
+                            Update Status
+                        </button>
+                    @else
+                        <x-admin.button type="primary">Update Status</x-admin.button>
+                    @endif
                 </div>
+                @if($statusLocked)
+                    <small style="display:block; margin-top:0.5rem; color:#777;">Status is locked for {{ ucwords(str_replace('_', ' ', $booking->status)) }} bookings.</small>
+                @endif
             </form>
         </x-admin.card>
     </div>
