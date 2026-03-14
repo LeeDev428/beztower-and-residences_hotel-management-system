@@ -242,6 +242,11 @@ class BookingManagementController extends Controller
 
     public function finalBilling(Booking $booking)
     {
+        if (in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true)) {
+            return redirect()->route('admin.bookings.show', $booking)
+                ->with('error', 'Final billing is locked for this booking status.');
+        }
+
         $booking->load(['guest', 'room', 'roomType']);
 
         $verifiedPaymentsTotal = $booking->payments()
@@ -262,6 +267,11 @@ class BookingManagementController extends Controller
 
     public function updateFinalBilling(Request $request, Booking $booking)
     {
+        if (in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true)) {
+            return redirect()->route('admin.bookings.show', $booking)
+                ->with('error', 'Final billing is locked for this booking status.');
+        }
+
         $validated = $request->validate([
             'early_checkin_hours' => 'nullable|integer|min:0|max:5',
             'early_checkin_charge' => 'nullable|numeric|min:0',
