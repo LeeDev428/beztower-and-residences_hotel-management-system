@@ -199,7 +199,7 @@
 
             <div class="qr-box">
                 <h3 style="margin:0 0 15px 0; color:#2c2c2c;">💳 Scan to Pay with GCash</h3>
-                <img src="{{ asset('images/gcash/gcash.png') }}" alt="GCash QR Code" style="pointer-events: none; user-select: none; -webkit-user-drag: none;">
+                <img src="{{ asset('images/gcash/gcash_v2.jpg') }}" alt="GCash QR Code" style="pointer-events: none; user-select: none; -webkit-user-drag: none;">
                 <p style="margin:15px 0 0 0; font-size:14px; color:#666;">Scan this QR code to make your payment via GCash</p>
                 <div style="background:#fff3cd; padding:12px; border-radius:5px; margin-top:15px;">
                     <p style="margin:0; font-size:13px;"><strong>📱 After payment, please send your proof of payment to:</strong></p>
