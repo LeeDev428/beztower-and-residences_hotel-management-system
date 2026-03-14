@@ -25,10 +25,6 @@
                 <input type="text" name="contact_phone" value="(02) 88075046 or 09171221429" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
             </div>
 
-            <div>
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Tax Rate (%)</label>
-                <input type="number" name="tax_rate" value="12" step="0.01" min="0" max="100" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
-            </div>
         </div>
 
         <div style="margin-bottom: 1.5rem;">
@@ -51,7 +47,6 @@
             <li>Free cancellation up to 24 hours before check-in</li>
             <li>Valid government-issued ID required upon check-in</li>
             <li>Down payment: 30% of total amount</li>
-            <li>Tax: 12% applied to all bookings</li>
         </ul>
     </div>
 </x-admin.card>
