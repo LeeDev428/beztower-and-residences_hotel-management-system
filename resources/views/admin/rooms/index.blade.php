@@ -74,11 +74,17 @@
                                         <x-admin.button type="success" size="sm">Restore</x-admin.button>
                                     </form>
                                 @else
-                                    <form method="POST" action="{{ route('admin.rooms.destroy', $room) }}" onsubmit="return confirm('Are you sure you want to archive this room?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-admin.button type="warning" size="sm">Archive</x-admin.button>
-                                    </form>
+                                    @if($room->status === 'occupied')
+                                        <button type="button" disabled style="padding: 0.4rem 0.7rem; border: none; border-radius: 6px; background: #d9d9d9; color: #6b6b6b; font-size: 0.8rem; cursor: not-allowed;" title="Occupied rooms cannot be archived.">
+                                            Archive
+                                        </button>
+                                    @else
+                                        <form method="POST" action="{{ route('admin.rooms.destroy', $room) }}" onsubmit="return confirm('Are you sure you want to archive this room?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-admin.button type="warning" size="sm">Archive</x-admin.button>
+                                        </form>
+                                    @endif
                                 @endif
                             @endif
                         </div>
