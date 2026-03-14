@@ -98,13 +98,6 @@
                     </tr>
                 @endif
 
-                @if($payment->booking->tax_amount > 0)
-                <tr>
-                    <td style="padding: 8px 0; color: #666;">Tax (12%):</td>
-                    <td style="padding: 8px 0; text-align: right;">₱{{ number_format($payment->booking->tax_amount, 2) }}</td>
-                </tr>
-                @endif
-
                 <tr style="background: #fff3cd; border-top: 2px solid #C9A961;">
                     <td style="padding: 12px 8px; font-weight: bold; font-size: 16px; color: #2c2c2c;">TOTAL AMOUNT:</td>
                     <td style="padding: 12px 8px; font-weight: bold; font-size: 16px; text-align: right; color: #dc3545;">₱{{ number_format($payment->booking->total_amount, 2) }}</td>
