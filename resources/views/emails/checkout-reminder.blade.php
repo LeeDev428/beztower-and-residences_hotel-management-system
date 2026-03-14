@@ -148,13 +148,6 @@
                     </div>
                 @endif
 
-                @if($booking->tax_amount > 0)
-                <div class="info-row">
-                    <span class="label">Tax (12%):</span>
-                    <span class="value">₱{{ number_format($booking->tax_amount, 2) }}</span>
-                </div>
-                @endif
-
                 <div class="info-row" style="background:#e3f2fd; padding:12px; margin-top:10px; border-radius:5px;">
                     <span class="label" style="font-size:18px; color:#2c2c2c;"><strong>TOTAL AMOUNT:</strong></span>
                     <span class="value" style="font-size:18px; color:#2196f3;"><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></span>
@@ -207,11 +200,6 @@
                     <span class="value">₱{{ number_format($booking->extras_total, 2) }}</span>
                 </div>
                 @endif
-                
-                <div class="info-row">
-                    <span class="label">Tax (12%):</span>
-                    <span class="value">₱{{ number_format($booking->tax_amount, 2) }}</span>
-                </div>
                 
                 <div class="info-row" style="background:#e8f5e9; padding:12px; border-radius:5px; margin-top:10px;">
                     <span class="label"><strong>Total Amount Paid:</strong></span>
