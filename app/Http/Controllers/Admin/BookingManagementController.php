@@ -61,6 +61,13 @@ class BookingManagementController extends Controller
     {
         $booking->load(['guest', 'room.roomType', 'roomType']);
 
+        $verifiedPaymentsTotal = $booking->payments()
+            ->whereIn('payment_status', ['verified', 'completed'])
+            ->sum('amount');
+
+        $grossTotal = $booking->final_total ?? $booking->total_amount;
+        $balanceDue = max(round($grossTotal - $verifiedPaymentsTotal, 2), 0);
+
         // Available rooms of the same type (for assign/transfer)
         $availableRooms = Room::with('roomType')
             ->where('status', 'available')
@@ -70,7 +77,7 @@ class BookingManagementController extends Controller
             ->orderBy('room_number')
             ->get();
 
-        return view('admin.bookings.show', compact('booking', 'availableRooms'));
+        return view('admin.bookings.show', compact('booking', 'availableRooms', 'verifiedPaymentsTotal', 'balanceDue', 'grossTotal'));
     }
 
     public function updateStatus(Request $request, Booking $booking)
@@ -173,13 +180,20 @@ class BookingManagementController extends Controller
     {
         $booking->load(['guest', 'room', 'roomType']);
 
+        $verifiedPaymentsTotal = $booking->payments()
+            ->whereIn('payment_status', ['verified', 'completed'])
+            ->sum('amount');
+
+        $grossTotal = $booking->final_total ?? $booking->total_amount;
+        $balanceDue = max(round($grossTotal - $verifiedPaymentsTotal, 2), 0);
+
         // Determine hourly rate based on room type
         $hourlyRate = 150; // Default for Standard/Deluxe
         if (stripos($booking->roomType->name, 'family') !== false) {
             $hourlyRate = 250;
         }
 
-        return view('admin.bookings.final-billing', compact('booking', 'hourlyRate'));
+        return view('admin.bookings.final-billing', compact('booking', 'hourlyRate', 'verifiedPaymentsTotal', 'grossTotal', 'balanceDue'));
     }
 
     public function updateFinalBilling(Request $request, Booking $booking)
