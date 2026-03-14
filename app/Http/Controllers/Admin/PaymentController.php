@@ -10,6 +10,7 @@ use App\Mail\PaymentConfirmation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
@@ -50,7 +51,7 @@ class PaymentController extends Controller
             'payment_status' => 'verified',
             'payment_notes' => $request->payment_notes,
             'verified_at' => now(),
-            'verified_by' => auth()->id(),
+            'verified_by' => Auth::id(),
         ]);
 
         // Send confirmation email
@@ -81,7 +82,7 @@ class PaymentController extends Controller
             'payment_status' => 'failed',
             'payment_notes' => $request->rejection_reason,
             'verified_at' => now(),
-            'verified_by' => auth()->id(),
+            'verified_by' => Auth::id(),
         ]);
 
         // Keep booking status in sync with payment rejection.
