@@ -1314,7 +1314,7 @@
                                             <span>Full Payment (100%)</span>
                                         </div>
                                         <p class="payment-card-desc">Pay the full amount now and enjoy a hassle-free check-in experience.</p>
-                                        <div class="payment-amount" id="fullPaymentAmount">₱{{ number_format($room->roomType->base_price * 1.12, 2) }}</div>
+                                        <div class="payment-amount" id="fullPaymentAmount">₱{{ number_format($room->roomType->base_price, 2) }}</div>
                                     </div>
                                 </label>
                             </div>
@@ -1350,12 +1350,8 @@
                                     <span id="extrasDisplay">₱0.00</span>
                                 </div>
                                 <div class="summary-row">
-                                    <span>Tax (12%)</span>
-                                    <span id="taxDisplay">₱{{ number_format($room->roomType->base_price * 0.12, 2) }}</span>
-                                </div>
-                                <div class="summary-row">
                                     <span>Total Amount</span>
-                                    <span id="totalDisplay">₱{{ number_format($room->roomType->base_price * 1.12, 2) }}</span>
+                                    <span id="totalDisplay">₱{{ number_format($room->roomType->base_price, 2) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -1378,7 +1374,6 @@
 
     <script>
         const basePrice = {{ $room->roomType->base_price }};
-        const taxRate = 0.12;
 
         // Change main image when clicking thumbnails
         function changeImage(src, element) {
@@ -1503,15 +1498,11 @@
                 extrasTotal += price * quantity;
             });
             
-            // Calculate tax and total
-            const beforeTax = subtotal + extrasTotal;
-            const taxAmount = beforeTax * taxRate;
-            const totalAmount = beforeTax + taxAmount;
+            const totalAmount = subtotal + extrasTotal;
             
             // Update displays
             document.getElementById('subtotalDisplay').textContent = '₱' + subtotal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             document.getElementById('extrasDisplay').textContent = '₱' + extrasTotal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-            document.getElementById('taxDisplay').textContent = '₱' + taxAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             document.getElementById('totalDisplay').textContent = '₱' + totalAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             
             // Update payment options
