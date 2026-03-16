@@ -281,7 +281,7 @@ class BookingController extends Controller
 
     public function payment($reference)
     {
-        $booking = Booking::with(['guest', 'room.roomType', 'extras'])
+        $booking = Booking::with(['guest', 'room.roomType', 'rooms.roomType', 'extras'])
             ->where('booking_reference', $reference)
             ->firstOrFail();
 
