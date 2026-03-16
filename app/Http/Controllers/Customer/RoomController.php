@@ -72,26 +72,21 @@ class RoomController extends Controller
             
             // Exclude rooms with conflicting bookings
             $query->whereDoesntHave('bookings', function($q) use ($checkIn, $checkOut) {
-                $q->where(function($q) use ($checkIn, $checkOut) {
-                    $q->whereBetween('check_in_date', [$checkIn, $checkOut])
-                      ->orWhereBetween('check_out_date', [$checkIn, $checkOut])
-                      ->orWhere(function($q) use ($checkIn, $checkOut) {
-                          $q->where('check_in_date', '<=', $checkIn)
-                            ->where('check_out_date', '>=', $checkOut);
-                      });
-                })->whereIn('status', ['pending', 'confirmed', 'checked_in']);
+                $q->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                    ->where('check_in_date', '<', $checkOut)
+                    ->where('check_out_date', '>', $checkIn);
+            });
+
+            $query->whereDoesntHave('reservationBookings', function($q) use ($checkIn, $checkOut) {
+                $q->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                    ->where('check_in_date', '<', $checkOut)
+                    ->where('check_out_date', '>', $checkIn);
             });
             
             // Exclude rooms with block dates
             $query->whereDoesntHave('blockDates', function($q) use ($checkIn, $checkOut) {
-                $q->where(function($q) use ($checkIn, $checkOut) {
-                    $q->whereBetween('start_date', [$checkIn, $checkOut])
-                      ->orWhereBetween('end_date', [$checkIn, $checkOut])
-                      ->orWhere(function($q) use ($checkIn, $checkOut) {
-                          $q->where('start_date', '<=', $checkIn)
-                            ->where('end_date', '>=', $checkOut);
-                      });
-                });
+                                $q->where('start_date', '<', $checkOut)
+                                    ->where('end_date', '>', $checkIn);
             });
         }
         
@@ -152,26 +147,32 @@ class RoomController extends Controller
         
         // Get all booked dates in this month
         $bookedDates = \App\Models\Booking::where(function($q) use ($startDate, $endDate) {
-            $q->whereBetween('check_in_date', [$startDate, $endDate])
-              ->orWhereBetween('check_out_date', [$startDate, $endDate])
-              ->orWhere(function($q) use ($startDate, $endDate) {
-                  $q->where('check_in_date', '<=', $startDate)
-                    ->where('check_out_date', '>=', $endDate);
-              });
+            $q->where('check_in_date', '<=', $endDate)
+              ->where('check_out_date', '>=', $startDate);
         })
-        ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
-        ->with('room')
+        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+        ->with(['room', 'rooms'])
         ->get()
         ->flatMap(function($booking) {
             $dates = [];
             $current = new \DateTime($booking->check_in_date);
             $end = new \DateTime($booking->check_out_date);
+            $roomIds = $booking->rooms->pluck('id')->all();
+            if (empty($roomIds) && $booking->room_id) {
+                $roomIds = [$booking->room_id];
+            }
+
+            if (empty($roomIds)) {
+                return $dates;
+            }
             
-            while ($current <= $end) {
-                $dates[] = [
-                    'date' => $current->format('Y-m-d'),
-                    'room_id' => $booking->room_id
-                ];
+            while ($current < $end) {
+                foreach ($roomIds as $roomId) {
+                    $dates[] = [
+                        'date' => $current->format('Y-m-d'),
+                        'room_id' => $roomId
+                    ];
+                }
                 $current->modify('+1 day');
             }
             
