@@ -72,6 +72,13 @@ class Room extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function reservationBookings()
+    {
+        return $this->belongsToMany(Booking::class, 'booking_rooms')
+            ->withPivot('nightly_rate')
+            ->withTimestamps();
+    }
+
     public function housekeeping()
     {
         return $this->hasOne(Housekeeping::class)->latest();
