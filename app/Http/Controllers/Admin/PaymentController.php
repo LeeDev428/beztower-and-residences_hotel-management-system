@@ -76,7 +76,7 @@ class PaymentController extends Controller
         ]);
 
         // Load relationships for emails and booking status update
-        $payment->load('booking.guest', 'booking.room');
+        $payment->load('booking.guest', 'booking.room', 'booking.rooms');
 
         $payment->update([
             'payment_status' => 'failed',
@@ -91,8 +91,14 @@ class PaymentController extends Controller
                 'status' => 'rejected_payment',
             ]);
 
-            if ($payment->booking->room && $payment->booking->room->status !== 'available') {
-                $payment->booking->room->update(['status' => 'available']);
+            $roomsToRelease = $payment->booking->rooms->isNotEmpty()
+                ? $payment->booking->rooms
+                : collect([$payment->booking->room])->filter();
+
+            foreach ($roomsToRelease as $room) {
+                if ($room->status !== 'available') {
+                    $room->update(['status' => 'available']);
+                }
             }
         }
 
