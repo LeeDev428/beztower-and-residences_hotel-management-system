@@ -162,7 +162,7 @@
         .qr-code-container {
             text-align: center;
             background: white;
-            padding: 2rem;
+            padding: 1rem;
             border-radius: 10px;
             border: 2px solid #e5e5e5;
         }
@@ -173,17 +173,20 @@
         }
 
         .qr-code-wrapper {
-            background: white;
-            padding: 1.5rem;
+            background: transparent;
+            padding: 0;
             border-radius: 10px;
-            display: inline-block;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            box-shadow: none;
         }
 
         .qr-code-wrapper img {
-            width: 340px;
-            height: 340px;
+            width: min(100%, 540px);
+            height: auto;
             object-fit: contain;
+            display: block;
+            border-radius: 8px;
         }
 
         .gcash-info {
@@ -382,8 +385,8 @@
             }
 
             .qr-code-wrapper img {
-                width: 280px;
-                height: 280px;
+                width: min(100%, 420px);
+                height: auto;
             }
         }
     </style>
