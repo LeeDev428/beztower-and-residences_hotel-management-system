@@ -125,6 +125,22 @@
             padding: 0;
         }
 
+        .room-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .room-list li {
+            padding: 0.6rem 0.8rem;
+            background: #f8f8f8;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
         .extra-item {
             padding: 0.8rem;
             background: #f8f8f8;
@@ -495,8 +511,16 @@
                     </h2>
                     <div class="info-grid">
                         <div class="info-item">
-                            <span class="info-label">Room Type</span>
-                            <span class="info-value">{{ $booking->room->roomType->name }}</span>
+                            <span class="info-label">Reserved Rooms</span>
+                            @if($booking->rooms->count() > 0)
+                                <ul class="room-list">
+                                    @foreach($booking->rooms as $reservedRoom)
+                                        <li>Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}</li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <span class="info-value">{{ $booking->room->roomType->name }} (Room {{ $booking->room->room_number }})</span>
+                            @endif
                         </div>
                         {{-- <div class="info-item">
                             <span class="info-label">Room Number</span>
@@ -565,10 +589,19 @@
                         <i class="fas fa-receipt"></i> Payment Summary
                     </h2>
                     <div class="price-summary">
-                        <div class="price-row">
-                            <span>Room Rate (₱{{ number_format($booking->room->roomType->base_price, 2) }} × {{ $booking->total_nights }} {{ $booking->total_nights == 1 ? 'night' : 'nights' }})</span>
-                            <span>₱{{ number_format($booking->subtotal, 2) }}</span>
-                        </div>
+                        @if($booking->rooms->count() > 0)
+                            @foreach($booking->rooms as $reservedRoom)
+                                <div class="price-row">
+                                    <span>Room {{ $reservedRoom->room_number }} (₱{{ number_format($reservedRoom->pivot->nightly_rate, 2) }} × {{ $booking->total_nights }} {{ $booking->total_nights == 1 ? 'night' : 'nights' }})</span>
+                                    <span>₱{{ number_format($reservedRoom->pivot->nightly_rate * $booking->total_nights, 2) }}</span>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="price-row">
+                                <span>Room Rate (₱{{ number_format($booking->room->roomType->base_price, 2) }} × {{ $booking->total_nights }} {{ $booking->total_nights == 1 ? 'night' : 'nights' }})</span>
+                                <span>₱{{ number_format($booking->subtotal, 2) }}</span>
+                            </div>
+                        @endif
                         @if($booking->extras_total > 0)
                             <div class="price-row">
                                 <span>Additional Services</span>
