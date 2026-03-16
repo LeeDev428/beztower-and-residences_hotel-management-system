@@ -68,8 +68,18 @@
                         <div style="font-size: 0.875rem; color: var(--text-muted);">{{ $booking->guest->email }}</div>
                     </td>
                     <td style="padding: 1rem 0.75rem;">
-                        <div style="font-weight: 600;">{{ $booking->room->room_number }}</div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">{{ $booking->roomType->name }}</div>
+                        @if($booking->rooms->isNotEmpty())
+                            <div style="font-weight: 600;">{{ $booking->rooms->count() }} room(s)</div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">
+                                Room {{ $booking->rooms->first()->room_number }}
+                                @if($booking->rooms->count() > 1)
+                                    +{{ $booking->rooms->count() - 1 }} more
+                                @endif
+                            </div>
+                        @else
+                            <div style="font-weight: 600;">{{ $booking->room->room_number }}</div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">{{ $booking->roomType->name }}</div>
+                        @endif
                     </td>
                     <td style="padding: 1rem 0.75rem;">
                         <div>{{ $booking->check_in_date->format('M d') }} - {{ $booking->check_out_date->format('M d, Y') }}</div>
