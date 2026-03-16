@@ -28,16 +28,17 @@ class BookingController extends Controller
 
     public function create(Request $request)
     {
-        // Validate the incoming request
         $validated = $request->validate([
-            'room_id' => 'required|exists:rooms,id',
+            'room_id' => 'nullable|exists:rooms,id',
+            'room_ids' => 'nullable|array|min:1|max:5',
+            'room_ids.*' => 'distinct|exists:rooms,id',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email',
             'phone' => 'required|string',
             'country' => 'nullable|string',
             'address' => 'nullable|string',
-            'id_photo' => 'nullable|image|mimes:jpeg,png,jpg,pdf|max:5120',
+            'id_photo' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:5120',
             'check_in_date' => 'required|date|after_or_equal:today',
             'check_out_date' => 'required|date|after:check_in_date',
             'number_of_guests' => 'required|integer|min:1',
@@ -49,6 +50,20 @@ class BookingController extends Controller
             'extra_quantities' => 'nullable|array',
             'extra_quantities.*' => 'integer|min:1|max:50'
         ]);
+
+        $selectedRoomIds = collect($validated['room_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        if ($selectedRoomIds->isEmpty() && !empty($validated['room_id'])) {
+            $selectedRoomIds = collect([(int) $validated['room_id']]);
+        }
+
+        if ($selectedRoomIds->isEmpty()) {
+            return back()->withErrors([
+                'room_ids' => 'Please select at least one room.',
+            ])->withInput();
+        }
 
         // Booking limit: max 3 active bookings per email
         $existingGuest = Guest::where('email', $validated['email'])->first();
@@ -81,15 +96,54 @@ class BookingController extends Controller
                     'phone' => $validated['phone'],
                     'country' => $validated['country'],
                     'address' => $validated['address'],
-                    'id_photo' => $idPhotoPath ?? $guest->id_photo ?? null
+                    'id_photo' => $idPhotoPath ?? $existingGuest?->id_photo
                 ]
             );
 
-            // Get room details
-            $room = Room::with('roomType')->findOrFail($validated['room_id']);
+            $selectedRooms = Room::with('roomType')
+                ->whereIn('id', $selectedRoomIds)
+                ->where('status', 'available')
+                ->whereNull('archived_at')
+                ->get();
+
+            if ($selectedRooms->count() !== $selectedRoomIds->count()) {
+                DB::rollBack();
+                return back()->withErrors([
+                    'room_ids' => 'One or more selected rooms are unavailable.',
+                ])->withInput();
+            }
+
+            $hasConflict = Booking::query()
+                ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                ->where('check_in_date', '<', $validated['check_out_date'])
+                ->where('check_out_date', '>', $validated['check_in_date'])
+                ->where(function ($query) use ($selectedRoomIds) {
+                    $query->whereIn('room_id', $selectedRoomIds)
+                        ->orWhereHas('rooms', function ($q) use ($selectedRoomIds) {
+                            $q->whereIn('rooms.id', $selectedRoomIds);
+                        });
+                })
+                ->exists();
+
+            if ($hasConflict) {
+                DB::rollBack();
+                return back()->withErrors([
+                    'room_ids' => 'One or more selected rooms are already booked for the selected dates.',
+                ])->withInput();
+            }
+
+            $totalCapacity = (int) $selectedRooms->sum(fn ($room) => (int) ($room->roomType?->max_guests ?? 0));
+            if ($validated['number_of_guests'] > $totalCapacity) {
+                DB::rollBack();
+                return back()->withErrors([
+                    'number_of_guests' => 'Selected rooms can only accommodate up to ' . $totalCapacity . ' guests.',
+                ])->withInput();
+            }
+
+            $nightlyTotal = (float) $selectedRooms->sum(fn ($room) => (float) ($room->roomType?->base_price ?? 0));
 
             // Calculate costs using base room rate (discounts removed globally)
-            $subtotal = $room->roomType->base_price * $validated['total_nights'];
+            $subtotal = $nightlyTotal * $validated['total_nights'];
             $extrasTotal = 0;
 
             // Get selected extras with quantities
@@ -119,7 +173,7 @@ class BookingController extends Controller
             $booking = Booking::create([
                 'booking_reference' => $bookingReference,
                 'guest_id' => $guest->id,
-                'room_id' => $room->id,
+                'room_id' => $selectedRooms->first()->id,
                 'check_in_date' => $validated['check_in_date'],
                 'check_out_date' => $validated['check_out_date'],
                 'number_of_guests' => $validated['number_of_guests'],
@@ -133,6 +187,12 @@ class BookingController extends Controller
                 'expires_at' => now()->addHours(8),
                 'special_requests' => $validated['special_requests']
             ]);
+
+            foreach ($selectedRooms as $selectedRoom) {
+                $booking->rooms()->attach($selectedRoom->id, [
+                    'nightly_rate' => (float) ($selectedRoom->roomType?->base_price ?? 0),
+                ]);
+            }
 
             // Attach extras to booking if any
             if (!empty($selectedExtras)) {
@@ -169,6 +229,54 @@ class BookingController extends Controller
                 'error' => 'An error occurred while processing your booking. Please try again.'
             ])->withInput();
         }
+    }
+
+    public function getAvailableRooms(Request $request)
+    {
+        $validated = $request->validate([
+            'check_in_date' => 'required|date|after_or_equal:today',
+            'check_out_date' => 'required|date|after:check_in_date',
+        ]);
+
+        $rooms = Room::with('roomType')
+            ->where('status', 'available')
+            ->whereNull('archived_at')
+            ->whereDoesntHave('bookings', function ($query) use ($validated) {
+                $query->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                    ->where('check_in_date', '<', $validated['check_out_date'])
+                    ->where('check_out_date', '>', $validated['check_in_date']);
+            })
+            ->whereDoesntHave('reservationBookings', function ($query) use ($validated) {
+                $query->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                    ->where('check_in_date', '<', $validated['check_out_date'])
+                    ->where('check_out_date', '>', $validated['check_in_date']);
+            })
+            ->orderBy('room_type_id')
+            ->orderBy('room_number')
+            ->get()
+            ->map(function ($room) {
+                return [
+                    'id' => $room->id,
+                    'room_number' => $room->room_number,
+                    'room_type' => $room->roomType?->name,
+                    'capacity' => (int) ($room->roomType?->max_guests ?? 0),
+                    'price' => (float) ($room->roomType?->base_price ?? 0),
+                ];
+            })
+            ->values();
+
+        $remainingByType = $rooms
+            ->groupBy('room_type')
+            ->map(fn ($items, $type) => [
+                'room_type' => $type,
+                'remaining' => $items->count(),
+            ])
+            ->values();
+
+        return response()->json([
+            'rooms' => $rooms,
+            'remaining_by_type' => $remainingByType,
+        ]);
     }
 
     public function payment($reference)
@@ -244,7 +352,7 @@ class BookingController extends Controller
 
     public function confirmation($reference)
     {
-        $booking = Booking::with(['guest', 'room.roomType', 'extras', 'payments'])
+        $booking = Booking::with(['guest', 'room.roomType', 'rooms.roomType', 'extras', 'payments'])
             ->where('booking_reference', $reference)
             ->firstOrFail();
 
@@ -263,14 +371,14 @@ class BookingController extends Controller
         ]);
 
         // Check if room is already booked for these dates
-        $isBooked = Booking::where('room_id', $validated['room_id'])
-            ->where('status', '!=', 'cancelled')
-            ->where(function($query) use ($validated) {
-                $query->whereBetween('check_in_date', [$validated['check_in_date'], $validated['check_out_date']])
-                    ->orWhereBetween('check_out_date', [$validated['check_in_date'], $validated['check_out_date']])
-                    ->orWhere(function($q) use ($validated) {
-                        $q->where('check_in_date', '<=', $validated['check_in_date'])
-                          ->where('check_out_date', '>=', $validated['check_out_date']);
+        $isBooked = Booking::query()
+            ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+            ->where('check_in_date', '<', $validated['check_out_date'])
+            ->where('check_out_date', '>', $validated['check_in_date'])
+            ->where(function ($query) use ($validated) {
+                $query->where('room_id', $validated['room_id'])
+                    ->orWhereHas('rooms', function ($q) use ($validated) {
+                        $q->where('rooms.id', $validated['room_id']);
                     });
             })
             ->exists();
@@ -283,7 +391,7 @@ class BookingController extends Controller
 
     public function downloadPDF($reference)
     {
-        $booking = Booking::with(['guest', 'room.roomType', 'extras', 'payments'])
+        $booking = Booking::with(['guest', 'room.roomType', 'rooms.roomType', 'extras', 'payments'])
             ->where('booking_reference', $reference)
             ->firstOrFail();
 
