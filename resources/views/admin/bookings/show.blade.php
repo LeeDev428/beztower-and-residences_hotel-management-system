@@ -32,7 +32,16 @@
                     </div>
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Room</div>
-                        <div style="font-weight: 600;">{{ $booking->room->room_number }} - {{ $booking->roomType->name }}</div>
+                        @if($booking->rooms->isNotEmpty())
+                            <div style="font-weight: 600;">{{ $booking->rooms->count() }} room(s)</div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.35rem;">
+                                @foreach($booking->rooms as $reservedRoom)
+                                    Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
+                                @endforeach
+                            </div>
+                        @else
+                            <div style="font-weight: 600;">{{ $booking->room->room_number }} - {{ $booking->roomType->name }}</div>
+                        @endif
                     </div>
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Number of Guests</div>
@@ -172,7 +181,7 @@
         <x-admin.card title="Payment">
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Room Rate ({{ $booking->number_of_nights }} nights)</span>
+                    <span>Room Rate ({{ $booking->total_nights }} nights)</span>
                     <span style="font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
                 </div>
                 @if(($booking->final_total ?? $booking->total_amount) != $booking->total_amount)
