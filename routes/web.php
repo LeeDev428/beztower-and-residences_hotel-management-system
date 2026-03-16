@@ -26,6 +26,7 @@ Route::get('/rooms/{room}', [RoomController::class, 'show'])->name('rooms.show')
 Route::get('/rooms/{room}/checkout', [BookingController::class, 'checkout'])->name('booking.checkout');
 Route::get('/api/calendar/availability', [RoomController::class, 'getAvailability'])->name('calendar.availability');
 Route::post('/booking/check-availability', [BookingController::class, 'checkAvailability'])->name('booking.checkAvailability');
+Route::get('/booking/available-rooms', [BookingController::class, 'getAvailableRooms'])->name('booking.availableRooms');
 Route::post('/booking/create', [BookingController::class, 'create'])->name('booking.create');
 Route::get('/booking/payment/{reference}', [BookingController::class, 'payment'])->name('booking.payment');
 Route::post('/booking/payment/{reference}', [BookingController::class, 'processPayment'])->name('booking.processPayment');
