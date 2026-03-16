@@ -143,6 +143,16 @@
     <div class="section">
         <div class="section-title">Booking Details</div>
         <table>
+            @if($booking->rooms->count() > 0)
+            <tr>
+                <td>Reserved Rooms:</td>
+                <td>
+                    @foreach($booking->rooms as $reservedRoom)
+                        Room {{ $reservedRoom->room_number }} ({{ $reservedRoom->roomType->name }})@if(!$loop->last), @endif
+                    @endforeach
+                </td>
+            </tr>
+            @else
             <tr>
                 <td>Room Type:</td>
                 <td>{{ $booking->room->roomType->name }}</td>
@@ -151,6 +161,7 @@
                 <td>Room Number:</td>
                 <td>{{ $booking->room->room_number }}</td>
             </tr>
+            @endif
             <tr>
                 <td>Check-in Date:</td>
                 <td>{{ \Carbon\Carbon::parse($booking->check_in_date)->format('F d, Y') }} at 2:00 PM</td>
@@ -180,9 +191,17 @@
         <div class="price-table">
             <table>
                 <tr>
-                    <td>Room Charges ({{ $booking->total_nights }} night(s) × PHP {{ number_format($booking->room->roomType->base_price, 2) }}):</td>
+                    <td>Room Charges:</td>
                     <td style="text-align: right;">PHP {{ number_format($booking->subtotal, 2) }}</td>
                 </tr>
+                @if($booking->rooms->count() > 0)
+                    @foreach($booking->rooms as $reservedRoom)
+                    <tr>
+                        <td style="padding-left: 20px;">Room {{ $reservedRoom->room_number }} ({{ $booking->total_nights }} × PHP {{ number_format($reservedRoom->pivot->nightly_rate, 2) }})</td>
+                        <td style="text-align: right;">PHP {{ number_format($booking->total_nights * $reservedRoom->pivot->nightly_rate, 2) }}</td>
+                    </tr>
+                    @endforeach
+                @endif
                 
                 @if($booking->extras && $booking->extras->count() > 0)
                 <tr>
