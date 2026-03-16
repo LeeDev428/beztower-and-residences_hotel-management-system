@@ -108,7 +108,7 @@
                     <div style="font-weight: 600;">{{ $booking->guest->address }}</div>
                 </div>
                 @endif
-                @if($booking->guest->id_photo)
+                {{-- @if($booking->guest->id_photo)
                 <div style="grid-column: 1 / -1;">
                     <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">ID Photo</div>
                     <div style="display: flex; gap: 1rem; align-items: flex-start;">
@@ -132,7 +132,7 @@
                         </div>
                     </div>
                 </div>
-                @endif
+                @endif --}}
             </div>
         </x-admin.card>
     
