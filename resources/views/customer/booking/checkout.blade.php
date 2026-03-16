@@ -573,6 +573,17 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div>
+                            <label class="form-label">How Many Rooms <span class="required">*</span></label>
+                            <input type="number" name="number_of_rooms" id="numberOfRooms" class="form-input" min="1" max="5" value="1" required onchange="renderRoomSelection(); updateTotal();">
+                        </div>
+
+                        <div class="form-group-full">
+                            <label class="form-label">Select Room(s) <span class="required">*</span></label>
+                            <div id="availabilityByType" style="font-size: 0.9rem; color: #666; margin-bottom: 0.7rem;">Select check-in and check-out dates to load available rooms.</div>
+                            <div id="availableRoomsContainer" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem;"></div>
+                        </div>
                     </div>
                     
                     <!-- Additional Services -->
