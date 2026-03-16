@@ -557,7 +557,7 @@
                         <div>
                             <label class="form-label">Number of Guests <span class="required">*</span></label>
                             <select name="number_of_guests" class="form-select" id="guestCountSelect" required onchange="showGuestRecommendation()">
-                                @for($i = 1; $i <= $room->roomType->max_guests; $i++)
+                                @for($i = 1; $i <= 20; $i++)
                                     <option value="{{ $i }}" {{ request('guests') == $i ? 'selected' : '' }}>
                                         {{ $i }} {{ $i == 1 ? 'Guest' : 'Guests' }}
                                     </option>
@@ -720,6 +720,107 @@
 
     <script>
         const basePrice = {{ $room->roomType->base_price }};
+        const preferredRoomId = {{ $room->id }};
+        let availableRooms = [];
+
+        function getSelectedRoomIds() {
+            return Array.from(document.querySelectorAll('.room-checkbox:checked')).map((el) => Number(el.value));
+        }
+
+        function getSelectedRoomNightlyTotal() {
+            const selectedIds = new Set(getSelectedRoomIds());
+            let total = 0;
+            availableRooms.forEach((room) => {
+                if (selectedIds.has(room.id)) {
+                    total += Number(room.price || 0);
+                }
+            });
+            return total;
+        }
+
+        async function loadAvailableRooms() {
+            const checkIn = document.getElementById('checkInDate').value;
+            const checkOut = document.getElementById('checkOutDate').value;
+
+            if (!checkIn || !checkOut) {
+                availableRooms = [];
+                renderRoomSelection();
+                updateTotal();
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    check_in_date: checkIn,
+                    check_out_date: checkOut,
+                });
+                const response = await fetch(`{{ route('booking.availableRooms') }}?${params.toString()}`);
+                const data = await response.json();
+                availableRooms = data.rooms || [];
+
+                const byType = data.remaining_by_type || [];
+                const availabilityByType = document.getElementById('availabilityByType');
+                if (byType.length) {
+                    availabilityByType.innerHTML = byType.map((item) => `${item.room_type}: <strong>${item.remaining}</strong>`).join(' | ');
+                } else {
+                    availabilityByType.textContent = 'No rooms available for selected dates.';
+                }
+
+                renderRoomSelection();
+                updateTotal();
+            } catch (error) {
+                availableRooms = [];
+                document.getElementById('availabilityByType').textContent = 'Unable to load available rooms right now.';
+                renderRoomSelection();
+                updateTotal();
+            }
+        }
+
+        function renderRoomSelection() {
+            const container = document.getElementById('availableRoomsContainer');
+            const requestedRooms = Math.max(1, parseInt(document.getElementById('numberOfRooms').value || '1', 10));
+            const selectedBefore = new Set(getSelectedRoomIds());
+
+            container.innerHTML = '';
+            if (!availableRooms.length) {
+                container.innerHTML = '<div style="grid-column: 1 / -1; color: #b00020; font-size: 0.9rem;">No available rooms found for the selected date range.</div>';
+                return;
+            }
+
+            availableRooms.forEach((room) => {
+                const isPreferred = room.id === preferredRoomId;
+                const shouldCheck = selectedBefore.has(room.id) || (selectedBefore.size === 0 && isPreferred);
+
+                const label = document.createElement('label');
+                label.style.border = '1px solid #e5e5e5';
+                label.style.borderRadius = '8px';
+                label.style.padding = '0.7rem';
+                label.style.display = 'flex';
+                label.style.gap = '0.6rem';
+                label.style.alignItems = 'flex-start';
+                label.style.cursor = 'pointer';
+                label.innerHTML = `
+                    <input type="checkbox" class="room-checkbox" name="room_ids[]" value="${room.id}" data-price="${room.price}" ${shouldCheck ? 'checked' : ''} style="margin-top: 0.1rem; accent-color: #d4af37;">
+                    <div>
+                        <div style="font-weight: 600;">${room.room_type} - Room ${room.room_number}</div>
+                        <div style="font-size: 0.85rem; color: #666;">Capacity: ${room.capacity} guest(s) | ₱${Number(room.price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/night</div>
+                    </div>
+                `;
+
+                container.appendChild(label);
+            });
+
+            container.querySelectorAll('.room-checkbox').forEach((checkbox) => {
+                checkbox.addEventListener('change', function() {
+                    const selected = getSelectedRoomIds();
+                    if (selected.length > requestedRooms) {
+                        this.checked = false;
+                        alert(`You can only select up to ${requestedRooms} room(s).`);
+                    }
+                    updateTotal();
+                });
+            });
+        }
 
         // Calculate number of nights from check-in and check-out dates
         function calculateCheckout() {
@@ -738,6 +839,8 @@
             } else {
                 document.getElementById('totalNights').value = '';
             }
+
+            loadAvailableRooms();
         }
 
         // Toggle extra quantity controls
@@ -772,7 +875,8 @@
         // Update total calculation
         function updateTotal() {
             const nights = parseInt(document.getElementById('totalNights').value) || 1;
-            const subtotal = basePrice * nights;
+            const selectedNightlyTotal = getSelectedRoomNightlyTotal();
+            const subtotal = (selectedNightlyTotal > 0 ? selectedNightlyTotal : basePrice) * nights;
             
             // Calculate extras
             let extrasTotal = 0;
@@ -844,7 +948,17 @@
             @endif
             calculateCheckout();
             showGuestRecommendation();
+            loadAvailableRooms();
         })();
+
+        document.getElementById('bookingForm').addEventListener('submit', function (event) {
+            const requestedRooms = Math.max(1, parseInt(document.getElementById('numberOfRooms').value || '1', 10));
+            const selected = getSelectedRoomIds();
+            if (selected.length !== requestedRooms) {
+                event.preventDefault();
+                alert(`Please select exactly ${requestedRooms} room(s).`);
+            }
+        });
     </script>
 </body>
 </html>
