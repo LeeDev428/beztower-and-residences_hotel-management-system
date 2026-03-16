@@ -86,9 +86,9 @@
                         <div style="font-size: 0.875rem; color: var(--text-muted);">{{ $booking->total_nights }} nights</div>
                     </td>
                     <td style="padding: 1rem 0.75rem;">
-                        @if($booking->payments->where('payment_status', 'verified')->first())
+                        @if($booking->payments->whereIn('payment_status', ['verified', 'completed'])->first())
                             @php
-                                $payment = $booking->payments->where('payment_status', 'verified')->first();
+                                $payment = $booking->payments->whereIn('payment_status', ['verified', 'completed'])->first();
                             @endphp
                             @if($payment->payment_type === 'down_payment')
                             <span style="padding: 0.375rem 0.75rem; background: linear-gradient(135deg, #3498db, #2980b9); color: white; border-radius: 6px; font-size: 0.875rem; font-weight: 600; display: inline-block;">Downpayment</span>
