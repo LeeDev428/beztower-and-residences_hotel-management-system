@@ -163,11 +163,12 @@ class WalkInController extends Controller
                 'special_requests' => $validated['special_requests'] ?? null,
             ]);
 
-            foreach ($selectedRooms as $room) {
-                $booking->rooms()->attach($room->id, [
-                    'nightly_rate' => (float) ($room->roomType?->base_price ?? 0),
+            /** @var \App\Models\Room $selectedRoom */
+            foreach ($selectedRooms as $selectedRoom) {
+                $booking->rooms()->attach($selectedRoom->id, [
+                    'nightly_rate' => (float) ($selectedRoom->roomType?->base_price ?? 0),
                 ]);
-                $room->update(['status' => 'occupied']);
+                $selectedRoom->update(['status' => 'occupied']);
             }
 
             if (!empty($selectedExtras)) {
@@ -231,6 +232,13 @@ class WalkInController extends Controller
             ->whereNull('archived_at')
             ->whereHas('roomType')
             ->whereDoesntHave('bookings', function ($query) use ($checkInDate, $checkOutDate) {
+                $query->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                    ->where(function ($overlap) use ($checkInDate, $checkOutDate) {
+                        $overlap->where('check_in_date', '<', $checkOutDate)
+                            ->where('check_out_date', '>', $checkInDate);
+                    });
+            })
+            ->whereDoesntHave('reservationBookings', function ($query) use ($checkInDate, $checkOutDate) {
                 $query->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
                     ->where(function ($overlap) use ($checkInDate, $checkOutDate) {
                         $overlap->where('check_in_date', '<', $checkOutDate)
