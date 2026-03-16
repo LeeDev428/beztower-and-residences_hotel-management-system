@@ -100,6 +100,13 @@ class Booking extends Model
         return $this->belongsTo(Room::class);
     }
 
+    public function rooms()
+    {
+        return $this->belongsToMany(Room::class, 'booking_rooms')
+            ->withPivot('nightly_rate')
+            ->withTimestamps();
+    }
+
     public function roomType()
     {
         return $this->hasOneThrough(RoomType::class, Room::class, 'id', 'id', 'room_id', 'room_type_id');
