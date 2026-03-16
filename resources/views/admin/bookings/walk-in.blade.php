@@ -203,12 +203,14 @@
 
 <script>
 let availableRooms = @json($availableRooms->map(function ($room) {
+    $roomTypeName = $room->roomType?->name ?? 'Room';
+    $basePrice = (float) ($room->roomType?->base_price ?? 0);
     return [
         'id' => $room->id,
         'room_number' => $room->room_number,
-        'room_type' => $room->roomType->name,
-        'price' => (float) $room->roomType->base_price,
-        'label' => $room->roomType->name . ' - Room ' . $room->room_number . ' (PHP ' . number_format($room->roomType->base_price, 2) . '/night)',
+        'room_type' => $roomTypeName,
+        'price' => $basePrice,
+        'label' => $roomTypeName . ' - Room ' . $room->room_number . ' (PHP ' . number_format($basePrice, 2) . '/night)',
     ];
 }));
 

@@ -40,13 +40,18 @@ class WalkInController extends Controller
             ->orderBy('room_type_id')
             ->orderBy('room_number')
             ->get()
+            ->filter(function ($room) {
+                return $room->roomType !== null;
+            })
             ->map(function ($room) {
+                $roomTypeName = $room->roomType?->name ?? 'Room';
+                $basePrice = (float) ($room->roomType?->base_price ?? 0);
                 return [
                     'id' => $room->id,
                     'room_number' => $room->room_number,
-                    'room_type' => $room->roomType->name,
-                    'price' => (float) $room->roomType->base_price,
-                    'label' => $room->roomType->name . ' - Room ' . $room->room_number . ' (PHP ' . number_format($room->roomType->base_price, 2) . '/night)',
+                    'room_type' => $roomTypeName,
+                    'price' => $basePrice,
+                    'label' => $roomTypeName . ' - Room ' . $room->room_number . ' (PHP ' . number_format($basePrice, 2) . '/night)',
                 ];
             })
             ->values();
@@ -227,6 +232,7 @@ class WalkInController extends Controller
         return Room::with('roomType')
             ->where('status', 'available')
             ->whereNull('archived_at')
+            ->whereHas('roomType')
             ->whereDoesntHave('bookings', function ($query) use ($checkInDate, $checkOutDate) {
                 $query->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
                     ->where(function ($overlap) use ($checkInDate, $checkOutDate) {

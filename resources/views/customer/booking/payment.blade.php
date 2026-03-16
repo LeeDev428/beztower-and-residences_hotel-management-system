@@ -181,8 +181,8 @@
         }
 
         .qr-code-wrapper img {
-            width: 250px;
-            height: 250px;
+            width: 340px;
+            height: 340px;
             object-fit: contain;
         }
 
@@ -382,8 +382,8 @@
             }
 
             .qr-code-wrapper img {
-                width: 200px;
-                height: 200px;
+                width: 280px;
+                height: 280px;
             }
         }
     </style>
