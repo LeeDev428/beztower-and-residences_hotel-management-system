@@ -19,7 +19,7 @@ class BookingManagementController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Booking::with(['guest', 'room', 'roomType']);
+        $query = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType', 'payments']);
 
         // Filter by status
         if ($request->filled('status')) {
@@ -60,7 +60,7 @@ class BookingManagementController extends Controller
 
     public function show(Booking $booking)
     {
-        $booking->load(['guest', 'room.roomType', 'roomType']);
+        $booking->load(['guest', 'room.roomType', 'roomType', 'rooms.roomType']);
 
         $allowedStatuses = $this->getAllowedStatusTransitions($booking->status);
         $statusLocked = in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true);
@@ -74,10 +74,11 @@ class BookingManagementController extends Controller
         $balanceDue = max(round($grossTotal - $verifiedPaymentsTotal, 2), 0);
 
         // Available rooms of the same type (for assign/transfer)
+        $primaryRoomTypeId = $booking->rooms->first()?->room_type_id ?? $booking->room?->room_type_id;
         $availableRooms = Room::with('roomType')
             ->where('status', 'available')
             ->whereNull('archived_at')
-            ->when($booking->room, fn($q) => $q->where('room_type_id', $booking->room->room_type_id))
+            ->when($primaryRoomTypeId, fn($q) => $q->where('room_type_id', $primaryRoomTypeId))
             ->where('id', '!=', $booking->room_id)
             ->orderBy('room_number')
             ->get();
@@ -135,12 +136,20 @@ class BookingManagementController extends Controller
 
         // Update room status based on booking status
         if ($targetStatus === 'rejected_payment') {
-            // Free up room when payment is rejected
-            $booking->room->update(['status' => 'available']);
+            $roomsToUpdate = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+            foreach ($roomsToUpdate as $room) {
+                $room->update(['status' => 'available']);
+            }
         } elseif ($targetStatus === 'checked_in') {
-            $booking->room->update(['status' => 'occupied']);
+            $roomsToUpdate = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+            foreach ($roomsToUpdate as $room) {
+                $room->update(['status' => 'occupied']);
+            }
         } elseif ($targetStatus === 'cancelled') {
-            $booking->room->update(['status' => 'available']);
+            $roomsToUpdate = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+            foreach ($roomsToUpdate as $room) {
+                $room->update(['status' => 'available']);
+            }
 
             try {
                 Mail::to($booking->guest->email)->send(new BookingCancelled($booking));
@@ -148,8 +157,11 @@ class BookingManagementController extends Controller
                 Log::error('Failed to send cancellation email from status update: ' . $e->getMessage());
             }
         } elseif ($targetStatus === 'checked_out') {
-            // Room becomes dirty after checkout (needs cleaning)
-            $booking->room->update(['status' => 'dirty']);
+            // Rooms become dirty after checkout (need cleaning)
+            $roomsToUpdate = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+            foreach ($roomsToUpdate as $room) {
+                $room->update(['status' => 'dirty']);
+            }
 
             // Auto-record remaining balance as revenue
             $amountPaid = $booking->payments()
@@ -332,8 +344,12 @@ class BookingManagementController extends Controller
             'refund_status' => $validated['refund_status'],
         ]);
 
-        // Free up the room
-        $booking->room->update(['status' => 'available']);
+        // Free up reserved room(s)
+        $booking->loadMissing('rooms', 'room');
+        $roomsToUpdate = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+        foreach ($roomsToUpdate as $room) {
+            $room->update(['status' => 'available']);
+        }
 
         // Send cancellation email
         $booking->load('guest');
