@@ -56,10 +56,6 @@
                     <input type="text" name="address" value="{{ old('address') }}" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Street, City, Province (optional)">
                 </div>
 
-                <div>
-                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Valid ID Photo <span style="color: var(--text-muted); font-weight: 400;">(Optional, JPG, PNG, PDF — max 5MB)</span></label>
-                    <input type="file" name="id_photo" accept="image/jpeg,image/png,image/jpg,application/pdf" style="width: 100%; padding: 0.55rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; background: white; box-sizing: border-box;">
-                </div>
             </x-admin.card>
 
             <x-admin.card title="Booking Details">
