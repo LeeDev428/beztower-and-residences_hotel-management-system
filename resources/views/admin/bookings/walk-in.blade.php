@@ -201,18 +201,24 @@
     </form>
 </div>
 
+@php
+    $availableRoomsForJs = $availableRooms->map(function ($room) {
+        $roomType = $room->roomType;
+        $roomTypeName = $roomType ? $roomType->name : 'Room';
+        $basePrice = (float) ($roomType ? $roomType->base_price : 0);
+
+        return [
+            'id' => $room->id,
+            'room_number' => $room->room_number,
+            'room_type' => $roomTypeName,
+            'price' => $basePrice,
+            'label' => $roomTypeName . ' - Room ' . $room->room_number . ' (PHP ' . number_format($basePrice, 2) . '/night)',
+        ];
+    })->values();
+@endphp
+
 <script>
-let availableRooms = @json($availableRooms->map(function ($room) {
-    $roomTypeName = $room->roomType?->name ?? 'Room';
-    $basePrice = (float) ($room->roomType?->base_price ?? 0);
-    return [
-        'id' => $room->id,
-        'room_number' => $room->room_number,
-        'room_type' => $roomTypeName,
-        'price' => $basePrice,
-        'label' => $roomTypeName . ' - Room ' . $room->room_number . ' (PHP ' . number_format($basePrice, 2) . '/night)',
-    ];
-}));
+let availableRooms = @json($availableRoomsForJs);
 
 function formatPeso(value) {
     return 'PHP ' + Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
