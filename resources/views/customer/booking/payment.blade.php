@@ -423,10 +423,19 @@
                     <h3 style="margin-bottom: 1rem; color: #2c2c2c;">
                         <i class="fas fa-receipt"></i> Payment Breakdown
                     </h3>
-                    <div class="summary-row">
-                        <span>Room: {{ $booking->room->roomType->name }}</span>
-                        <span>₱{{ number_format($booking->room->roomType->base_price, 2) }}/night</span>
-                    </div>
+                    @if($booking->rooms->count() > 0)
+                        @foreach($booking->rooms as $reservedRoom)
+                            <div class="summary-row">
+                                <span>Room {{ $reservedRoom->room_number }} ({{ $reservedRoom->roomType->name }})</span>
+                                <span>₱{{ number_format($reservedRoom->pivot->nightly_rate, 2) }}/night</span>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="summary-row">
+                            <span>Room: {{ $booking->room->roomType->name }}</span>
+                            <span>₱{{ number_format($booking->room->roomType->base_price, 2) }}/night</span>
+                        </div>
+                    @endif
                     <div class="summary-row">
                         <span>Number of Nights</span>
                         <span>{{ $booking->total_nights }} {{ $booking->total_nights == 1 ? 'night' : 'nights' }}</span>
