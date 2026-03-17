@@ -16,7 +16,7 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Payment::with(['booking.guest', 'booking.room'])->whereNotNull('proof_of_payment');
+        $query = Payment::with(['booking.guest', 'booking.room', 'booking.rooms.roomType'])->whereNotNull('proof_of_payment');
 
         // Filter by payment status
         if ($request->filled('status')) {
@@ -33,7 +33,7 @@ class PaymentController extends Controller
 
     public function show(Payment $payment)
     {
-        $payment->load(['booking.guest', 'booking.room']);
+        $payment->load(['booking.guest', 'booking.room', 'booking.rooms.roomType']);
 
         return view('admin.payments.show', compact('payment'));
     }
