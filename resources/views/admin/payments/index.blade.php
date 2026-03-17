@@ -40,8 +40,15 @@
 
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem;">
                         <div>
-                            <div style="font-size: 0.875rem; color: var(--text-muted);">Room</div>
-                            <div style="font-weight: 600;">{{ $payment->booking->room->room_number }}</div>
+                            @php
+                                $reservedRooms = $payment->booking->rooms->isNotEmpty() ? $payment->booking->rooms : collect([$payment->booking->room])->filter();
+                            @endphp
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">Room(s)</div>
+                            <div style="font-weight: 600;">
+                                @foreach($reservedRooms as $reservedRoom)
+                                    Room {{ $reservedRoom->room_number }}@if(!$loop->last), @endif
+                                @endforeach
+                            </div>
                         </div>
                         <div>
                             <div style="font-size: 0.875rem; color: var(--text-muted);">Check-in</div>
