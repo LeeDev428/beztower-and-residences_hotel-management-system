@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Final Billing - Booking #' . $booking->booking_reference)
-@section('page-title', 'Final Billing')
+@section('title', 'Billing Adjustment & Charges - Booking #' . $booking->booking_reference)
+@section('page-title', 'Billing Adjustment & Charges')
 
 @section('content')
 <div style="max-width: 1100px; margin: 0 auto;">
@@ -9,7 +9,7 @@
     <!-- Page Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem;">
         <div>
-            <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-gold); margin: 0;">Final Billing</h2>
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--primary-gold); margin: 0;">Billing Adjustment & Charges</h2>
             <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Booking #{{ $booking->booking_reference }}</div>
         </div>
         <a href="{{ route('admin.bookings.show', $booking) }}" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; background: var(--light-gray); color: var(--text-muted); border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
@@ -24,6 +24,9 @@
     @endif
 
     <!-- Booking Details + Final Total -->
+    @php
+        $reservedRooms = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+    @endphp
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
 
         <!-- Booking Details -->
@@ -38,8 +41,8 @@
                     <td style="padding: 7px 0; font-weight: 700;">{{ $booking->guest->name }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 7px 0; color: var(--text-muted);">Room</td>
-                    <td style="padding: 7px 0; font-weight: 700;">{{ $booking->room->room_number }} — {{ $booking->roomType->name }}</td>
+                    <td style="padding: 7px 0; color: var(--text-muted);">Rooms</td>
+                    <td style="padding: 7px 0; font-weight: 700;">{{ $reservedRooms->count() }} room(s)</td>
                 </tr>
                 <tr>
                     <td style="padding: 7px 0; color: var(--text-muted);">Check-in</td>
@@ -62,6 +65,20 @@
                     <td style="padding: 10px 0 0; font-weight: 800; font-size: 1.1rem; color: var(--primary-gold); border-top: 1px solid var(--border-gray);">₱{{ number_format($booking->total_amount, 2) }}</td>
                 </tr>
             </table>
+
+            <div style="margin-top: 1rem; border-top: 1px dashed var(--border-gray); padding-top: 0.8rem;">
+                <div style="font-weight: 700; margin-bottom: 0.5rem; font-size: 0.88rem; color: #333;">Per-Room Charges</div>
+                @foreach($reservedRooms as $reservedRoom)
+                    @php
+                        $nightlyRate = (float) ($reservedRoom->pivot->nightly_rate ?? $reservedRoom->effective_price ?? $reservedRoom->roomType->base_price ?? 0);
+                        $roomTotal = $nightlyRate * (int) ($booking->total_nights ?? $booking->number_of_nights ?? 0);
+                    @endphp
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f1f1f1;font-size:0.86rem;">
+                        <span style="color:var(--text-muted);">Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}<br><small>₱{{ number_format($nightlyRate, 2) }} x {{ $booking->total_nights ?? $booking->number_of_nights }} night(s)</small></span>
+                        <span style="font-weight:700;">₱{{ number_format($roomTotal, 2) }}</span>
+                    </div>
+                @endforeach
+            </div>
         </x-admin.card>
 
         <!-- Final Total Summary -->
@@ -250,7 +267,7 @@
         <div style="text-align: center; padding: 1.5rem; background: white; border: 2px solid var(--primary-gold); border-radius: 12px;">
             <button type="submit"
                 style="padding: 1rem 3.5rem; background: linear-gradient(135deg, #4caf50, #3d9140); color: white; border: none; border-radius: 10px; font-size: 1.05rem; font-weight: 700; cursor: pointer;">
-                <i class="fas fa-save"></i>&nbsp; Save Final Billing
+                <i class="fas fa-save"></i>&nbsp; Save Billing Adjustment & Charges
             </button>
             <div style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted);">All changes will be saved to the booking record</div>
         </div>
