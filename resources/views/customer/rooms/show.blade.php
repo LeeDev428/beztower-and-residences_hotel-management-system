@@ -1076,9 +1076,15 @@
                             <i class="fas fa-calendar-check"></i> Continue to Checkout
                         </a>
                     @else
-                        <a href="{{ $continueUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
-                            <i class="fas fa-plus-circle"></i> Select This Room
-                        </a>
+                        @if($isSelected)
+                            <a href="{{ $continueUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center; background: linear-gradient(135deg, #2c2c2c, #1f1f1f); color:#fff;">
+                                <i class="fas fa-check-circle"></i> Room Already Selected
+                            </a>
+                        @else
+                            <a href="{{ $continueUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
+                                <i class="fas fa-plus-circle"></i> Select This Room
+                            </a>
+                        @endif
                         @if($remainingRooms > 0)
                             <div style="margin-top:0.75rem;font-size:0.88rem;color:#666;">{{ $nextSelectedRoomIds->count() }} of {{ $requestedRooms }} selected. Choose {{ $remainingRooms }} more room(s).</div>
                         @endif
