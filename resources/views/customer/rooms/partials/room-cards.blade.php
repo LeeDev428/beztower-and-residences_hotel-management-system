@@ -1,4 +1,52 @@
 @foreach($rooms as $room)
+    @php
+        $requestedRooms = max(1, min(12, (int) request('rooms', 1)));
+        $selectedRoomIds = collect(explode(',', (string) request('selected_rooms')))
+            ->map(fn ($id) => (int) trim($id))
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+        $isSelected = $selectedRoomIds->contains((int) $room->id);
+        $canSelectMore = $selectedRoomIds->count() < $requestedRooms;
+
+        $baseParams = [];
+        if (request('check_in'))  $baseParams['check_in'] = request('check_in');
+        if (request('check_out')) $baseParams['check_out'] = request('check_out');
+        if (request('guests'))    $baseParams['guests'] = request('guests');
+        $baseParams['rooms'] = $requestedRooms;
+
+        $nextSelectedRoomIds = $selectedRoomIds;
+        if (!$isSelected && $canSelectMore) {
+            $nextSelectedRoomIds = $selectedRoomIds->push((int) $room->id)->unique()->values();
+        }
+
+        if ($selectedRoomIds->isNotEmpty()) {
+            $baseParams['selected_rooms'] = $selectedRoomIds->implode(',');
+        }
+
+        $detailsParams = $baseParams;
+        $btnUrl  = route('rooms.show', $room) . ($detailsParams ? '?' . http_build_query($detailsParams) : '');
+
+        $selectParams = $baseParams;
+        if ($nextSelectedRoomIds->isNotEmpty()) {
+            $selectParams['selected_rooms'] = $nextSelectedRoomIds->implode(',');
+        }
+        $selectUrl = route('rooms.index') . '?' . http_build_query($selectParams);
+
+        $selectionComplete = $selectedRoomIds->count() >= $requestedRooms && $selectedRoomIds->isNotEmpty();
+        $checkoutUrl = '';
+        if ($selectionComplete) {
+            $checkoutParams = [
+                'check_in' => request('check_in'),
+                'check_out' => request('check_out'),
+                'guests' => request('guests'),
+                'rooms' => $requestedRooms,
+                'selected_rooms' => $selectedRoomIds->implode(','),
+                'room_ids' => $selectedRoomIds->all(),
+            ];
+            $checkoutUrl = route('booking.checkout', $selectedRoomIds->first()) . '?' . http_build_query(array_filter($checkoutParams, fn ($value) => !is_null($value) && $value !== ''));
+        }
+    @endphp
     <div class="room-card">
         <div class="room-image">
             @if($room->photos->count() > 0)
@@ -7,6 +55,9 @@
                 <img src="https://via.placeholder.com/400x300/d4af37/2c2c2c?text={{ urlencode($room->roomType->name) }}" alt="{{ $room->roomType->name }}">
             @endif
             <div class="room-badge">{{ $room->status }}</div>
+            @if($isSelected)
+                <div style="position:absolute;top:10px;left:10px;background:#27ae60;color:#fff;padding:0.4rem 0.7rem;border-radius:6px;font-size:0.8rem;font-weight:700;">Selected</div>
+            @endif
         </div>
         
         <div class="room-details">
@@ -35,20 +86,16 @@
                     <span class="price-amount">₱{{ number_format($room->roomType->base_price, 2) }}</span>
                     <span class="price-period">/night</span>
                 </div>
-                @php
-                    $checkIn  = request('check_in');
-                    $checkOut = request('check_out');
-                    $guests   = request('guests');
-                    $rooms    = request('rooms');
-                    $lcParams = [];
-                    if ($checkIn)  $lcParams['check_in']  = $checkIn;
-                    if ($checkOut) $lcParams['check_out'] = $checkOut;
-                    if ($guests)   $lcParams['guests']    = $guests;
-                    if ($rooms)    $lcParams['rooms']     = $rooms;
-                    $btnUrl  = route('rooms.show', $room) . ($lcParams ? '?' . http_build_query($lcParams) : '');
-                    $btnText = 'Learn More';
-                @endphp
-                <a href="{{ $btnUrl }}" class="book-btn">{{ $btnText }}</a>
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
+                    <a href="{{ $btnUrl }}" class="book-btn">Learn More</a>
+                    @if($selectionComplete)
+                        <a href="{{ $checkoutUrl }}" class="book-btn" style="background: linear-gradient(135deg, #2c2c2c, #1f1f1f); color:#fff;">Checkout</a>
+                    @elseif(!$isSelected && $canSelectMore)
+                        <a href="{{ $selectUrl }}" class="book-btn" style="background: linear-gradient(135deg, #27ae60, #229954); color:#fff;">Select Room</a>
+                    @elseif($isSelected)
+                        <span class="book-btn" style="background:#e8f5e9; color:#2e7d32; cursor:default;">Already Selected</span>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
