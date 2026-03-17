@@ -557,8 +557,13 @@
                         <div>
                             <label class="form-label">Number of Guests <span class="required">*</span></label>
                             <select name="number_of_guests" class="form-select" id="guestCountSelect" required onchange="showGuestRecommendation()">
-                                @for($i = 1; $i <= 20; $i++)
-                                    <option value="{{ $i }}" {{ request('guests') == $i ? 'selected' : '' }}>
+                                @php
+                                    $maxGuestsOption = max(1, (int) ($maxGuestCapacity ?? ($room->roomType->max_guests ?? 1)));
+                                    $requestedGuests = (int) request('guests', 1);
+                                    $requestedGuests = max(1, min($requestedGuests, $maxGuestsOption));
+                                @endphp
+                                @for($i = 1; $i <= $maxGuestsOption; $i++)
+                                    <option value="{{ $i }}" {{ $requestedGuests === $i ? 'selected' : '' }}>
                                         {{ $i }} {{ $i == 1 ? 'Guest' : 'Guests' }}
                                     </option>
                                 @endfor
@@ -576,7 +581,7 @@
 
                         <div>
                             <label class="form-label">How Many Rooms <span class="required">*</span></label>
-                            <input type="number" name="number_of_rooms" id="numberOfRooms" class="form-input" min="1" max="12" value="{{ request('rooms', 1) }}" required onchange="syncAutoSelectedRooms(); updateTotal();">
+                            <input type="number" name="number_of_rooms" id="numberOfRooms" class="form-input" min="1" max="12" value="{{ max(1, min(12, (int) ($requestedRooms ?? request('rooms', 1)))) }}" {{ isset($preselectedRooms) && $preselectedRooms->count() > 0 ? 'readonly' : '' }} required onchange="syncAutoSelectedRooms(); updateTotal();" style="{{ isset($preselectedRooms) && $preselectedRooms->count() > 0 ? 'background:#f0f0f0; cursor:not-allowed;' : '' }}">
                         </div>
 
                         <div class="form-group-full">
@@ -722,7 +727,34 @@
     <script>
         const basePrice = {{ $room->roomType->base_price }};
         const preferredRoomId = {{ $room->id }};
+        const lockedSelectedRoomIds = @json(isset($preselectedRooms) ? $preselectedRooms->pluck('id')->values()->all() : []);
+        const isRoomCountLocked = {{ (isset($preselectedRooms) && $preselectedRooms->count() > 0) ? 'true' : 'false' }};
+        const fallbackRoomCapacity = {{ (int) ($room->roomType->max_guests ?? 1) }};
         let availableRooms = [];
+
+        function syncGuestLimit(selectedRooms) {
+            const guestSelect = document.getElementById('guestCountSelect');
+            const currentValue = parseInt(guestSelect.value || '1', 10);
+
+            let maxGuests = 0;
+            if (selectedRooms && selectedRooms.length) {
+                maxGuests = selectedRooms.reduce((sum, selectedRoom) => sum + Number(selectedRoom.capacity || 0), 0);
+            }
+
+            if (maxGuests <= 0) {
+                maxGuests = fallbackRoomCapacity;
+            }
+
+            guestSelect.innerHTML = '';
+            for (let i = 1; i <= maxGuests; i += 1) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${i} ${i === 1 ? 'Guest' : 'Guests'}`;
+                guestSelect.appendChild(option);
+            }
+
+            guestSelect.value = String(Math.min(Math.max(currentValue, 1), maxGuests));
+        }
 
         function getSelectedRoomIds() {
             return Array.from(document.querySelectorAll('input[name="room_ids[]"]')).map((el) => Number(el.value));
@@ -778,13 +810,19 @@
         }
 
         function syncAutoSelectedRooms() {
-            const requestedRooms = Math.max(1, Math.min(12, parseInt(document.getElementById('numberOfRooms').value || '1', 10)));
+            const roomCountInput = document.getElementById('numberOfRooms');
+            if (isRoomCountLocked && lockedSelectedRoomIds.length > 0) {
+                roomCountInput.value = String(lockedSelectedRoomIds.length);
+            }
+
+            const requestedRooms = Math.max(1, Math.min(12, parseInt(roomCountInput.value || '1', 10)));
             const summary = document.getElementById('autoAssignedRoomsSummary');
             const hiddenInputs = document.getElementById('autoSelectedRoomInputs');
             hiddenInputs.innerHTML = '';
 
             if (!availableRooms.length) {
                 summary.innerHTML = '<span style="color:#b00020;">No available rooms found for the selected date range.</span>';
+                syncGuestLimit([]);
                 return;
             }
 
@@ -794,7 +832,28 @@
                 return Number(a.room_number) - Number(b.room_number);
             });
 
-            const selectedRooms = prioritized.slice(0, requestedRooms);
+            let selectedRooms = [];
+
+            if (isRoomCountLocked && lockedSelectedRoomIds.length > 0) {
+                const lockedSet = new Set(lockedSelectedRoomIds);
+                selectedRooms = prioritized.filter((room) => lockedSet.has(Number(room.id))).slice(0, requestedRooms);
+
+                if (selectedRooms.length < requestedRooms) {
+                    summary.innerHTML = `<span style="color:#b00020;">Some previously selected rooms are no longer available for the selected dates. Please reselect rooms from the rooms page.</span>`;
+                    syncGuestLimit(selectedRooms);
+                    selectedRooms.forEach((room) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'room_ids[]';
+                        input.value = room.id;
+                        hiddenInputs.appendChild(input);
+                    });
+                    return;
+                }
+            } else {
+                selectedRooms = prioritized.slice(0, requestedRooms);
+            }
+
             selectedRooms.forEach((room) => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
@@ -802,6 +861,8 @@
                 input.value = room.id;
                 hiddenInputs.appendChild(input);
             });
+
+            syncGuestLimit(selectedRooms);
 
             if (selectedRooms.length < requestedRooms) {
                 summary.innerHTML = `<span style="color:#b00020;">Only ${selectedRooms.length} room(s) are available for the selected dates, but ${requestedRooms} room(s) were requested.</span>`;
@@ -940,7 +1001,6 @@
             @endif
             calculateCheckout();
             showGuestRecommendation();
-            loadAvailableRooms();
         })();
 
         document.getElementById('bookingForm').addEventListener('submit', function (event) {
