@@ -47,6 +47,25 @@ class BookingController extends Controller
         $requestedRooms = (int) $request->integer('rooms', $preselectedRooms->count() ?: 1);
         $requestedRooms = max(1, min(12, $requestedRooms));
 
+        // For multi-room bookings, force explicit room-by-room selection first.
+        // This avoids auto-populating unselected rooms on checkout.
+        if ($requestedRooms > 1 && $preselectedRooms->count() < $requestedRooms) {
+            $selectedForFlow = $preselectedRooms->pluck('id')->map(fn ($id) => (int) $id)->values();
+            if ($selectedForFlow->isEmpty()) {
+                $selectedForFlow = collect([(int) $room->id]);
+            }
+
+            $remainingRooms = max($requestedRooms - $selectedForFlow->count(), 0);
+
+            return redirect()->route('rooms.index', [
+                'check_in' => $request->input('check_in'),
+                'check_out' => $request->input('check_out'),
+                'guests' => $request->input('guests'),
+                'rooms' => $requestedRooms,
+                'selected_rooms' => $selectedForFlow->implode(','),
+            ])->with('warning', 'Please select ' . $remainingRooms . ' more room(s) before checkout.');
+        }
+
         $maxGuestCapacity = (int) $preselectedRooms->sum(fn ($selectedRoom) => (int) ($selectedRoom->roomType?->max_guests ?? 0));
         if ($maxGuestCapacity <= 0) {
             $maxGuestCapacity = (int) ($room->roomType?->max_guests ?? 1);
