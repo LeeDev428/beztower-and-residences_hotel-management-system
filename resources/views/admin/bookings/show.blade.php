@@ -206,7 +206,7 @@
                 </div>
                 @if(($booking->final_total ?? $booking->total_amount) != $booking->total_amount)
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Final Billing (Gross)</span>
+                    <span>Billing Adjustment (Gross)</span>
                     <span style="font-weight: 600;">₱{{ number_format($grossTotal, 2) }}</span>
                 </div>
                 @endif
@@ -223,15 +223,15 @@
 
         <!-- Actions -->
         <x-admin.card title="Actions" style="margin-top: 1.5rem;">
-            <!-- Final Billing Button -->
+            <!-- Billing Adjustment Button -->
             <div style="margin-bottom: 1rem;">
                 @if($billingLocked)
-                    <button type="button" disabled style="display: block; width: 100%; padding: 0.75rem; background: #d9d9d9; color: #6b6b6b; border: none; border-radius: 8px; font-weight: 600; text-align: center; cursor: not-allowed;" title="Final billing is locked for this booking status.">
-                        <i class="fas fa-calculator"></i> Final Billing & Charges
+                    <button type="button" disabled style="display: block; width: 100%; padding: 0.75rem; background: #d9d9d9; color: #6b6b6b; border: none; border-radius: 8px; font-weight: 600; text-align: center; cursor: not-allowed;" title="Billing adjustment is locked for this booking status.">
+                        <i class="fas fa-calculator"></i> Billing Adjustment & Charges
                     </button>
                 @else
                     <a href="{{ route('admin.bookings.finalBilling', $booking) }}" class="btn-success" style="display: block; padding: 0.75rem; background: linear-gradient(135deg, #4caf50, #45a049); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; text-align: center;">
-                        <i class="fas fa-calculator"></i> Final Billing & Charges
+                        <i class="fas fa-calculator"></i> Billing Adjustment & Charges
                     </a>
                 @endif
             </div>
