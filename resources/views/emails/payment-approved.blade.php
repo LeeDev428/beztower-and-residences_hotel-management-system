@@ -13,6 +13,9 @@
         </div>
         
         <div style="padding: 30px;">
+            @php
+                $reservedRooms = $payment->booking->rooms->isNotEmpty() ? $payment->booking->rooms : collect([$payment->booking->room])->filter();
+            @endphp
             <p>Dear {{ $payment->booking->guest->name }},</p>
             
             <p>Great news! Your payment has been verified and approved.</p>
@@ -51,8 +54,12 @@
                     <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->booking_reference }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px 0; color: #666;">Room:</td>
-                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->room->roomType->name }}</td>
+                    <td style="padding: 8px 0; color: #666;">Room(s):</td>
+                    <td style="padding: 8px 0; font-weight: bold;">
+                        @foreach($reservedRooms as $reservedRoom)
+                            Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
+                        @endforeach
+                    </td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Check-in:</td>
@@ -77,7 +84,7 @@
                 <h2 style="color: #4caf50; margin-top: 0;">Total Amount Breakdown</h2>
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                    <td style="padding: 8px 0; color: #666;">Room Charges ({{ $payment->booking->total_nights }} night(s) × ₱{{ number_format($payment->booking->room->roomType->price_per_night, 2) }}):</td>
+                    <td style="padding: 8px 0; color: #666;">Room Charges ({{ $reservedRooms->count() }} room(s), {{ $payment->booking->total_nights }} night(s)):</td>
                     <td style="padding: 8px 0; text-align: right;">₱{{ number_format($payment->booking->subtotal, 2) }}</td>
                 </tr>
                 
