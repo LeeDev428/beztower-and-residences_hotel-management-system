@@ -299,7 +299,7 @@ class BookingManagementController extends Controller
     {
         if (in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true)) {
             return redirect()->route('admin.bookings.show', $booking)
-                ->with('error', 'Final billing is locked for this booking status.');
+                ->with('error', 'Billing adjustment is locked for this booking status.');
         }
 
         $booking->load(['guest', 'room.roomType', 'roomType', 'rooms.roomType']);
@@ -328,7 +328,7 @@ class BookingManagementController extends Controller
     {
         if (in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true)) {
             return redirect()->route('admin.bookings.show', $booking)
-                ->with('error', 'Final billing is locked for this booking status.');
+                ->with('error', 'Billing adjustment is locked for this booking status.');
         }
 
         $validated = $request->validate([
@@ -373,7 +373,7 @@ class BookingManagementController extends Controller
         );
 
         return redirect()->route('admin.bookings.show', $booking)
-            ->with('success', 'Final billing updated successfully! Total: ₱' . number_format($booking->final_total, 2));
+            ->with('success', 'Billing adjustment updated successfully! Total: ₱' . number_format($booking->final_total, 2));
     }
 
     public function cancelBooking(Request $request, Booking $booking)
