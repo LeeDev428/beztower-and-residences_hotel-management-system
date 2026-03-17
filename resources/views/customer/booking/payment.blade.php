@@ -484,8 +484,8 @@
                                 <img src="{{ asset('images/gcash/gcash_v2.jpg') }}" alt="GCash QR Code">
                             </div>
                             <div class="gcash-info">
-                                <p><strong>Account Name:</strong> Bez Tower & Residences</p>
-                                <p><strong>Mobile Number:</strong> +63 912 345 6789</p>
+                                <p><strong>Account Name:</strong> MICHAEL ANG</p>
+                                <p><strong>Mobile Number:</strong> 09778325550</p>
                                 <p><strong>Amount:</strong> ₱{{ number_format($paymentAmount, 2) }}</p>
                             </div>
                         </div>
