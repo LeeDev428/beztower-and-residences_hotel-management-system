@@ -1032,6 +1032,7 @@
                         if (request('check_in'))  $ctParams['check_in']  = request('check_in');
                         if (request('check_out')) $ctParams['check_out'] = request('check_out');
                         if (request('guests'))    $ctParams['guests']    = request('guests');
+                        if (request('rooms'))     $ctParams['rooms']     = request('rooms');
                         if ($ctParams) $checkoutUrl .= '?' . http_build_query($ctParams);
                     @endphp
                     <a href="{{ $checkoutUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
