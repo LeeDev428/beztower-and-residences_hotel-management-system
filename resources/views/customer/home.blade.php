@@ -946,7 +946,7 @@
                                     <label>Rooms</label>
                                     <div class="counter">
                                         <button type="button" class="counter-btn" onclick="changeValue('rooms', -1)">-</button>
-                                        <input type="number" name="rooms" id="rooms" value="1" min="1" max="5" readonly>
+                                        <input type="number" name="rooms" id="rooms" value="1" min="1" max="12" readonly>
                                         <button type="button" class="counter-btn" onclick="changeValue('rooms', 1)">+</button>
                                     </div>
                                 </div>
