@@ -104,6 +104,41 @@
     <input type="hidden" id="ctxCheckOut" value="{{ request('check_out') }}">
     <input type="hidden" id="ctxGuests"   value="{{ request('guests') }}">
     <input type="hidden" id="ctxRooms"    value="{{ request('rooms') }}">
+    <input type="hidden" id="ctxSelectedRooms" value="{{ request('selected_rooms') }}">
+
+    @php
+        $requestedRooms = max(1, min(12, (int) request('rooms', 1)));
+        $selectedRoomIds = collect(explode(',', (string) request('selected_rooms')))
+            ->map(fn ($id) => (int) trim($id))
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        $selectionCheckoutUrl = '';
+        if ($selectedRoomIds->count() >= $requestedRooms && $selectedRoomIds->isNotEmpty()) {
+            $checkoutParams = [
+                'check_in' => request('check_in'),
+                'check_out' => request('check_out'),
+                'guests' => request('guests'),
+                'rooms' => $requestedRooms,
+                'room_ids' => $selectedRoomIds->all(),
+            ];
+            $selectionCheckoutUrl = route('booking.checkout', $selectedRoomIds->first()) . '?' . http_build_query(array_filter($checkoutParams, fn ($value) => !is_null($value) && $value !== ''));
+        }
+    @endphp
+
+    @if($requestedRooms > 1)
+        <div style="margin-bottom: 1rem; padding: 0.9rem 1rem; background: #fff9e6; border: 1px solid #f1dfab; border-radius: 8px; display:flex; justify-content:space-between; gap:0.8rem; align-items:center; flex-wrap: wrap;">
+            <div style="font-size: 0.92rem; color:#5f4b1b;">
+                Room Selection Progress: <strong>{{ $selectedRoomIds->count() }}</strong> of <strong>{{ $requestedRooms }}</strong> selected
+            </div>
+            @if($selectionCheckoutUrl)
+                <a href="{{ $selectionCheckoutUrl }}" style="text-decoration:none; background: linear-gradient(135deg, #d4af37, #f4e4c1); color:#2c2c2c; padding:0.55rem 0.9rem; border-radius:6px; font-weight:700; font-size:0.85rem;">
+                    Proceed to Checkout
+                </a>
+            @endif
+        </div>
+    @endif
 
     <!-- Results Counter -->
     <div class="results-info">
@@ -956,11 +991,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const ctxCheckOut = document.getElementById('ctxCheckOut').value;
             const ctxGuests   = document.getElementById('ctxGuests').value;
             const ctxRooms    = document.getElementById('ctxRooms').value;
+            const ctxSelectedRooms = document.getElementById('ctxSelectedRooms').value;
             if (ctxCheckIn)  params.append('check_in', ctxCheckIn);
             if (ctxCheckOut) params.append('check_out', ctxCheckOut);
             // Use ctxGuests as fallback when no guests filter UI is present
             if (!guests && ctxGuests) params.append('guests', ctxGuests);
             if (ctxRooms) params.append('rooms', ctxRooms);
+            if (ctxSelectedRooms) params.append('selected_rooms', ctxSelectedRooms);
             
             if (amenityCheckboxes.length > 0) {
                 const selectedAmenities = Array.from(amenityCheckboxes)
