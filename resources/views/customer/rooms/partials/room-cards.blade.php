@@ -39,10 +39,12 @@
                     $checkIn  = request('check_in');
                     $checkOut = request('check_out');
                     $guests   = request('guests');
+                    $rooms    = request('rooms');
                     $lcParams = [];
                     if ($checkIn)  $lcParams['check_in']  = $checkIn;
                     if ($checkOut) $lcParams['check_out'] = $checkOut;
                     if ($guests)   $lcParams['guests']    = $guests;
+                    if ($rooms)    $lcParams['rooms']     = $rooms;
                     $btnUrl  = route('rooms.show', $room) . ($lcParams ? '?' . http_build_query($lcParams) : '');
                     $btnText = 'Learn More';
                 @endphp
