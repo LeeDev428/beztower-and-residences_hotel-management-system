@@ -65,16 +65,36 @@
         @if(!in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment']))
         <x-admin.card title="Room Assignment / Transfer" style="margin-top: 1.5rem;">
             <div style="margin-bottom: 1rem;">
-                <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Currently Assigned Room</div>
-                <div style="font-weight: 600;">
-                    {{ $booking->room->room_number }} — {{ $booking->room->roomType->name ?? 'N/A' }}
-                    <x-admin.badge :status="$booking->room->status" />
-                </div>
+                <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Currently Assigned Room(s)</div>
+                @if($booking->rooms->isNotEmpty())
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #333;">
+                        @foreach($booking->rooms as $assignedRoom)
+                            <div style="padding: 0.25rem 0;">Room {{ $assignedRoom->room_number }} — {{ $assignedRoom->roomType->name ?? 'N/A' }}</div>
+                        @endforeach
+                    </div>
+                @else
+                    <div style="font-weight: 600;">
+                        {{ $booking->room->room_number }} — {{ $booking->room->roomType->name ?? 'N/A' }}
+                        <x-admin.badge :status="$booking->room->status" />
+                    </div>
+                @endif
             </div>
             @if(isset($availableRooms) && $availableRooms->isNotEmpty())
             <form method="POST" action="{{ route('admin.bookings.assignRoom', $booking) }}">
                 @csrf
                 <div style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+                    @if($booking->rooms->isNotEmpty())
+                    <div style="flex: 1; min-width: 220px;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Replace Assigned Room</label>
+                        <select name="current_room_id" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                            @foreach($booking->rooms as $assignedRoom)
+                                <option value="{{ $assignedRoom->id }}">
+                                    Room {{ $assignedRoom->room_number }} — {{ $assignedRoom->roomType->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
                     <div style="flex: 1; min-width: 200px;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Transfer to Room</label>
                         <select name="room_id" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
