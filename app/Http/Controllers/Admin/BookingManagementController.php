@@ -75,11 +75,14 @@ class BookingManagementController extends Controller
 
         // Available rooms of the same type (for assign/transfer)
         $primaryRoomTypeId = $booking->rooms->first()?->room_type_id ?? $booking->room?->room_type_id;
+        $assignedRoomIds = $booking->rooms->isNotEmpty()
+            ? $booking->rooms->pluck('id')->all()
+            : array_filter([$booking->room_id]);
         $availableRooms = Room::with('roomType')
             ->where('status', 'available')
             ->whereNull('archived_at')
             ->when($primaryRoomTypeId, fn($q) => $q->where('room_type_id', $primaryRoomTypeId))
-            ->where('id', '!=', $booking->room_id)
+            ->when(!empty($assignedRoomIds), fn($q) => $q->whereNotIn('id', $assignedRoomIds))
             ->orderBy('room_number')
             ->get();
 
@@ -221,12 +224,54 @@ class BookingManagementController extends Controller
     {
         $validated = $request->validate([
             'room_id' => 'required|exists:rooms,id',
+            'current_room_id' => 'nullable|exists:rooms,id',
         ]);
 
+        $booking->loadMissing(['rooms', 'room']);
         $newRoom = Room::findOrFail($validated['room_id']);
 
         if ($newRoom->status !== 'available') {
             return back()->with('error', 'Selected room is not available. Only available rooms can be assigned.');
+        }
+
+        $statusForNewRoom = $booking->status === 'checked_in' ? 'occupied' : 'available';
+
+        if ($booking->rooms->isNotEmpty()) {
+            $currentRoomId = (int) ($validated['current_room_id'] ?? 0);
+            $currentRoom = $booking->rooms->firstWhere('id', $currentRoomId);
+
+            if (!$currentRoom) {
+                return back()->with('error', 'Please select which assigned room to transfer.');
+            }
+
+            if ($booking->rooms->contains('id', $newRoom->id)) {
+                return back()->with('error', 'Selected room is already assigned to this booking.');
+            }
+
+            $pivotRate = (float) ($currentRoom->pivot->nightly_rate ?? $currentRoom->effective_price ?? $currentRoom->roomType->base_price ?? 0);
+
+            $booking->rooms()->detach($currentRoom->id);
+            $booking->rooms()->attach($newRoom->id, ['nightly_rate' => $pivotRate]);
+
+            if ((int) $booking->room_id === (int) $currentRoom->id) {
+                $booking->update(['room_id' => $newRoom->id]);
+            }
+
+            $currentRoom->update(['status' => 'available']);
+            $newRoom->update(['status' => $statusForNewRoom]);
+
+            ActivityLog::log(
+                'room_transfer',
+                'Transferred room #' . $currentRoom->room_number . ' to room #' . $newRoom->room_number . ' for booking #' . $booking->booking_reference,
+                'App\\Models\\Booking',
+                $booking->id,
+                [
+                    'from_room_number' => $currentRoom->room_number,
+                    'to_room_number' => $newRoom->room_number,
+                ]
+            );
+
+            return back()->with('success', 'Room transfer completed successfully.');
         }
 
         // Free old room if booking is pending/confirmed (not already checked in)
@@ -235,10 +280,7 @@ class BookingManagementController extends Controller
         }
 
         // Assign new room; if already checked in, mark new room occupied
-        $newRoomStatus = in_array($booking->status, ['checked_in']) ? 'occupied' : 'available';
-        if ($booking->status === 'checked_in') {
-            $newRoom->update(['status' => 'occupied']);
-        }
+        $newRoom->update(['status' => $statusForNewRoom]);
 
         $booking->update(['room_id' => $newRoom->id]);
 
@@ -260,7 +302,7 @@ class BookingManagementController extends Controller
                 ->with('error', 'Final billing is locked for this booking status.');
         }
 
-        $booking->load(['guest', 'room', 'roomType']);
+        $booking->load(['guest', 'room.roomType', 'roomType', 'rooms.roomType']);
 
         $verifiedPaymentsTotal = $booking->payments()
             ->whereIn('payment_status', ['verified', 'completed'])
@@ -270,8 +312,12 @@ class BookingManagementController extends Controller
         $balanceDue = max(round($grossTotal - $verifiedPaymentsTotal, 2), 0);
 
         // Determine hourly rate based on room type
+        $primaryRoomTypeName = $booking->rooms->first()?->roomType?->name
+            ?? $booking->room?->roomType?->name
+            ?? $booking->roomType?->name
+            ?? '';
         $hourlyRate = 150; // Default for Standard/Deluxe
-        if (stripos($booking->roomType->name, 'family') !== false) {
+        if (stripos($primaryRoomTypeName, 'family') !== false) {
             $hourlyRate = 250;
         }
 
