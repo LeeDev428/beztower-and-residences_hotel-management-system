@@ -20,10 +20,39 @@ use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
-    public function checkout(Room $room)
+    public function checkout(Request $request, Room $room)
     {
         $room->load(['roomType', 'photos']);
-        return view('customer.booking.checkout', compact('room'));
+
+        $preselectedRoomIds = collect($request->input('room_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($preselectedRoomIds->isEmpty() && $request->filled('selected_rooms')) {
+            $preselectedRoomIds = collect(explode(',', (string) $request->input('selected_rooms')))
+                ->map(fn ($id) => (int) trim($id))
+                ->filter(fn ($id) => $id > 0)
+                ->unique()
+                ->values();
+        }
+
+        $preselectedRooms = Room::with('roomType')
+            ->whereIn('id', $preselectedRoomIds)
+            ->whereNull('archived_at')
+            ->where('status', 'available')
+            ->get();
+
+        $requestedRooms = (int) $request->integer('rooms', $preselectedRooms->count() ?: 1);
+        $requestedRooms = max(1, min(12, $requestedRooms));
+
+        $maxGuestCapacity = (int) $preselectedRooms->sum(fn ($selectedRoom) => (int) ($selectedRoom->roomType?->max_guests ?? 0));
+        if ($maxGuestCapacity <= 0) {
+            $maxGuestCapacity = (int) ($room->roomType?->max_guests ?? 1);
+        }
+
+        return view('customer.booking.checkout', compact('room', 'preselectedRooms', 'requestedRooms', 'maxGuestCapacity'));
     }
 
     public function create(Request $request)
