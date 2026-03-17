@@ -360,7 +360,7 @@ class BookingManagementController extends Controller
         // Log the activity
         ActivityLog::log(
             'final_billing_edit',
-            'Updated final billing for booking #' . $booking->booking_reference . ' - Final Total: ₱' . number_format($booking->final_total, 2),
+            'Updated billing adjustment for booking #' . $booking->booking_reference . ' - Final Total: ₱' . number_format($booking->final_total, 2),
             'App\Models\Booking',
             $booking->id,
             [
