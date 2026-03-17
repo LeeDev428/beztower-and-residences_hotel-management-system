@@ -108,6 +108,9 @@
         </div>
 
         <div class="content">
+            @php
+                $reservedRooms = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+            @endphp
             <p>Good day, <strong>{{ $booking->guest->name }}</strong>,</p>
 
             <p>We would like to inform you that your booking has been <strong>successfully canceled</strong>.</p>
@@ -119,8 +122,12 @@
                     <span class="value">{{ $booking->booking_reference }}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="label">Room:</span>
-                    <span class="value">{{ $booking->room->roomType->name }}</span>
+                    <span class="label">Room(s):</span>
+                    <span class="value">
+                        @foreach($reservedRooms as $reservedRoom)
+                            Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
+                        @endforeach
+                    </span>
                 </div>
                 <div class="detail-row">
                     <span class="label">Original Check-in Date:</span>
