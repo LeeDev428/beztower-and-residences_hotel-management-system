@@ -124,6 +124,9 @@
         </div>
         
         <div class="content">
+            @php
+                $reservedRooms = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+            @endphp
             <p>Dear {{ $booking->guest->first_name }} {{ $booking->guest->last_name }},</p>
             
             <p>Thank you for choosing Bez Tower and Residences! We have received your booking request and are pleased to confirm the following details:</p>
@@ -140,8 +143,12 @@
                     <span class="value"><strong>{{ $booking->booking_reference }}</strong></span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Room:</span>
-                    <span class="value">{{ $booking->room->roomType->name }}</span>
+                    <span class="label">Room(s):</span>
+                    <span class="value">
+                        @foreach($reservedRooms as $reservedRoom)
+                            Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
+                        @endforeach
+                    </span>
                 </div>
                 <div class="info-row">
                     <span class="label">Check-in:</span>
@@ -164,7 +171,7 @@
             <div class="info-box">
                 <h3 style="margin-top:0; color:#2c2c2c;">💰 Total Amount Breakdown</h3>
                 <div class="info-row">
-                    <span class="label">Room Charges ({{ $booking->total_nights }} night(s) × ₱{{ number_format($booking->room->roomType->price_per_night, 2) }}):</span>
+                    <span class="label">Room Charges ({{ $reservedRooms->count() }} room(s), {{ $booking->total_nights }} night(s)):</span>
                     <span class="value">₱{{ number_format($booking->subtotal, 2) }}</span>
                 </div>
                 
