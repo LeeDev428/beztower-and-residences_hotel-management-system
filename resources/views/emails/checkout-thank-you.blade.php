@@ -14,6 +14,9 @@
         </div>
 
         <div style="padding:24px; line-height:1.6;">
+            @php
+                $reservedRooms = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+            @endphp
             <p>Dear {{ $booking->guest->name }},</p>
 
             <p>Thank you for staying with us. Your booking has been successfully checked out.</p>
@@ -24,8 +27,12 @@
                     <span>{{ $booking->booking_reference }}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee;">
-                    <span style="font-weight:600; color:#666;">Room:</span>
-                    <span>{{ $booking->room->roomType->name }}</span>
+                    <span style="font-weight:600; color:#666;">Room(s):</span>
+                    <span>
+                        @foreach($reservedRooms as $reservedRoom)
+                            Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
+                        @endforeach
+                    </span>
                 </div>
                 <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee;">
                     <span style="font-weight:600; color:#666;">Check-out Date:</span>
