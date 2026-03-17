@@ -576,13 +576,14 @@
 
                         <div>
                             <label class="form-label">How Many Rooms <span class="required">*</span></label>
-                            <input type="number" name="number_of_rooms" id="numberOfRooms" class="form-input" min="1" max="5" value="1" required onchange="renderRoomSelection(); updateTotal();">
+                            <input type="number" name="number_of_rooms" id="numberOfRooms" class="form-input" min="1" max="12" value="{{ request('rooms', 1) }}" required onchange="syncAutoSelectedRooms(); updateTotal();">
                         </div>
 
                         <div class="form-group-full">
-                            <label class="form-label">Select Room(s) <span class="required">*</span></label>
+                            <label class="form-label">Room Assignment <span class="required">*</span></label>
                             <div id="availabilityByType" style="font-size: 0.9rem; color: #666; margin-bottom: 0.7rem;">Select check-in and check-out dates to load available rooms.</div>
-                            <div id="availableRoomsContainer" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem;"></div>
+                            <div id="autoAssignedRoomsSummary" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:8px;padding:0.9rem;font-size:0.9rem;color:#444;">Rooms will be automatically assigned after selecting dates.</div>
+                            <div id="autoSelectedRoomInputs"></div>
                         </div>
                     </div>
                     
@@ -724,7 +725,7 @@
         let availableRooms = [];
 
         function getSelectedRoomIds() {
-            return Array.from(document.querySelectorAll('.room-checkbox:checked')).map((el) => Number(el.value));
+            return Array.from(document.querySelectorAll('input[name="room_ids[]"]')).map((el) => Number(el.value));
         }
 
         function getSelectedRoomNightlyTotal() {
@@ -744,7 +745,7 @@
 
             if (!checkIn || !checkOut) {
                 availableRooms = [];
-                renderRoomSelection();
+                syncAutoSelectedRooms();
                 updateTotal();
                 return;
             }
@@ -766,60 +767,51 @@
                     availabilityByType.textContent = 'No rooms available for selected dates.';
                 }
 
-                renderRoomSelection();
+                syncAutoSelectedRooms();
                 updateTotal();
             } catch (error) {
                 availableRooms = [];
                 document.getElementById('availabilityByType').textContent = 'Unable to load available rooms right now.';
-                renderRoomSelection();
+                syncAutoSelectedRooms();
                 updateTotal();
             }
         }
 
-        function renderRoomSelection() {
-            const container = document.getElementById('availableRoomsContainer');
-            const requestedRooms = Math.max(1, parseInt(document.getElementById('numberOfRooms').value || '1', 10));
-            const selectedBefore = new Set(getSelectedRoomIds());
+        function syncAutoSelectedRooms() {
+            const requestedRooms = Math.max(1, Math.min(12, parseInt(document.getElementById('numberOfRooms').value || '1', 10)));
+            const summary = document.getElementById('autoAssignedRoomsSummary');
+            const hiddenInputs = document.getElementById('autoSelectedRoomInputs');
+            hiddenInputs.innerHTML = '';
 
-            container.innerHTML = '';
             if (!availableRooms.length) {
-                container.innerHTML = '<div style="grid-column: 1 / -1; color: #b00020; font-size: 0.9rem;">No available rooms found for the selected date range.</div>';
+                summary.innerHTML = '<span style="color:#b00020;">No available rooms found for the selected date range.</span>';
                 return;
             }
 
-            availableRooms.forEach((room) => {
-                const isPreferred = room.id === preferredRoomId;
-                const shouldCheck = selectedBefore.has(room.id) || (selectedBefore.size === 0 && isPreferred);
-
-                const label = document.createElement('label');
-                label.style.border = '1px solid #e5e5e5';
-                label.style.borderRadius = '8px';
-                label.style.padding = '0.7rem';
-                label.style.display = 'flex';
-                label.style.gap = '0.6rem';
-                label.style.alignItems = 'flex-start';
-                label.style.cursor = 'pointer';
-                label.innerHTML = `
-                    <input type="checkbox" class="room-checkbox" name="room_ids[]" value="${room.id}" data-price="${room.price}" ${shouldCheck ? 'checked' : ''} style="margin-top: 0.1rem; accent-color: #d4af37;">
-                    <div>
-                        <div style="font-weight: 600;">${room.room_type} - Room ${room.room_number}</div>
-                        <div style="font-size: 0.85rem; color: #666;">Capacity: ${room.capacity} guest(s) | ₱${Number(room.price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/night</div>
-                    </div>
-                `;
-
-                container.appendChild(label);
+            const prioritized = [...availableRooms].sort((a, b) => {
+                if (a.id === preferredRoomId) return -1;
+                if (b.id === preferredRoomId) return 1;
+                return Number(a.room_number) - Number(b.room_number);
             });
 
-            container.querySelectorAll('.room-checkbox').forEach((checkbox) => {
-                checkbox.addEventListener('change', function() {
-                    const selected = getSelectedRoomIds();
-                    if (selected.length > requestedRooms) {
-                        this.checked = false;
-                        alert(`You can only select up to ${requestedRooms} room(s).`);
-                    }
-                    updateTotal();
-                });
+            const selectedRooms = prioritized.slice(0, requestedRooms);
+            selectedRooms.forEach((room) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'room_ids[]';
+                input.value = room.id;
+                hiddenInputs.appendChild(input);
             });
+
+            if (selectedRooms.length < requestedRooms) {
+                summary.innerHTML = `<span style="color:#b00020;">Only ${selectedRooms.length} room(s) are available for the selected dates, but ${requestedRooms} room(s) were requested.</span>`;
+                return;
+            }
+
+            summary.innerHTML = selectedRooms.map((room) => {
+                const nightly = Number(room.price || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return `<div style="padding:0.2rem 0;">Room ${room.room_number} - ${room.room_type} (₱${nightly}/night)</div>`;
+            }).join('');
         }
 
         // Calculate number of nights from check-in and check-out dates
@@ -956,7 +948,7 @@
             const selected = getSelectedRoomIds();
             if (selected.length !== requestedRooms) {
                 event.preventDefault();
-                alert(`Please select exactly ${requestedRooms} room(s).`);
+                alert(`Only ${selected.length} room(s) can be assigned. Please adjust your room count or date range.`);
             }
         });
     </script>
