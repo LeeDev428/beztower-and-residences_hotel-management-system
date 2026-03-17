@@ -30,8 +30,9 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'room_id' => 'nullable|exists:rooms,id',
-            'room_ids' => 'nullable|array|min:1|max:5',
+            'room_ids' => 'nullable|array|min:1|max:12',
             'room_ids.*' => 'distinct|exists:rooms,id',
+            'number_of_rooms' => 'required|integer|min:1|max:12',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email',
@@ -62,6 +63,12 @@ class BookingController extends Controller
         if ($selectedRoomIds->isEmpty()) {
             return back()->withErrors([
                 'room_ids' => 'Please select at least one room.',
+            ])->withInput();
+        }
+
+        if ($selectedRoomIds->count() !== (int) $validated['number_of_rooms']) {
+            return back()->withErrors([
+                'room_ids' => 'Unable to assign the exact number of requested rooms. Please review your date range or room count.',
             ])->withInput();
         }
 
