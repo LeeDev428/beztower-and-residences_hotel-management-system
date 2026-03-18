@@ -8,6 +8,7 @@ use App\Models\RoomType;
 use App\Models\Amenity;
 use App\Models\BlockDate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class RoomController extends Controller
 {
@@ -15,6 +16,10 @@ class RoomController extends Controller
     {
         $query = Room::with(['roomType', 'amenities', 'photos'])
             ->where('status', 'available'); // Only show available rooms
+
+        $requestedRooms = max(1, min(12, (int) $request->input('rooms', 1)));
+        $requestedGuests = (int) $request->input('guests', 0);
+        $applyCombinationFilter = false;
         
         // Search functionality
         if ($request->filled('search')) {
@@ -36,11 +41,16 @@ class RoomController extends Controller
             $query->where('room_type_id', $request->room_type);
         }
         
-        // Filter by number of guests
+        // Filter by number of guests.
+        // For multi-room requests, use combination logic instead of single-room capacity.
         if ($request->filled('guests')) {
-            $query->whereHas('roomType', function($q) use ($request) {
-                $q->where('max_guests', '>=', $request->guests);
-            });
+            if ($requestedRooms > 1) {
+                $applyCombinationFilter = true;
+            } else {
+                $query->whereHas('roomType', function($q) use ($request) {
+                    $q->where('max_guests', '>=', $request->guests);
+                });
+            }
         }
         
         // Filter by price range
@@ -110,6 +120,27 @@ class RoomController extends Controller
                     break;
             }
         }
+
+        if ($applyCombinationFilter) {
+            $roomsForCombination = (clone $query)->with('roomType')->get();
+            $combinationMeta = $this->resolveCombinationRoomTypeMeta($roomsForCombination, $requestedRooms, $requestedGuests);
+
+            if (empty($combinationMeta['typeIds'])) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereIn('room_type_id', $combinationMeta['typeIds']);
+
+                // Prioritize room types that appear in better-fit combinations when no explicit sort is requested.
+                if (!$request->filled('sort') && !empty($combinationMeta['priorityTypeIds'])) {
+                    $caseParts = [];
+                    foreach ($combinationMeta['priorityTypeIds'] as $index => $typeId) {
+                        $caseParts[] = 'WHEN ' . (int) $typeId . ' THEN ' . $index;
+                    }
+                    $caseSql = 'CASE rooms.room_type_id ' . implode(' ', $caseParts) . ' ELSE 999 END';
+                    $query->orderByRaw($caseSql)->orderBy('room_number');
+                }
+            }
+        }
         
         $rooms = $query->paginate(6)->withQueryString();
         $roomTypes = RoomType::all();
@@ -125,6 +156,120 @@ class RoomController extends Controller
         }
         
         return view('customer.rooms.index', compact('rooms', 'roomTypes', 'amenities'));
+    }
+
+    /**
+     * Resolve room-type metadata for multi-room booking combinations.
+     *
+     * Returns room types that can participate in any valid combination where:
+     * - exact number of requested rooms is used
+     * - combined capacity >= requested guests
+     */
+    private function resolveCombinationRoomTypeMeta(Collection $rooms, int $requestedRooms, int $requestedGuests): array
+    {
+        if ($requestedRooms <= 1 || $requestedGuests <= 0 || $rooms->isEmpty()) {
+            return [
+                'typeIds' => [],
+                'priorityTypeIds' => [],
+            ];
+        }
+
+        $types = $rooms
+            ->groupBy('room_type_id')
+            ->map(function (Collection $group, $typeId) {
+                $capacity = (int) optional($group->first()->roomType)->max_guests;
+
+                return [
+                    'type_id' => (int) $typeId,
+                    'count' => $group->count(),
+                    'capacity' => max(0, $capacity),
+                ];
+            })
+            ->filter(fn ($type) => $type['count'] > 0 && $type['capacity'] > 0)
+            ->values()
+            ->all();
+
+        if (empty($types)) {
+            return [
+                'typeIds' => [],
+                'priorityTypeIds' => [],
+            ];
+        }
+
+        $combinations = [];
+        $this->buildTypeCombinations($types, 0, $requestedRooms, 0, $requestedGuests, [], $combinations);
+
+        if (empty($combinations)) {
+            return [
+                'typeIds' => [],
+                'priorityTypeIds' => [],
+            ];
+        }
+
+        $typeIds = [];
+        $bestExcessByType = [];
+
+        foreach ($combinations as $combo) {
+            $excess = $combo['excess'];
+            foreach ($combo['type_counts'] as $typeId => $count) {
+                if ($count <= 0) {
+                    continue;
+                }
+                $typeId = (int) $typeId;
+                $typeIds[$typeId] = true;
+
+                if (!isset($bestExcessByType[$typeId]) || $excess < $bestExcessByType[$typeId]) {
+                    $bestExcessByType[$typeId] = $excess;
+                }
+            }
+        }
+
+        $priorityTypeIds = array_keys($bestExcessByType);
+        usort($priorityTypeIds, function ($left, $right) use ($bestExcessByType) {
+            return $bestExcessByType[$left] <=> $bestExcessByType[$right];
+        });
+
+        return [
+            'typeIds' => array_map('intval', array_keys($typeIds)),
+            'priorityTypeIds' => array_map('intval', $priorityTypeIds),
+        ];
+    }
+
+    private function buildTypeCombinations(array $types, int $index, int $remainingRooms, int $currentCapacity, int $requestedGuests, array $currentTypeCounts, array &$combinations): void
+    {
+        if ($remainingRooms === 0) {
+            if ($currentCapacity >= $requestedGuests) {
+                $combinations[] = [
+                    'type_counts' => $currentTypeCounts,
+                    'excess' => $currentCapacity - $requestedGuests,
+                ];
+            }
+            return;
+        }
+
+        if ($index >= count($types)) {
+            return;
+        }
+
+        $type = $types[$index];
+        $maxPick = min($remainingRooms, (int) $type['count']);
+
+        for ($pick = 0; $pick <= $maxPick; $pick++) {
+            $nextCounts = $currentTypeCounts;
+            if ($pick > 0) {
+                $nextCounts[(int) $type['type_id']] = $pick;
+            }
+
+            $this->buildTypeCombinations(
+                $types,
+                $index + 1,
+                $remainingRooms - $pick,
+                $currentCapacity + ($pick * (int) $type['capacity']),
+                $requestedGuests,
+                $nextCounts,
+                $combinations
+            );
+        }
     }
     
     public function show(Room $room)
