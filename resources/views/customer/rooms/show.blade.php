@@ -1028,20 +1028,23 @@
                 <div class="action-section">
                     @php
                         $requestedRooms = max(1, min(12, (int) request('rooms', 1)));
+                        $currentRoomId = (int) $room->id;
                         $selectedRoomIds = collect(explode(',', (string) request('selected_rooms')))
                             ->map(fn ($id) => (int) trim($id))
                             ->filter(fn ($id) => $id > 0)
                             ->unique()
                             ->values();
 
-                        $isSelected = $selectedRoomIds->contains((int) $room->id);
+                        $isSelected = $selectedRoomIds->contains($currentRoomId);
+                        $selectionComplete = $selectedRoomIds->count() >= $requestedRooms;
+                        $nextRoomLabelNumber = min($selectedRoomIds->count() + 1, $requestedRooms);
 
                         $nextSelectedRoomIds = $selectedRoomIds;
                         if (!$isSelected && $selectedRoomIds->count() < $requestedRooms) {
-                            $nextSelectedRoomIds = $selectedRoomIds->push((int) $room->id)->unique()->values();
+                            $nextSelectedRoomIds = $selectedRoomIds->push($currentRoomId)->unique()->values();
                         }
 
-                        $selectionComplete = $nextSelectedRoomIds->count() >= $requestedRooms;
+                        $deselectedRoomIds = $selectedRoomIds->reject(fn ($id) => (int) $id === $currentRoomId)->values();
 
                         $ctx = [];
                         if (request('check_in'))  $ctx['check_in'] = request('check_in');
@@ -1051,42 +1054,60 @@
 
                         $continueUrl = route('rooms.index');
                         $continueParams = $ctx;
-                        if ($nextSelectedRoomIds->isNotEmpty()) {
-                            $continueParams['selected_rooms'] = $nextSelectedRoomIds->implode(',');
+                        if ($selectedRoomIds->isNotEmpty()) {
+                            $continueParams['selected_rooms'] = $selectedRoomIds->implode(',');
                         }
                         if ($continueParams) {
                             $continueUrl .= '?' . http_build_query($continueParams);
                         }
 
-                        $checkoutUrl = route('booking.checkout', $nextSelectedRoomIds->first() ?: $room->id);
+                        $selectUrl = route('rooms.index');
+                        $selectParams = $ctx;
+                        if ($nextSelectedRoomIds->isNotEmpty()) {
+                            $selectParams['selected_rooms'] = $nextSelectedRoomIds->implode(',');
+                        }
+                        if ($selectParams) {
+                            $selectUrl .= '?' . http_build_query($selectParams);
+                        }
+
+                        $deselectUrl = route('rooms.index');
+                        $deselectParams = $ctx;
+                        if ($deselectedRoomIds->isNotEmpty()) {
+                            $deselectParams['selected_rooms'] = $deselectedRoomIds->implode(',');
+                        }
+                        if ($deselectParams) {
+                            $deselectUrl .= '?' . http_build_query($deselectParams);
+                        }
+
+                        $checkoutUrl = route('booking.checkout', $selectedRoomIds->first() ?: $room->id);
                         $checkoutParams = [
                             'check_in' => request('check_in'),
                             'check_out' => request('check_out'),
                             'guests' => request('guests'),
                             'rooms' => $requestedRooms,
-                            'selected_rooms' => $nextSelectedRoomIds->implode(','),
-                            'room_ids' => $nextSelectedRoomIds->all(),
+                            'selected_rooms' => $selectedRoomIds->implode(','),
+                            'room_ids' => $selectedRoomIds->all(),
                         ];
                         $checkoutUrl .= '?' . http_build_query(array_filter($checkoutParams, fn ($value) => !is_null($value) && $value !== ''));
 
-                        $remainingRooms = max($requestedRooms - $nextSelectedRoomIds->count(), 0);
+                        $remainingRooms = max($requestedRooms - $selectedRoomIds->count(), 0);
                     @endphp
                     @if($selectionComplete)
                         <a href="{{ $checkoutUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
-                            <i class="fas fa-calendar-check"></i> Continue to Checkout
+                            <i class="fas fa-calendar-check"></i> Proceed to Billing Details
                         </a>
                     @else
                         @if($isSelected)
-                            <a href="{{ $continueUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center; background: linear-gradient(135deg, #2c2c2c, #1f1f1f); color:#fff;">
-                                <i class="fas fa-check-circle"></i> Room Already Selected
+                            <a href="{{ $deselectUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center; background: linear-gradient(135deg, #dc3545, #b02a37); color:#fff;">
+                                <i class="fas fa-times-circle"></i> Deselect Room
                             </a>
                         @else
-                            <a href="{{ $continueUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
-                                <i class="fas fa-plus-circle"></i> Select This Room
+                            <a href="{{ $selectUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
+                                <i class="fas fa-plus-circle"></i> Select Room {{ $nextRoomLabelNumber }}
                             </a>
                         @endif
                         @if($remainingRooms > 0)
-                            <div style="margin-top:0.75rem;font-size:0.88rem;color:#666;">{{ $nextSelectedRoomIds->count() }} of {{ $requestedRooms }} selected. Choose {{ $remainingRooms }} more room(s).</div>
+                            <div style="margin-top:0.75rem;font-size:0.88rem;color:#666;">{{ $selectedRoomIds->count() }} of {{ $requestedRooms }} selected. Choose {{ $remainingRooms }} more room(s).</div>
                         @endif
                     @endif
                 </div>
