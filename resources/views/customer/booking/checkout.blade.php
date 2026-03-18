@@ -731,6 +731,7 @@
         const isRoomCountLocked = {{ (isset($preselectedRooms) && $preselectedRooms->count() > 0) ? 'true' : 'false' }};
         const fallbackRoomCapacity = {{ (int) ($room->roomType->max_guests ?? 1) }};
         let availableRooms = [];
+        let recommendedRoomIds = [];
 
         function syncGuestLimit(selectedRooms) {
             const guestSelect = document.getElementById('guestCountSelect');
@@ -774,6 +775,8 @@
         async function loadAvailableRooms() {
             const checkIn = document.getElementById('checkInDate').value;
             const checkOut = document.getElementById('checkOutDate').value;
+            const requestedRooms = Math.max(1, Math.min(12, parseInt(document.getElementById('numberOfRooms').value || '1', 10)));
+            const requestedGuests = Math.max(1, parseInt(document.getElementById('guestCountSelect').value || '1', 10));
 
             if (!checkIn || !checkOut) {
                 availableRooms = [];
@@ -786,10 +789,13 @@
                 const params = new URLSearchParams({
                     check_in_date: checkIn,
                     check_out_date: checkOut,
+                    number_of_rooms: String(requestedRooms),
+                    number_of_guests: String(requestedGuests),
                 });
                 const response = await fetch(`{{ route('booking.availableRooms') }}?${params.toString()}`);
                 const data = await response.json();
                 availableRooms = data.rooms || [];
+                recommendedRoomIds = Array.isArray(data.recommended_room_ids) ? data.recommended_room_ids.map((id) => Number(id)) : [];
 
                 const byType = data.remaining_by_type || [];
                 const availabilityByType = document.getElementById('availabilityByType');
@@ -803,6 +809,7 @@
                 updateTotal();
             } catch (error) {
                 availableRooms = [];
+                recommendedRoomIds = [];
                 document.getElementById('availabilityByType').textContent = 'Unable to load available rooms right now.';
                 syncAutoSelectedRooms();
                 updateTotal();
@@ -851,7 +858,14 @@
                     return;
                 }
             } else {
-                selectedRooms = prioritized.slice(0, requestedRooms);
+                if (recommendedRoomIds.length > 0) {
+                    const recommendedSet = new Set(recommendedRoomIds);
+                    const preferred = prioritized.filter((room) => recommendedSet.has(Number(room.id)));
+                    const fallback = prioritized.filter((room) => !recommendedSet.has(Number(room.id)));
+                    selectedRooms = [...preferred, ...fallback].slice(0, requestedRooms);
+                } else {
+                    selectedRooms = prioritized.slice(0, requestedRooms);
+                }
             }
 
             selectedRooms.forEach((room) => {
