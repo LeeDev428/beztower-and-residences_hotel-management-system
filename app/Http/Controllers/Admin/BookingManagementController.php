@@ -256,11 +256,19 @@ class BookingManagementController extends Controller
 
             $pivotRate = (float) ($currentRoom->pivot->nightly_rate ?? $currentRoom->effective_price ?? $currentRoom->roomType->base_price ?? 0);
             $pivotManualAdjustment = (float) ($currentRoom->pivot->manual_adjustment ?? 0);
+            $pivotAdditionalCharge = (float) ($currentRoom->pivot->additional_charge ?? 0);
+            $pivotAdditionalReason = $currentRoom->pivot->additional_charge_reason;
+            $pivotDiscountAmount = (float) ($currentRoom->pivot->discount_amount ?? 0);
+            $pivotDiscountType = $currentRoom->pivot->discount_type;
 
             $booking->rooms()->detach($currentRoom->id);
             $booking->rooms()->attach($newRoom->id, [
                 'nightly_rate' => $pivotRate,
                 'manual_adjustment' => $pivotManualAdjustment,
+                'additional_charge' => $pivotAdditionalCharge,
+                'additional_charge_reason' => $pivotAdditionalReason,
+                'discount_amount' => $pivotDiscountAmount,
+                'discount_type' => $pivotDiscountType,
             ]);
 
             if ((int) $booking->room_id === (int) $currentRoom->id) {
@@ -354,6 +362,14 @@ class BookingManagementController extends Controller
             'pwd_senior_count' => 'nullable|integer|min:0',
             'pwd_senior_discount' => 'nullable|numeric|min:0',
             'manual_adjustment' => 'nullable|numeric',
+            'room_additional_charges' => 'nullable|array',
+            'room_additional_charges.*' => 'nullable|numeric|min:0',
+            'room_additional_reasons' => 'nullable|array',
+            'room_additional_reasons.*' => 'nullable|string|max:255',
+            'room_discount_amounts' => 'nullable|array',
+            'room_discount_amounts.*' => 'nullable|numeric|min:0',
+            'room_discount_types' => 'nullable|array',
+            'room_discount_types.*' => 'nullable|in:none,pwd,senior,other',
             'room_manual_adjustments' => 'nullable|array',
             'room_manual_adjustments.*' => 'nullable|numeric',
             'adjustment_reason' => 'nullable|string|max:500',
@@ -363,8 +379,41 @@ class BookingManagementController extends Controller
         $booking->loadMissing('rooms');
 
         $manualAdjustment = (float) ($validated['manual_adjustment'] ?? 0);
+        $isMultiRoom = $booking->rooms->isNotEmpty() && $booking->rooms->count() > 1;
+        $totalPwdSeniorDiscount = 0.0;
+        $hasAnyPwdSeniorDiscount = false;
 
-        if ($booking->rooms->isNotEmpty() && isset($validated['room_manual_adjustments'])) {
+        if ($isMultiRoom) {
+            $manualAdjustment = 0;
+
+            foreach ($booking->rooms as $reservedRoom) {
+                $roomId = (int) $reservedRoom->id;
+                $perRoomAdditional = (float) ($validated['room_additional_charges'][$roomId] ?? 0);
+                $perRoomAdditionalReason = $validated['room_additional_reasons'][$roomId] ?? null;
+                $perRoomDiscountType = $validated['room_discount_types'][$roomId] ?? 'none';
+                $perRoomDiscount = (float) ($validated['room_discount_amounts'][$roomId] ?? 0);
+
+                if ($perRoomDiscountType === 'none') {
+                    $perRoomDiscount = 0;
+                }
+
+                if (in_array($perRoomDiscountType, ['pwd', 'senior'], true) && $perRoomDiscount > 0) {
+                    $hasAnyPwdSeniorDiscount = true;
+                    $totalPwdSeniorDiscount += $perRoomDiscount;
+                }
+
+                $perRoomNetAdjustment = $perRoomAdditional - $perRoomDiscount;
+                $manualAdjustment += $perRoomNetAdjustment;
+
+                $booking->rooms()->updateExistingPivot($reservedRoom->id, [
+                    'manual_adjustment' => $perRoomNetAdjustment,
+                    'additional_charge' => $perRoomAdditional,
+                    'additional_charge_reason' => $perRoomAdditionalReason,
+                    'discount_amount' => $perRoomDiscount,
+                    'discount_type' => $perRoomDiscountType,
+                ]);
+            }
+        } elseif ($booking->rooms->isNotEmpty() && isset($validated['room_manual_adjustments'])) {
             $manualAdjustment = 0;
 
             foreach ($booking->rooms as $reservedRoom) {
@@ -377,15 +426,33 @@ class BookingManagementController extends Controller
             }
         }
 
+        $earlyCheckinHours = $validated['early_checkin_hours'] ?? 0;
+        $earlyCheckinCharge = $validated['early_checkin_charge'] ?? 0;
+        $lateCheckoutHours = $validated['late_checkout_hours'] ?? 0;
+        $lateCheckoutCharge = $validated['late_checkout_charge'] ?? 0;
+        $hasPwdSenior = $request->has('has_pwd_senior');
+        $pwdSeniorCount = $validated['pwd_senior_count'] ?? 0;
+        $pwdSeniorDiscount = $validated['pwd_senior_discount'] ?? 0;
+
+        if ($isMultiRoom) {
+            $earlyCheckinHours = 0;
+            $earlyCheckinCharge = 0;
+            $lateCheckoutHours = 0;
+            $lateCheckoutCharge = 0;
+            $hasPwdSenior = $hasAnyPwdSeniorDiscount;
+            $pwdSeniorCount = 0;
+            $pwdSeniorDiscount = 0;
+        }
+
         // Update booking with validated data
         $booking->update([
-            'early_checkin_hours' => $validated['early_checkin_hours'] ?? 0,
-            'early_checkin_charge' => $validated['early_checkin_charge'] ?? 0,
-            'late_checkout_hours' => $validated['late_checkout_hours'] ?? 0,
-            'late_checkout_charge' => $validated['late_checkout_charge'] ?? 0,
-            'has_pwd_senior' => $request->has('has_pwd_senior'),
-            'pwd_senior_count' => $validated['pwd_senior_count'] ?? 0,
-            'pwd_senior_discount' => $validated['pwd_senior_discount'] ?? 0,
+            'early_checkin_hours' => $earlyCheckinHours,
+            'early_checkin_charge' => $earlyCheckinCharge,
+            'late_checkout_hours' => $lateCheckoutHours,
+            'late_checkout_charge' => $lateCheckoutCharge,
+            'has_pwd_senior' => $hasPwdSenior,
+            'pwd_senior_count' => $pwdSeniorCount,
+            'pwd_senior_discount' => $pwdSeniorDiscount,
             'manual_adjustment' => $manualAdjustment,
             'adjustment_reason' => $validated['adjustment_reason'],
         ]);
