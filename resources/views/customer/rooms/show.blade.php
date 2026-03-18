@@ -1035,6 +1035,13 @@
                             ->unique()
                             ->values();
 
+                        // Learn More must not auto-select the currently viewed room.
+                        if (request('origin') === 'learn_more') {
+                            $selectedRoomIds = $selectedRoomIds
+                                ->reject(fn ($id) => (int) $id === $currentRoomId)
+                                ->values();
+                        }
+
                         $isSelected = $selectedRoomIds->contains($currentRoomId);
                         $selectionComplete = $selectedRoomIds->count() >= $requestedRooms;
                         $nextRoomLabelNumber = min($selectedRoomIds->count() + 1, $requestedRooms);
