@@ -51,9 +51,6 @@ class BookingController extends Controller
         // This avoids auto-populating unselected rooms on checkout.
         if ($requestedRooms > 1 && $preselectedRooms->count() < $requestedRooms) {
             $selectedForFlow = $preselectedRooms->pluck('id')->map(fn ($id) => (int) $id)->values();
-            if ($selectedForFlow->isEmpty()) {
-                $selectedForFlow = collect([(int) $room->id]);
-            }
 
             $remainingRooms = max($requestedRooms - $selectedForFlow->count(), 0);
 
