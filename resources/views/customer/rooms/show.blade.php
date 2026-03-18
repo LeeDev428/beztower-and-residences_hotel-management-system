@@ -1035,11 +1035,22 @@
                             ->unique()
                             ->values();
 
+                        $selectionAction = (string) request('selection_action', '');
+
                         // Learn More must not auto-select the currently viewed room.
                         if (request('origin') === 'learn_more') {
                             $selectedRoomIds = $selectedRoomIds
                                 ->reject(fn ($id) => (int) $id === $currentRoomId)
                                 ->values();
+                        }
+
+                        // Backward compatibility for old Learn More URLs that may include selected_rooms=current_room_id.
+                        // If no explicit selection action was performed, treat that as not selected.
+                        if (!in_array($selectionAction, ['select', 'deselect'], true)
+                            && $selectedRoomIds->count() === 1
+                            && (int) $selectedRoomIds->first() === $currentRoomId
+                        ) {
+                            $selectedRoomIds = collect();
                         }
 
                         $isSelected = $selectedRoomIds->contains($currentRoomId);
@@ -1070,6 +1081,7 @@
 
                         $selectUrl = route('rooms.show', $room);
                         $selectParams = $ctx;
+                        $selectParams['selection_action'] = 'select';
                         if ($nextSelectedRoomIds->isNotEmpty()) {
                             $selectParams['selected_rooms'] = $nextSelectedRoomIds->implode(',');
                         }
@@ -1079,6 +1091,7 @@
 
                         $deselectUrl = route('rooms.show', $room);
                         $deselectParams = $ctx;
+                        $deselectParams['selection_action'] = 'deselect';
                         if ($deselectedRoomIds->isNotEmpty()) {
                             $deselectParams['selected_rooms'] = $deselectedRoomIds->implode(',');
                         }
