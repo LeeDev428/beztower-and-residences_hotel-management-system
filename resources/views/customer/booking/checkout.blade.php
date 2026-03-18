@@ -140,6 +140,67 @@
             padding: 1.5rem;
         }
 
+        .room-viewer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .room-viewer-title {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #2c2c2c;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .room-nav-controls {
+            display: flex;
+            gap: 0.45rem;
+        }
+
+        .room-nav-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid #e1e1e1;
+            background: #fff;
+            color: #2c2c2c;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .room-nav-btn:hover {
+            border-color: #d4af37;
+            color: #d4af37;
+        }
+
+        .room-thumbs {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.45rem;
+            margin-top: 0.65rem;
+        }
+
+        .room-thumb {
+            width: 100%;
+            height: 52px;
+            object-fit: cover;
+            border-radius: 7px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        .room-thumb.active {
+            border-color: #d4af37;
+        }
+
         .room-type-name {
             font-size: 1.4rem;
             font-weight: 700;
@@ -683,18 +744,57 @@
 
             <!-- Right: Price Details -->
             <div class="price-details-sidebar">
+                @php
+                    $selectedSidebarRooms = isset($preselectedRooms) && $preselectedRooms->count() > 0
+                        ? $preselectedRooms->values()
+                        : collect([$room]);
+
+                    $sidebarRoomMedia = $selectedSidebarRooms->map(function ($selectedRoom) {
+                        $photos = method_exists($selectedRoom, 'photos')
+                            ? $selectedRoom->photos->pluck('photo_path')->filter()->values()
+                            : collect();
+
+                        $imageUrls = $photos->map(fn ($path) => asset('storage/' . $path))->values()->all();
+                        if (empty($imageUrls)) {
+                            $imageUrls = [asset('images/default-room.jpg')];
+                        }
+
+                        return [
+                            'id' => (int) $selectedRoom->id,
+                            'room_number' => $selectedRoom->room_number,
+                            'name' => $selectedRoom->roomType->name ?? 'Room',
+                            'price' => (float) ($selectedRoom->roomType->base_price ?? 0),
+                            'images' => $imageUrls,
+                        ];
+                    })->values();
+                @endphp
+
                 <div class="room-summary-card">
-                    @if($room->photos->count() > 0)
-                        <img src="{{ asset('storage/' . $room->photos->first()->photo_path) }}" 
-                             alt="{{ $room->roomType->name }}" class="room-summary-image">
-                    @else
-                        <img src="{{ asset('images/default-room.jpg') }}" 
-                             alt="{{ $room->roomType->name }}" class="room-summary-image">
-                    @endif
+                    <div class="room-summary-content" style="padding-bottom: 0.75rem;">
+                        <div class="room-viewer-header">
+                            <div class="room-viewer-title" id="roomViewerTitle">Selected Room</div>
+                            <div class="room-nav-controls" id="roomNavControls" style="display: {{ $sidebarRoomMedia->count() > 1 ? 'flex' : 'none' }};">
+                                <button type="button" class="room-nav-btn" id="prevRoomBtn" aria-label="Previous room">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button type="button" class="room-nav-btn" id="nextRoomBtn" aria-label="Next room">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <img src="{{ $sidebarRoomMedia->first()['images'][0] ?? asset('images/default-room.jpg') }}"
+                         alt="Selected room image" class="room-summary-image" id="roomViewerMainImage">
+
+                    <div class="room-summary-content" style="padding-top: 0.8rem;">
+                        <div class="room-thumbs" id="roomViewerThumbs"></div>
+                    </div>
+
                     <div class="room-summary-content">
-                        <div class="room-type-name">{{ $room->roomType->name }}</div>
+                        <div class="room-type-name" id="roomViewerRoomName">{{ $sidebarRoomMedia->first()['name'] ?? ($room->roomType->name ?? 'Room') }}</div>
                         <div class="room-price">
-                            ₱{{ number_format($room->roomType->base_price, 2) }}
+                            ₱<span id="roomViewerRoomPrice" style="font-size:1.1rem;color:#d4af37;font-weight:600;">{{ number_format((float) ($sidebarRoomMedia->first()['price'] ?? $room->roomType->base_price), 2) }}</span>
                             <span>/ night</span>
                         </div>
                     </div>
@@ -725,6 +825,92 @@
     </div>
 
     <script>
+        const selectedSidebarRooms = @json($sidebarRoomMedia->all());
+        let currentSidebarRoomIndex = 0;
+        let currentSidebarImageIndex = 0;
+
+        function renderRoomViewer() {
+            if (!Array.isArray(selectedSidebarRooms) || selectedSidebarRooms.length === 0) {
+                return;
+            }
+
+            const room = selectedSidebarRooms[currentSidebarRoomIndex] || selectedSidebarRooms[0];
+            const images = Array.isArray(room.images) && room.images.length > 0 ? room.images : ['{{ asset('images/default-room.jpg') }}'];
+
+            if (currentSidebarImageIndex >= images.length) {
+                currentSidebarImageIndex = 0;
+            }
+
+            const mainImage = document.getElementById('roomViewerMainImage');
+            const title = document.getElementById('roomViewerTitle');
+            const name = document.getElementById('roomViewerRoomName');
+            const price = document.getElementById('roomViewerRoomPrice');
+            const thumbs = document.getElementById('roomViewerThumbs');
+
+            if (mainImage) {
+                mainImage.src = images[currentSidebarImageIndex];
+                mainImage.alt = `${room.name} image ${currentSidebarImageIndex + 1}`;
+            }
+
+            if (title) {
+                title.textContent = selectedSidebarRooms.length > 1
+                    ? `Room ${currentSidebarRoomIndex + 1} of ${selectedSidebarRooms.length}`
+                    : 'Selected Room';
+            }
+
+            if (name) {
+                name.textContent = room.room_number
+                    ? `${room.name} (Room ${room.room_number})`
+                    : room.name;
+            }
+
+            if (price) {
+                const roomPrice = Number(room.price || 0);
+                price.textContent = roomPrice.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            if (thumbs) {
+                thumbs.innerHTML = '';
+                images.forEach((imageUrl, index) => {
+                    const img = document.createElement('img');
+                    img.src = imageUrl;
+                    img.alt = `${room.name} thumbnail ${index + 1}`;
+                    img.className = 'room-thumb' + (index === currentSidebarImageIndex ? ' active' : '');
+                    img.addEventListener('click', () => {
+                        currentSidebarImageIndex = index;
+                        renderRoomViewer();
+                    });
+                    thumbs.appendChild(img);
+                });
+            }
+        }
+
+        function moveRoomViewer(direction) {
+            if (!Array.isArray(selectedSidebarRooms) || selectedSidebarRooms.length <= 1) {
+                return;
+            }
+
+            currentSidebarRoomIndex += direction;
+            if (currentSidebarRoomIndex < 0) {
+                currentSidebarRoomIndex = selectedSidebarRooms.length - 1;
+            }
+            if (currentSidebarRoomIndex >= selectedSidebarRooms.length) {
+                currentSidebarRoomIndex = 0;
+            }
+            currentSidebarImageIndex = 0;
+            renderRoomViewer();
+        }
+
+        const prevRoomBtn = document.getElementById('prevRoomBtn');
+        const nextRoomBtn = document.getElementById('nextRoomBtn');
+        if (prevRoomBtn) {
+            prevRoomBtn.addEventListener('click', () => moveRoomViewer(-1));
+        }
+        if (nextRoomBtn) {
+            nextRoomBtn.addEventListener('click', () => moveRoomViewer(1));
+        }
+        renderRoomViewer();
+
         const basePrice = {{ $room->roomType->base_price }};
         const preferredRoomId = {{ $room->id }};
         const lockedSelectedRoomIds = @json(isset($preselectedRooms) ? $preselectedRooms->pluck('id')->values()->all() : []);
