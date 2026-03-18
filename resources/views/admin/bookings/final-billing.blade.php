@@ -27,12 +27,25 @@
     @php
         $reservedRooms = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
         $roomManualAdjustments = [];
+        $roomAdditionalCharges = [];
+        $roomAdditionalReasons = [];
+        $roomDiscountAmounts = [];
+        $roomDiscountTypes = [];
+        $roomBaseTotals = [];
         $pivotManualAdjustmentTotal = 0.0;
 
         foreach ($reservedRooms as $idx => $reservedRoom) {
             $pivotAdjustment = (float) ($reservedRoom->pivot->manual_adjustment ?? 0);
             $roomManualAdjustments[$reservedRoom->id] = $pivotAdjustment;
             $pivotManualAdjustmentTotal += $pivotAdjustment;
+
+            $roomAdditionalCharges[$reservedRoom->id] = (float) ($reservedRoom->pivot->additional_charge ?? 0);
+            $roomAdditionalReasons[$reservedRoom->id] = $reservedRoom->pivot->additional_charge_reason ?? '';
+            $roomDiscountAmounts[$reservedRoom->id] = (float) ($reservedRoom->pivot->discount_amount ?? 0);
+            $roomDiscountTypes[$reservedRoom->id] = $reservedRoom->pivot->discount_type ?? 'none';
+
+            $nightlyRate = (float) ($reservedRoom->pivot->nightly_rate ?? $reservedRoom->effective_price ?? $reservedRoom->roomType->base_price ?? 0);
+            $roomBaseTotals[$reservedRoom->id] = $nightlyRate * (int) ($booking->total_nights ?? $booking->number_of_nights ?? 0);
         }
 
         if ($reservedRooms->count() > 1 && abs($pivotManualAdjustmentTotal) < 0.00001 && abs((float) ($booking->manual_adjustment ?? 0)) > 0.00001) {
@@ -42,9 +55,18 @@
             }
         }
 
-        $initialManualAdjustment = $reservedRooms->count() > 1
-            ? array_sum($roomManualAdjustments)
-            : (float) ($booking->manual_adjustment ?? 0);
+        if ($reservedRooms->count() > 1) {
+            $initialManualAdjustment = 0;
+            foreach ($reservedRooms as $reservedRoom) {
+                $roomId = $reservedRoom->id;
+                $initialManualAdjustment += (float) ($roomAdditionalCharges[$roomId] ?? 0) - (float) ($roomDiscountAmounts[$roomId] ?? 0);
+            }
+        } else {
+            $initialManualAdjustment = (float) ($booking->manual_adjustment ?? 0);
+        }
+
+        $initialPerRoomAdditionalTotal = array_sum($roomAdditionalCharges);
+        $initialPerRoomDiscountTotal = array_sum($roomDiscountAmounts);
     @endphp
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
 
@@ -111,6 +133,16 @@
                     <span style="color: var(--text-muted);">Room Charges</span>
                     <span style="font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
                 </div>
+                @if($reservedRooms->count() > 1)
+                <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
+                    <span style="color: var(--text-muted);">Per-Room Additional Charges</span>
+                    <span style="font-weight: 600;" id="perRoomAdditionalDisplay">₱{{ number_format($initialPerRoomAdditionalTotal, 2) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
+                    <span style="color: var(--success); font-weight: 600;">Per-Room Discounts</span>
+                    <span style="font-weight: 700; color: var(--success);" id="perRoomDiscountDisplay">-₱{{ number_format($initialPerRoomDiscountTotal, 2) }}</span>
+                </div>
+                @endif
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--text-muted);">Early Check-in</span>
                     <span style="font-weight: 600;" id="earlyCheckinDisplay">₱{{ number_format($booking->early_checkin_charge ?? 0, 2) }}</span>
@@ -241,30 +273,90 @@
             <x-admin.card title="Manual Adjustment">
                 @if($reservedRooms->count() > 1)
                     <div style="margin-bottom: 1.25rem;">
-                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.75rem;">Per-Room Adjustment Amount</label>
+                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.75rem;">Per-Room Billing</label>
                         <div style="display: flex; flex-direction: column; gap: 0.7rem;">
                             @foreach($reservedRooms as $reservedRoom)
-                                <div style="border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.65rem 0.75rem;">
+                                @php
+                                    $roomId = $reservedRoom->id;
+                                    $roomBaseTotal = (float) ($roomBaseTotals[$roomId] ?? 0);
+                                    $roomAdditional = (float) ($roomAdditionalCharges[$roomId] ?? 0);
+                                    $roomDiscount = (float) ($roomDiscountAmounts[$roomId] ?? 0);
+                                    $roomDisplayTotal = $roomBaseTotal + $roomAdditional - $roomDiscount;
+                                @endphp
+                                <div data-room-row="1" data-room-id="{{ $roomId }}" data-room-base-total="{{ $roomBaseTotal }}" style="border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.65rem 0.75rem;">
                                     <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.45rem;">
                                         Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name ?? 'N/A' }}
                                     </div>
-                                    <div style="display: flex; align-items: center; border: 1px solid var(--border-gray); border-radius: 8px; overflow: hidden; background: white;">
-                                        <span style="padding: 0.55rem 0.75rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.85rem;">₱</span>
-                                        <input
-                                            type="number"
-                                            name="room_manual_adjustments[{{ $reservedRoom->id }}]"
-                                            class="room-manual-adjustment"
-                                            value="{{ $roomManualAdjustments[$reservedRoom->id] ?? 0 }}"
-                                            step="0.01"
-                                            style="flex: 1; border: none; outline: none; padding: 0.55rem 0.75rem; font-size: 0.88rem;"
-                                            oninput="calculateTotal()"
-                                        >
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.5rem;">
+                                        <div>
+                                            <label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:0.3rem;">Additional Charge</label>
+                                            <div style="display: flex; align-items: center; border: 1px solid var(--border-gray); border-radius: 8px; overflow: hidden; background: white;">
+                                                <span style="padding: 0.55rem 0.75rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.85rem;">₱</span>
+                                                <input
+                                                    type="number"
+                                                    name="room_additional_charges[{{ $roomId }}]"
+                                                    class="room-additional-charge"
+                                                    value="{{ $roomAdditional }}"
+                                                    step="0.01"
+                                                    min="0"
+                                                    style="flex: 1; border: none; outline: none; padding: 0.55rem 0.75rem; font-size: 0.88rem;"
+                                                    oninput="calculateTotal()"
+                                                >
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:0.3rem;">Discount Amount</label>
+                                            <div style="display: flex; align-items: center; border: 1px solid var(--border-gray); border-radius: 8px; overflow: hidden; background: white;">
+                                                <span style="padding: 0.55rem 0.75rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.85rem;">₱</span>
+                                                <input
+                                                    type="number"
+                                                    name="room_discount_amounts[{{ $roomId }}]"
+                                                    class="room-discount-amount"
+                                                    value="{{ $roomDiscount }}"
+                                                    step="0.01"
+                                                    min="0"
+                                                    style="flex: 1; border: none; outline: none; padding: 0.55rem 0.75rem; font-size: 0.88rem;"
+                                                    oninput="calculateTotal()"
+                                                >
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                                        <div>
+                                            <label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:0.3rem;">Additional Charge Notes</label>
+                                            <input
+                                                type="text"
+                                                name="room_additional_reasons[{{ $roomId }}]"
+                                                value="{{ $roomAdditionalReasons[$roomId] ?? '' }}"
+                                                maxlength="255"
+                                                placeholder="e.g. Extra bedding"
+                                                style="width: 100%; border: 1px solid var(--border-gray); border-radius: 8px; outline: none; padding: 0.55rem 0.65rem; font-size: 0.83rem; box-sizing:border-box;"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:0.3rem;">Discount Type</label>
+                                            <select
+                                                name="room_discount_types[{{ $roomId }}]"
+                                                class="room-discount-type"
+                                                onchange="calculateTotal()"
+                                                style="width: 100%; border: 1px solid var(--border-gray); border-radius: 8px; outline: none; padding: 0.55rem 0.65rem; font-size: 0.83rem; box-sizing:border-box;"
+                                            >
+                                                <option value="none" {{ ($roomDiscountTypes[$roomId] ?? 'none') === 'none' ? 'selected' : '' }}>No Discount</option>
+                                                <option value="pwd" {{ ($roomDiscountTypes[$roomId] ?? '') === 'pwd' ? 'selected' : '' }}>PWD</option>
+                                                <option value="senior" {{ ($roomDiscountTypes[$roomId] ?? '') === 'senior' ? 'selected' : '' }}>Senior</option>
+                                                <option value="other" {{ ($roomDiscountTypes[$roomId] ?? '') === 'other' ? 'selected' : '' }}>Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="margin-top:0.5rem;display:flex;justify-content:space-between;align-items:center;background:#f8f8f8;border-radius:6px;padding:0.4rem 0.55rem;font-size:0.82rem;">
+                                        <span style="color:var(--text-muted);">Room Total</span>
+                                        <span style="font-weight:700;color:#2c2c2c;" id="roomNetTotalDisplay_{{ $roomId }}">₱{{ number_format($roomDisplayTotal, 2) }}</span>
                                     </div>
                                 </div>
                             @endforeach
                         </div>
                         <input type="hidden" name="manual_adjustment" id="manualAdjustment" value="{{ $initialManualAdjustment }}">
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.55rem;">Enter charges or discounts per room. The system will save their total as overall manual adjustment.</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.55rem;">Each room has independent additional charges and discounts. Grand total is automatically combined at the bottom.</p>
                     </div>
                 @else
                     <div style="margin-bottom: 1.25rem;">
@@ -329,7 +421,70 @@ const roomTotal = {{ $booking->total_amount }};
 const numberOfGuests = {{ $booking->number_of_guests }};
 const verifiedPaymentsTotal = {{ $verifiedPaymentsTotal }};
 
+function calculatePerRoomNetAdjustmentTotal() {
+    const roomRows = document.querySelectorAll('[data-room-row="1"]');
+
+    if (roomRows.length === 0) {
+        return null;
+    }
+
+    let additionalTotal = 0;
+    let discountTotal = 0;
+    let netTotal = 0;
+
+    roomRows.forEach(row => {
+        const roomId = row.dataset.roomId;
+        const roomBase = parseFloat(row.dataset.roomBaseTotal) || 0;
+        const additionalInput = row.querySelector('.room-additional-charge');
+        const discountInput = row.querySelector('.room-discount-amount');
+        const discountTypeInput = row.querySelector('.room-discount-type');
+
+        const additional = parseFloat(additionalInput?.value) || 0;
+        let discount = parseFloat(discountInput?.value) || 0;
+        const discountType = discountTypeInput?.value || 'none';
+
+        if (discountType === 'none') {
+            discount = 0;
+            if (discountInput) {
+                discountInput.value = '0';
+            }
+        }
+
+        const roomTotalValue = roomBase + additional - discount;
+        const roomDisplay = document.getElementById('roomNetTotalDisplay_' + roomId);
+        if (roomDisplay) {
+            roomDisplay.textContent = '₱' + roomTotalValue.toLocaleString('en-PH', {minimumFractionDigits: 2});
+        }
+
+        additionalTotal += additional;
+        discountTotal += discount;
+        netTotal += (additional - discount);
+    });
+
+    const additionalDisplay = document.getElementById('perRoomAdditionalDisplay');
+    if (additionalDisplay) {
+        additionalDisplay.textContent = '₱' + additionalTotal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    }
+
+    const discountDisplay = document.getElementById('perRoomDiscountDisplay');
+    if (discountDisplay) {
+        discountDisplay.textContent = '-₱' + discountTotal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    }
+
+    const aggregateInput = document.getElementById('manualAdjustment');
+    if (aggregateInput) {
+        aggregateInput.value = netTotal.toFixed(2);
+    }
+
+    return netTotal;
+}
+
 function getManualAdjustmentTotal() {
+    const perRoomNet = calculatePerRoomNetAdjustmentTotal();
+    if (perRoomNet !== null) {
+        return perRoomNet;
+    }
+
     const roomAdjustmentInputs = document.querySelectorAll('.room-manual-adjustment');
 
     if (roomAdjustmentInputs.length > 0) {
@@ -446,6 +601,11 @@ function toggleGcashQR() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.room-additional-charge, .room-discount-amount, .room-discount-type').forEach(input => {
+        input.addEventListener('change', calculateTotal);
+        input.addEventListener('input', calculateTotal);
+    });
+
     document.querySelectorAll('.room-manual-adjustment').forEach(input => {
         input.addEventListener('change', calculateTotal);
     });
