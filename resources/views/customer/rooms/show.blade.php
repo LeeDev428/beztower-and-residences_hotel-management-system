@@ -1038,11 +1038,24 @@
                         $selectionAction = (string) request('selection_action', '');
                         $isViewOnlyLearnMore = request('origin') === 'learn_more'
                             && !in_array($selectionAction, ['select', 'deselect'], true);
+                        $currentSelectedOnSource = request('current_selected') === '1';
 
-                        // Strict Learn More behavior: viewing details should not carry or auto-apply selection
-                        // unless user explicitly clicked Select/Deselect from this page.
+                        // Learn More behavior: do not auto-select the currently viewed room unless
+                        // it was already selected on the source list card.
                         if ($isViewOnlyLearnMore) {
-                            $selectedRoomIds = collect();
+                            if (!$currentSelectedOnSource) {
+                                $selectedRoomIds = $selectedRoomIds
+                                    ->reject(fn ($id) => (int) $id === $currentRoomId)
+                                    ->values();
+                            }
+
+                            // Backward compatibility when old URLs don't pass current_selected.
+                            if (!request()->has('current_selected')
+                                && $selectedRoomIds->count() === 1
+                                && (int) $selectedRoomIds->first() === $currentRoomId
+                            ) {
+                                $selectedRoomIds = collect();
+                            }
                         }
 
                         $isSelected = $selectedRoomIds->contains($currentRoomId);
@@ -1064,7 +1077,7 @@
 
                         $continueUrl = route('rooms.index');
                         $continueParams = $ctx;
-                        if (!$isViewOnlyLearnMore && $selectedRoomIds->isNotEmpty()) {
+                        if ($selectedRoomIds->isNotEmpty()) {
                             $continueParams['selected_rooms'] = $selectedRoomIds->implode(',');
                         }
                         if ($continueParams) {
