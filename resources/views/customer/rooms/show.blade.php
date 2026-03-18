@@ -1064,7 +1064,10 @@
 
                         $nextSelectedRoomIds = $selectedRoomIds;
                         if (!$isSelected && $selectedRoomIds->count() < $requestedRooms) {
-                            $nextSelectedRoomIds = $selectedRoomIds->push($currentRoomId)->unique()->values();
+                            $nextSelectedRoomIds = $selectedRoomIds
+                                ->concat([$currentRoomId])
+                                ->unique()
+                                ->values();
                         }
 
                         $deselectedRoomIds = $selectedRoomIds->reject(fn ($id) => (int) $id === $currentRoomId)->values();
