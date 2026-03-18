@@ -21,10 +21,6 @@
             $nextSelectedRoomIds = $selectedRoomIds->push((int) $room->id)->unique()->values();
         }
 
-        if ($selectedRoomIds->isNotEmpty()) {
-            $baseParams['selected_rooms'] = $selectedRoomIds->implode(',');
-        }
-
         $detailsParams = $baseParams;
         if ($selectedRoomIds->isNotEmpty()) {
             $detailsParams['selected_rooms'] = $selectedRoomIds->implode(',');
@@ -43,6 +39,8 @@
         $deselectParams = $baseParams;
         if ($deselectedRoomIds->isNotEmpty()) {
             $deselectParams['selected_rooms'] = $deselectedRoomIds->implode(',');
+        } else {
+            unset($deselectParams['selected_rooms']);
         }
         $deselectUrl = route('rooms.index') . '?' . http_build_query($deselectParams);
 
