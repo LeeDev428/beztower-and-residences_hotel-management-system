@@ -26,6 +26,11 @@
         }
 
         $detailsParams = $baseParams;
+        if ($selectedRoomIds->isNotEmpty()) {
+            $detailsParams['selected_rooms'] = $selectedRoomIds->implode(',');
+        } else {
+            unset($detailsParams['selected_rooms']);
+        }
         $btnUrl  = route('rooms.show', $room) . ($detailsParams ? '?' . http_build_query($detailsParams) : '');
 
         $selectParams = $baseParams;
