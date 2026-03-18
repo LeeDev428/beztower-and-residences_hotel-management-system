@@ -39,7 +39,7 @@ class BookingController extends Controller
                 ->values();
         }
 
-        $preselectedRooms = Room::with('roomType')
+        $preselectedRooms = Room::with(['roomType', 'photos'])
             ->whereIn('id', $preselectedRoomIds)
             ->whereNull('archived_at')
             ->where('status', 'available')
