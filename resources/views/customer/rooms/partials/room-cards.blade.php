@@ -22,8 +22,13 @@
         }
 
         $detailsParams = $baseParams;
-        if ($selectedRoomIds->isNotEmpty()) {
-            $detailsParams['selected_rooms'] = $selectedRoomIds->implode(',');
+        $detailsParams['origin'] = 'learn_more';
+        $learnMoreSelectedIds = $selectedRoomIds
+            ->reject(fn ($id) => (int) $id === (int) $room->id)
+            ->values();
+
+        if ($learnMoreSelectedIds->isNotEmpty()) {
+            $detailsParams['selected_rooms'] = $learnMoreSelectedIds->implode(',');
         } else {
             unset($detailsParams['selected_rooms']);
         }
