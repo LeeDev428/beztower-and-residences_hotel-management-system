@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class BookingController extends Controller
@@ -288,9 +289,14 @@ class BookingController extends Controller
         $validated = $request->validate([
             'check_in_date' => 'required|date|after_or_equal:today',
             'check_out_date' => 'required|date|after:check_in_date',
+            'number_of_rooms' => 'nullable|integer|min:1|max:12',
+            'number_of_guests' => 'nullable|integer|min:1|max:50',
         ]);
 
-        $rooms = Room::with('roomType')
+        $requestedRooms = max(1, min(12, (int) ($validated['number_of_rooms'] ?? 1)));
+        $requestedGuests = max(1, (int) ($validated['number_of_guests'] ?? 1));
+
+        $availableRooms = Room::with('roomType')
             ->where('status', 'available')
             ->whereNull('archived_at')
             ->whereDoesntHave('bookings', function ($query) use ($validated) {
@@ -305,11 +311,29 @@ class BookingController extends Controller
             })
             ->orderBy('room_type_id')
             ->orderBy('room_number')
-            ->get()
+            ->get();
+
+        $recommendedRoomIds = [];
+        if ($requestedRooms > 1) {
+            $combinationMeta = $this->resolveAvailabilityCombinationMeta($availableRooms, $requestedRooms, $requestedGuests);
+            $eligibleTypeIds = $combinationMeta['eligible_type_ids'] ?? [];
+            $recommendedRoomIds = $combinationMeta['recommended_room_ids'] ?? [];
+
+            if (empty($eligibleTypeIds)) {
+                $availableRooms = collect();
+            } else {
+                $availableRooms = $availableRooms
+                    ->filter(fn ($room) => in_array((int) $room->room_type_id, $eligibleTypeIds, true))
+                    ->values();
+            }
+        }
+
+        $rooms = $availableRooms
             ->map(function ($room) {
                 return [
                     'id' => $room->id,
                     'room_number' => $room->room_number,
+                    'room_type_id' => (int) $room->room_type_id,
                     'room_type' => $room->roomType?->name,
                     'capacity' => (int) ($room->roomType?->max_guests ?? 0),
                     'price' => (float) ($room->roomType?->base_price ?? 0),
@@ -328,7 +352,148 @@ class BookingController extends Controller
         return response()->json([
             'rooms' => $rooms,
             'remaining_by_type' => $remainingByType,
+            'recommended_room_ids' => array_values(array_map('intval', $recommendedRoomIds)),
         ]);
+    }
+
+    private function resolveAvailabilityCombinationMeta(Collection $availableRooms, int $requestedRooms, int $requestedGuests): array
+    {
+        if ($requestedRooms <= 1 || $availableRooms->isEmpty()) {
+            return [
+                'eligible_type_ids' => [],
+                'recommended_room_ids' => [],
+            ];
+        }
+
+        $typeBuckets = $availableRooms
+            ->groupBy('room_type_id')
+            ->map(function (Collection $group, $typeId) {
+                $sortedRooms = $group->sortBy('room_number')->values();
+                $capacity = (int) optional($sortedRooms->first()->roomType)->max_guests;
+
+                return [
+                    'type_id' => (int) $typeId,
+                    'capacity' => max(0, $capacity),
+                    'count' => $sortedRooms->count(),
+                    'rooms' => $sortedRooms,
+                ];
+            })
+            ->filter(fn ($bucket) => $bucket['count'] > 0 && $bucket['capacity'] > 0)
+            ->values()
+            ->all();
+
+        if (empty($typeBuckets)) {
+            return [
+                'eligible_type_ids' => [],
+                'recommended_room_ids' => [],
+            ];
+        }
+
+        $combinations = [];
+        $this->buildAvailabilityTypeCombinations(
+            $typeBuckets,
+            0,
+            $requestedRooms,
+            0,
+            $requestedGuests,
+            [],
+            $combinations
+        );
+
+        if (empty($combinations)) {
+            return [
+                'eligible_type_ids' => [],
+                'recommended_room_ids' => [],
+            ];
+        }
+
+        $eligibleTypeIds = [];
+        foreach ($combinations as $combination) {
+            foreach (($combination['type_counts'] ?? []) as $typeId => $count) {
+                if ($count > 0) {
+                    $eligibleTypeIds[(int) $typeId] = true;
+                }
+            }
+        }
+
+        usort($combinations, function ($left, $right) {
+            $leftExcess = (int) ($left['excess'] ?? PHP_INT_MAX);
+            $rightExcess = (int) ($right['excess'] ?? PHP_INT_MAX);
+            if ($leftExcess !== $rightExcess) {
+                return $leftExcess <=> $rightExcess;
+            }
+
+            return (int) ($left['total_capacity'] ?? PHP_INT_MAX) <=> (int) ($right['total_capacity'] ?? PHP_INT_MAX);
+        });
+
+        $bestTypeCounts = $combinations[0]['type_counts'] ?? [];
+        $recommendedRoomIds = [];
+
+        foreach ($typeBuckets as $bucket) {
+            $typeId = (int) $bucket['type_id'];
+            $pick = (int) ($bestTypeCounts[$typeId] ?? 0);
+            if ($pick <= 0) {
+                continue;
+            }
+
+            $pickedRoomIds = collect($bucket['rooms'])
+                ->take($pick)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            $recommendedRoomIds = array_merge($recommendedRoomIds, $pickedRoomIds);
+        }
+
+        return [
+            'eligible_type_ids' => array_values(array_map('intval', array_keys($eligibleTypeIds))),
+            'recommended_room_ids' => array_slice(array_values(array_unique($recommendedRoomIds)), 0, $requestedRooms),
+        ];
+    }
+
+    private function buildAvailabilityTypeCombinations(
+        array $types,
+        int $index,
+        int $remainingRooms,
+        int $currentCapacity,
+        int $requestedGuests,
+        array $currentTypeCounts,
+        array &$combinations
+    ): void {
+        if ($remainingRooms === 0) {
+            if ($currentCapacity >= $requestedGuests) {
+                $combinations[] = [
+                    'type_counts' => $currentTypeCounts,
+                    'total_capacity' => $currentCapacity,
+                    'excess' => $currentCapacity - $requestedGuests,
+                ];
+            }
+            return;
+        }
+
+        if ($index >= count($types)) {
+            return;
+        }
+
+        $type = $types[$index];
+        $maxPick = min($remainingRooms, (int) ($type['count'] ?? 0));
+
+        for ($pick = 0; $pick <= $maxPick; $pick++) {
+            $nextCounts = $currentTypeCounts;
+            if ($pick > 0) {
+                $nextCounts[(int) $type['type_id']] = $pick;
+            }
+
+            $this->buildAvailabilityTypeCombinations(
+                $types,
+                $index + 1,
+                $remainingRooms - $pick,
+                $currentCapacity + ($pick * (int) ($type['capacity'] ?? 0)),
+                $requestedGuests,
+                $nextCounts,
+                $combinations
+            );
+        }
     }
 
     public function payment($reference)
