@@ -1061,7 +1061,7 @@
                             $continueUrl .= '?' . http_build_query($continueParams);
                         }
 
-                        $selectUrl = route('rooms.index');
+                        $selectUrl = route('rooms.show', $room);
                         $selectParams = $ctx;
                         if ($nextSelectedRoomIds->isNotEmpty()) {
                             $selectParams['selected_rooms'] = $nextSelectedRoomIds->implode(',');
@@ -1070,7 +1070,7 @@
                             $selectUrl .= '?' . http_build_query($selectParams);
                         }
 
-                        $deselectUrl = route('rooms.index');
+                        $deselectUrl = route('rooms.show', $room);
                         $deselectParams = $ctx;
                         if ($deselectedRoomIds->isNotEmpty()) {
                             $deselectParams['selected_rooms'] = $deselectedRoomIds->implode(',');
@@ -1108,6 +1108,9 @@
                         @endif
                         @if($remainingRooms > 0)
                             <div style="margin-top:0.75rem;font-size:0.88rem;color:#666;">{{ $selectedRoomIds->count() }} of {{ $requestedRooms }} selected. Choose {{ $remainingRooms }} more room(s).</div>
+                            <div style="margin-top:0.5rem;">
+                                <a href="{{ $continueUrl }}" style="font-size:0.88rem;color:#2c2c2c;text-decoration:underline;">Continue selecting from room list</a>
+                            </div>
                         @endif
                     @endif
                 </div>
