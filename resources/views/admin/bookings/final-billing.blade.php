@@ -26,6 +26,25 @@
     <!-- Booking Details + Final Total -->
     @php
         $reservedRooms = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+        $roomManualAdjustments = [];
+        $pivotManualAdjustmentTotal = 0.0;
+
+        foreach ($reservedRooms as $idx => $reservedRoom) {
+            $pivotAdjustment = (float) ($reservedRoom->pivot->manual_adjustment ?? 0);
+            $roomManualAdjustments[$reservedRoom->id] = $pivotAdjustment;
+            $pivotManualAdjustmentTotal += $pivotAdjustment;
+        }
+
+        if ($reservedRooms->count() > 1 && abs($pivotManualAdjustmentTotal) < 0.00001 && abs((float) ($booking->manual_adjustment ?? 0)) > 0.00001) {
+            $firstRoom = $reservedRooms->first();
+            if ($firstRoom) {
+                $roomManualAdjustments[$firstRoom->id] = (float) $booking->manual_adjustment;
+            }
+        }
+
+        $initialManualAdjustment = $reservedRooms->count() > 1
+            ? array_sum($roomManualAdjustments)
+            : (float) ($booking->manual_adjustment ?? 0);
     @endphp
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
 
@@ -110,7 +129,7 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; padding: 5px 0;">
                     <span style="color: var(--text-muted);">Manual Adjustment</span>
-                    <span style="font-weight: 600;" id="manualAdjustmentDisplay">₱{{ number_format($booking->manual_adjustment ?? 0, 2) }}</span>
+                    <span style="font-weight: 600;" id="manualAdjustmentDisplay">₱{{ number_format($initialManualAdjustment, 2) }}</span>
                 </div>
             </div>
         </x-admin.card>
@@ -220,17 +239,46 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
 
             <x-admin.card title="Manual Adjustment">
-                <div style="margin-bottom: 1.25rem;">
-                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Adjustment Amount</label>
-                    <div style="display: flex; align-items: center; border: 1px solid var(--border-gray); border-radius: 8px; overflow: hidden;">
-                        <span style="padding: 0.65rem 0.85rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.9rem;">₱</span>
-                        <input type="number" name="manual_adjustment" id="manualAdjustment"
-                            value="{{ $booking->manual_adjustment ?? 0 }}" step="0.01"
-                            style="flex: 1; border: none; outline: none; padding: 0.65rem 0.85rem; font-size: 0.9rem;"
-                            onchange="calculateTotal()">
+                @if($reservedRooms->count() > 1)
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.75rem;">Per-Room Adjustment Amount</label>
+                        <div style="display: flex; flex-direction: column; gap: 0.7rem;">
+                            @foreach($reservedRooms as $reservedRoom)
+                                <div style="border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.65rem 0.75rem;">
+                                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.45rem;">
+                                        Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name ?? 'N/A' }}
+                                    </div>
+                                    <div style="display: flex; align-items: center; border: 1px solid var(--border-gray); border-radius: 8px; overflow: hidden; background: white;">
+                                        <span style="padding: 0.55rem 0.75rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.85rem;">₱</span>
+                                        <input
+                                            type="number"
+                                            name="room_manual_adjustments[{{ $reservedRoom->id }}]"
+                                            class="room-manual-adjustment"
+                                            value="{{ $roomManualAdjustments[$reservedRoom->id] ?? 0 }}"
+                                            step="0.01"
+                                            style="flex: 1; border: none; outline: none; padding: 0.55rem 0.75rem; font-size: 0.88rem;"
+                                            oninput="calculateTotal()"
+                                        >
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <input type="hidden" name="manual_adjustment" id="manualAdjustment" value="{{ $initialManualAdjustment }}">
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.55rem;">Enter charges or discounts per room. The system will save their total as overall manual adjustment.</p>
                     </div>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">Positive for additional charges, negative for discounts</p>
-                </div>
+                @else
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Adjustment Amount</label>
+                        <div style="display: flex; align-items: center; border: 1px solid var(--border-gray); border-radius: 8px; overflow: hidden;">
+                            <span style="padding: 0.65rem 0.85rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.9rem;">₱</span>
+                            <input type="number" name="manual_adjustment" id="manualAdjustment"
+                                value="{{ $initialManualAdjustment }}" step="0.01"
+                                style="flex: 1; border: none; outline: none; padding: 0.65rem 0.85rem; font-size: 0.9rem;"
+                                onchange="calculateTotal()">
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">Positive for additional charges, negative for discounts</p>
+                    </div>
+                @endif
                 <div>
                     <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Reason for Adjustment</label>
                     <textarea name="adjustment_reason" rows="5"
@@ -280,6 +328,26 @@ const hourlyRate = {{ $hourlyRate }};
 const roomTotal = {{ $booking->total_amount }};
 const numberOfGuests = {{ $booking->number_of_guests }};
 const verifiedPaymentsTotal = {{ $verifiedPaymentsTotal }};
+
+function getManualAdjustmentTotal() {
+    const roomAdjustmentInputs = document.querySelectorAll('.room-manual-adjustment');
+
+    if (roomAdjustmentInputs.length > 0) {
+        let sum = 0;
+        roomAdjustmentInputs.forEach(input => {
+            sum += parseFloat(input.value) || 0;
+        });
+
+        const aggregateInput = document.getElementById('manualAdjustment');
+        if (aggregateInput) {
+            aggregateInput.value = sum.toFixed(2);
+        }
+
+        return sum;
+    }
+
+    return parseFloat(document.getElementById('manualAdjustment').value) || 0;
+}
 
 function incrementCounter(type) {
     const input = document.getElementById(type + 'Hours');
@@ -363,7 +431,7 @@ function calculateTotal() {
     const earlyCheckin = parseFloat(document.getElementById('earlyCheckinChargeInput').value) || 0;
     const lateCheckout = parseFloat(document.getElementById('lateCheckoutChargeInput').value) || 0;
     const pwdDiscount  = parseFloat(document.getElementById('pwdSeniorDiscountInput').value) || 0;
-    const manualAdjust = parseFloat(document.getElementById('manualAdjustment').value) || 0;
+    const manualAdjust = getManualAdjustmentTotal();
 
     const grossTotal = roomTotal + earlyCheckin + lateCheckout - pwdDiscount + manualAdjust;
     const balanceDue = Math.max(grossTotal - verifiedPaymentsTotal, 0);
@@ -378,6 +446,9 @@ function toggleGcashQR() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.room-manual-adjustment').forEach(input => {
+        input.addEventListener('change', calculateTotal);
+    });
     calculateTotal();
 });
 </script>
