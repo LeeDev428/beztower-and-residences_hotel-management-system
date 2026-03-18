@@ -73,15 +73,17 @@ class BookingManagementController extends Controller
         $grossTotal = $booking->final_total ?? $booking->total_amount;
         $balanceDue = max(round($grossTotal - $verifiedPaymentsTotal, 2), 0);
 
-        // Available rooms of the same type (for assign/transfer)
-        $primaryRoomTypeId = $booking->rooms->first()?->room_type_id ?? $booking->room?->room_type_id;
+        // Available rooms for the same assigned room type(s) (for assign/transfer)
+        $assignedRoomTypeIds = $booking->rooms->isNotEmpty()
+            ? $booking->rooms->pluck('room_type_id')->filter()->unique()->values()->all()
+            : array_filter([$booking->room?->room_type_id]);
         $assignedRoomIds = $booking->rooms->isNotEmpty()
             ? $booking->rooms->pluck('id')->all()
             : array_filter([$booking->room_id]);
         $availableRooms = Room::with('roomType')
             ->where('status', 'available')
             ->whereNull('archived_at')
-            ->when($primaryRoomTypeId, fn($q) => $q->where('room_type_id', $primaryRoomTypeId))
+            ->when(!empty($assignedRoomTypeIds), fn($q) => $q->whereIn('room_type_id', $assignedRoomTypeIds))
             ->when(!empty($assignedRoomIds), fn($q) => $q->whereNotIn('id', $assignedRoomIds))
             ->orderBy('room_number')
             ->get();
@@ -248,10 +250,18 @@ class BookingManagementController extends Controller
                 return back()->with('error', 'Selected room is already assigned to this booking.');
             }
 
+            if ((int) $newRoom->room_type_id !== (int) $currentRoom->room_type_id) {
+                return back()->with('error', 'Room transfer must stay within the same room type as the selected assigned room.');
+            }
+
             $pivotRate = (float) ($currentRoom->pivot->nightly_rate ?? $currentRoom->effective_price ?? $currentRoom->roomType->base_price ?? 0);
+            $pivotManualAdjustment = (float) ($currentRoom->pivot->manual_adjustment ?? 0);
 
             $booking->rooms()->detach($currentRoom->id);
-            $booking->rooms()->attach($newRoom->id, ['nightly_rate' => $pivotRate]);
+            $booking->rooms()->attach($newRoom->id, [
+                'nightly_rate' => $pivotRate,
+                'manual_adjustment' => $pivotManualAdjustment,
+            ]);
 
             if ((int) $booking->room_id === (int) $currentRoom->id) {
                 $booking->update(['room_id' => $newRoom->id]);
@@ -272,6 +282,10 @@ class BookingManagementController extends Controller
             );
 
             return back()->with('success', 'Room transfer completed successfully.');
+        }
+
+        if ($booking->room && (int) $newRoom->room_type_id !== (int) $booking->room->room_type_id) {
+            return back()->with('error', 'Room assignment must stay within the originally booked room type.');
         }
 
         // Free old room if booking is pending/confirmed (not already checked in)
@@ -340,9 +354,28 @@ class BookingManagementController extends Controller
             'pwd_senior_count' => 'nullable|integer|min:0',
             'pwd_senior_discount' => 'nullable|numeric|min:0',
             'manual_adjustment' => 'nullable|numeric',
+            'room_manual_adjustments' => 'nullable|array',
+            'room_manual_adjustments.*' => 'nullable|numeric',
             'adjustment_reason' => 'nullable|string|max:500',
             'payment_method' => 'nullable|in:cash,gcash',
         ]);
+
+        $booking->loadMissing('rooms');
+
+        $manualAdjustment = (float) ($validated['manual_adjustment'] ?? 0);
+
+        if ($booking->rooms->isNotEmpty() && isset($validated['room_manual_adjustments'])) {
+            $manualAdjustment = 0;
+
+            foreach ($booking->rooms as $reservedRoom) {
+                $perRoomAdjustment = (float) ($validated['room_manual_adjustments'][$reservedRoom->id] ?? 0);
+                $manualAdjustment += $perRoomAdjustment;
+
+                $booking->rooms()->updateExistingPivot($reservedRoom->id, [
+                    'manual_adjustment' => $perRoomAdjustment,
+                ]);
+            }
+        }
 
         // Update booking with validated data
         $booking->update([
@@ -353,7 +386,7 @@ class BookingManagementController extends Controller
             'has_pwd_senior' => $request->has('has_pwd_senior'),
             'pwd_senior_count' => $validated['pwd_senior_count'] ?? 0,
             'pwd_senior_discount' => $validated['pwd_senior_discount'] ?? 0,
-            'manual_adjustment' => $validated['manual_adjustment'] ?? 0,
+            'manual_adjustment' => $manualAdjustment,
             'adjustment_reason' => $validated['adjustment_reason'],
         ]);
 
@@ -367,7 +400,7 @@ class BookingManagementController extends Controller
                 'early_checkin' => $validated['early_checkin_hours'] ?? 0,
                 'late_checkout' => $validated['late_checkout_hours'] ?? 0,
                 'pwd_senior_discount' => $validated['pwd_senior_discount'] ?? 0,
-                'manual_adjustment' => $validated['manual_adjustment'] ?? 0,
+                'manual_adjustment' => $manualAdjustment,
                 'final_total' => $booking->final_total,
             ]
         );
