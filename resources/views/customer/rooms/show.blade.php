@@ -1036,10 +1036,12 @@
                             ->values();
 
                         $selectionAction = (string) request('selection_action', '');
+                        $isViewOnlyLearnMore = request('origin') === 'learn_more'
+                            && !in_array($selectionAction, ['select', 'deselect'], true);
 
                         // Strict Learn More behavior: viewing details should not carry or auto-apply selection
                         // unless user explicitly clicked Select/Deselect from this page.
-                        if (request('origin') === 'learn_more' && !in_array($selectionAction, ['select', 'deselect'], true)) {
+                        if ($isViewOnlyLearnMore) {
                             $selectedRoomIds = collect();
                         }
 
@@ -1062,7 +1064,7 @@
 
                         $continueUrl = route('rooms.index');
                         $continueParams = $ctx;
-                        if ($selectedRoomIds->isNotEmpty()) {
+                        if (!$isViewOnlyLearnMore && $selectedRoomIds->isNotEmpty()) {
                             $continueParams['selected_rooms'] = $selectedRoomIds->implode(',');
                         }
                         if ($continueParams) {
