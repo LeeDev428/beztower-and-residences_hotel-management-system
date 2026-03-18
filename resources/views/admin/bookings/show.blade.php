@@ -86,9 +86,9 @@
                     @if($booking->rooms->isNotEmpty())
                     <div style="flex: 1; min-width: 220px;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Replace Assigned Room</label>
-                        <select name="current_room_id" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                        <select id="currentRoomSelect" name="current_room_id" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                             @foreach($booking->rooms as $assignedRoom)
-                                <option value="{{ $assignedRoom->id }}">
+                                <option value="{{ $assignedRoom->id }}" data-room-type-id="{{ $assignedRoom->room_type_id }}">
                                     Room {{ $assignedRoom->room_number }} — {{ $assignedRoom->roomType->name }}
                                 </option>
                             @endforeach
@@ -97,10 +97,10 @@
                     @endif
                     <div style="flex: 1; min-width: 200px;">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Transfer to Room</label>
-                        <select name="room_id" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                        <select id="transferRoomSelect" name="room_id" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                             @foreach($availableRooms as $availRoom)
-                                <option value="{{ $availRoom->id }}">
-                                    Room {{ $availRoom->room_number }} — Floor {{ $availRoom->floor }}
+                                <option value="{{ $availRoom->id }}" data-room-type-id="{{ $availRoom->room_type_id }}">
+                                    Room {{ $availRoom->room_number }} — {{ $availRoom->roomType->name ?? 'N/A' }}
                                 </option>
                             @endforeach
                         </select>
@@ -319,6 +319,50 @@ document.addEventListener('keydown', function(event) {
         hideCancelModal();
         hideRescheduleModal();
     }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const currentRoomSelect = document.getElementById('currentRoomSelect');
+    const transferRoomSelect = document.getElementById('transferRoomSelect');
+
+    if (!currentRoomSelect || !transferRoomSelect) {
+        return;
+    }
+
+    const transferOptions = Array.from(transferRoomSelect.options).map(option => ({
+        value: option.value,
+        label: option.textContent,
+        roomTypeId: option.dataset.roomTypeId || '',
+    }));
+
+    function refreshTransferRooms() {
+        const selectedCurrentOption = currentRoomSelect.options[currentRoomSelect.selectedIndex];
+        const selectedRoomTypeId = selectedCurrentOption?.dataset.roomTypeId || '';
+
+        transferRoomSelect.innerHTML = '';
+
+        const matchingOptions = transferOptions.filter(option => option.roomTypeId === selectedRoomTypeId);
+        matchingOptions.forEach(option => {
+            const el = document.createElement('option');
+            el.value = option.value;
+            el.textContent = option.label;
+            el.dataset.roomTypeId = option.roomTypeId;
+            transferRoomSelect.appendChild(el);
+        });
+
+        if (transferRoomSelect.options.length === 0) {
+            const empty = document.createElement('option');
+            empty.value = '';
+            empty.textContent = 'No available rooms for selected room type';
+            transferRoomSelect.appendChild(empty);
+            transferRoomSelect.disabled = true;
+        } else {
+            transferRoomSelect.disabled = false;
+        }
+    }
+
+    currentRoomSelect.addEventListener('change', refreshTransferRooms);
+    refreshTransferRooms();
 });
 </script>
 
