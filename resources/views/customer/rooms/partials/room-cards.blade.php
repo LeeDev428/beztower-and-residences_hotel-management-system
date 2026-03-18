@@ -18,7 +18,10 @@
 
         $nextSelectedRoomIds = $selectedRoomIds;
         if (!$isSelected && $canSelectMore) {
-            $nextSelectedRoomIds = $selectedRoomIds->push((int) $room->id)->unique()->values();
+            $nextSelectedRoomIds = $selectedRoomIds
+                ->concat([(int) $room->id])
+                ->unique()
+                ->values();
         }
 
         $detailsParams = $baseParams;
