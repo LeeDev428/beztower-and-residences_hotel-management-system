@@ -1037,19 +1037,9 @@
 
                         $selectionAction = (string) request('selection_action', '');
 
-                        // Learn More must not auto-select the currently viewed room.
-                        if (request('origin') === 'learn_more') {
-                            $selectedRoomIds = $selectedRoomIds
-                                ->reject(fn ($id) => (int) $id === $currentRoomId)
-                                ->values();
-                        }
-
-                        // Backward compatibility for old Learn More URLs that may include selected_rooms=current_room_id.
-                        // If no explicit selection action was performed, treat that as not selected.
-                        if (!in_array($selectionAction, ['select', 'deselect'], true)
-                            && $selectedRoomIds->count() === 1
-                            && (int) $selectedRoomIds->first() === $currentRoomId
-                        ) {
+                        // Strict Learn More behavior: viewing details should not carry or auto-apply selection
+                        // unless user explicitly clicked Select/Deselect from this page.
+                        if (request('origin') === 'learn_more' && !in_array($selectionAction, ['select', 'deselect'], true)) {
                             $selectedRoomIds = collect();
                         }
 
