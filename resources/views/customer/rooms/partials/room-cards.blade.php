@@ -24,9 +24,8 @@
         $detailsParams = $baseParams;
         $detailsParams['origin'] = 'learn_more';
         $detailsParams['selection_action'] = 'view';
-        $learnMoreSelectedIds = $selectedRoomIds
-            ->reject(fn ($id) => (int) $id === (int) $room->id)
-            ->values();
+        $detailsParams['current_selected'] = $isSelected ? '1' : '0';
+        $learnMoreSelectedIds = $selectedRoomIds;
 
         if ($learnMoreSelectedIds->isNotEmpty()) {
             $detailsParams['selected_rooms'] = $learnMoreSelectedIds->implode(',');
