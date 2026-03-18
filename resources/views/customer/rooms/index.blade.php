@@ -134,7 +134,7 @@
             </div>
             @if($selectionCheckoutUrl)
                 <a href="{{ $selectionCheckoutUrl }}" style="text-decoration:none; background: linear-gradient(135deg, #d4af37, #f4e4c1); color:#2c2c2c; padding:0.55rem 0.9rem; border-radius:6px; font-weight:700; font-size:0.85rem;">
-                    Proceed to Checkout
+                    Proceed to Billing Details
                 </a>
             @endif
         </div>
