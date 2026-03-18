@@ -8,6 +8,7 @@
             ->values();
         $isSelected = $selectedRoomIds->contains((int) $room->id);
         $canSelectMore = $selectedRoomIds->count() < $requestedRooms;
+        $nextRoomLabelNumber = min($selectedRoomIds->count() + 1, $requestedRooms);
 
         $baseParams = [];
         if (request('check_in'))  $baseParams['check_in'] = request('check_in');
@@ -32,6 +33,13 @@
             $selectParams['selected_rooms'] = $nextSelectedRoomIds->implode(',');
         }
         $selectUrl = route('rooms.index') . '?' . http_build_query($selectParams);
+
+        $deselectedRoomIds = $selectedRoomIds->reject(fn ($id) => (int) $id === (int) $room->id)->values();
+        $deselectParams = $baseParams;
+        if ($deselectedRoomIds->isNotEmpty()) {
+            $deselectParams['selected_rooms'] = $deselectedRoomIds->implode(',');
+        }
+        $deselectUrl = route('rooms.index') . '?' . http_build_query($deselectParams);
 
         $selectionComplete = $selectedRoomIds->count() >= $requestedRooms && $selectedRoomIds->isNotEmpty();
         $checkoutUrl = '';
@@ -89,11 +97,11 @@
                 <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
                     <a href="{{ $btnUrl }}" class="book-btn">Learn More</a>
                     @if($selectionComplete)
-                        <a href="{{ $checkoutUrl }}" class="book-btn" style="background: linear-gradient(135deg, #2c2c2c, #1f1f1f); color:#fff;">Checkout</a>
+                        <a href="{{ $checkoutUrl }}" class="book-btn" style="background: linear-gradient(135deg, #2c2c2c, #1f1f1f); color:#fff;">Proceed to Billing Details</a>
                     @elseif(!$isSelected && $canSelectMore)
-                        <a href="{{ $selectUrl }}" class="book-btn" style="background: linear-gradient(135deg, #27ae60, #229954); color:#fff;">Select Room</a>
+                        <a href="{{ $selectUrl }}" class="book-btn" style="background: linear-gradient(135deg, #27ae60, #229954); color:#fff;">Select Room {{ $nextRoomLabelNumber }}</a>
                     @elseif($isSelected)
-                        <span class="book-btn" style="background:#e8f5e9; color:#2e7d32; cursor:default;">Already Selected</span>
+                        <a href="{{ $deselectUrl }}" class="book-btn" style="background:#fdeaea; color:#b42318;">Deselect Room</a>
                     @endif
                 </div>
             </div>
