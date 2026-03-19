@@ -1124,6 +1124,12 @@
                         <a href="{{ $checkoutUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center;">
                             <i class="fas fa-calendar-check"></i> Proceed to Billing Details
                         </a>
+
+                        @if($isSelected)
+                            <a href="{{ $deselectUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center; margin-top:0.75rem; background: linear-gradient(135deg, #dc3545, #b02a37); color:#fff;">
+                                <i class="fas fa-times-circle"></i> Deselect Room
+                            </a>
+                        @endif
                     @else
                         @if($isSelected)
                             <a href="{{ $deselectUrl }}" class="check-now-btn" style="text-decoration: none; display: inline-block; text-align: center; background: linear-gradient(135deg, #dc3545, #b02a37); color:#fff;">
