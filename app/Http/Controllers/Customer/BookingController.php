@@ -34,6 +34,13 @@ class BookingController extends Controller
             $preselectedRoomIds = collect(explode(',', $roomIdsInput));
         }
 
+        // Compatibility: some query strings may arrive as room_ids[0]=... keys.
+        foreach ($request->query() as $key => $value) {
+            if (preg_match('/^room_ids\[\d+\]$/', (string) $key)) {
+                $preselectedRoomIds->push($value);
+            }
+        }
+
         if ($request->filled('selected_rooms')) {
             $selectedRoomsFromQuery = collect(explode(',', (string) $request->input('selected_rooms')));
             $preselectedRoomIds = $preselectedRoomIds->merge($selectedRoomsFromQuery);
@@ -59,6 +66,10 @@ class BookingController extends Controller
             ->whereIn('id', $preselectedRoomIds)
             ->whereNull('archived_at')
             ->get();
+
+        $preselectedRooms = $preselectedRooms
+            ->sortBy(fn (Room $selectedRoom) => $preselectedRoomIds->search((int) $selectedRoom->id))
+            ->values();
 
         $resolvedPreselectedIds = $preselectedRooms
             ->pluck('id')
