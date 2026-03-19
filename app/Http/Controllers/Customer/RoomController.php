@@ -21,6 +21,7 @@ class RoomController extends Controller
         $requestedGuests = $this->resolveRequestedGuests($request);
         $selectedRoomIds = $this->parseSelectedRoomIds((string) $request->input('selected_rooms', ''));
         $selectedCapacity = 0;
+        $selectedRooms = collect();
 
         if ($selectedRoomIds->isNotEmpty()) {
             $selectedRooms = Room::with('roomType')
@@ -213,6 +214,17 @@ class RoomController extends Controller
             'remaining_guests' => $remainingGuestsToCover,
             'remaining_rooms' => $remainingRoomsToSelect,
             'selected_count' => $selectedRoomIds->count(),
+            'selected_rooms_summary' => $selectedRooms
+                ->map(function (Room $room) {
+                    return [
+                        'id' => (int) $room->id,
+                        'room_number' => (string) ($room->room_number ?? ''),
+                        'room_type' => (string) (optional($room->roomType)->name ?? 'Room'),
+                        'capacity' => (int) (optional($room->roomType)->max_guests ?? 0),
+                    ];
+                })
+                ->values()
+                ->all(),
         ];
         
         return view('customer.rooms.index', compact('rooms', 'roomTypes', 'amenities', 'selectionMeta'));
