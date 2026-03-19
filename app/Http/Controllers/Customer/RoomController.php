@@ -18,7 +18,31 @@ class RoomController extends Controller
             ->where('status', 'available'); // Only show available rooms
 
         $requestedRooms = max(1, min(12, (int) $request->input('rooms', 1)));
-        $requestedGuests = (int) $request->input('guests', 0);
+        $requestedGuests = $this->resolveRequestedGuests($request);
+        $selectedRoomIds = $this->parseSelectedRoomIds((string) $request->input('selected_rooms', ''));
+        $selectedCapacity = 0;
+
+        if ($selectedRoomIds->isNotEmpty()) {
+            $selectedRooms = Room::with('roomType')
+                ->whereIn('id', $selectedRoomIds->all())
+                ->get();
+
+            $selectedRoomIds = $selectedRooms
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+
+            $selectedCapacity = (int) $selectedRooms->sum(function (Room $room) {
+                return (int) optional($room->roomType)->max_guests;
+            });
+
+            // Keep already selected rooms out of candidate list to reduce duplicate picks.
+            $query->whereNotIn('rooms.id', $selectedRoomIds->all());
+        }
+
+        $remainingRoomsToSelect = max($requestedRooms - $selectedRoomIds->count(), 0);
+        $remainingGuestsToCover = max($requestedGuests - $selectedCapacity, 0);
         $applyCombinationFilter = false;
         
         // Search functionality
@@ -43,12 +67,12 @@ class RoomController extends Controller
         
         // Filter by number of guests.
         // For multi-room requests, use combination logic instead of single-room capacity.
-        if ($request->filled('guests')) {
+        if ($requestedGuests > 0) {
             if ($requestedRooms > 1) {
                 $applyCombinationFilter = true;
             } else {
-                $query->whereHas('roomType', function($q) use ($request) {
-                    $q->where('max_guests', '>=', $request->guests);
+                $query->whereHas('roomType', function($q) use ($requestedGuests) {
+                    $q->where('max_guests', '>=', $requestedGuests);
                 });
             }
         }
@@ -67,8 +91,12 @@ class RoomController extends Controller
         }
         
         // Filter by amenities
-        if ($request->filled('amenities')) {
-            foreach ($request->amenities as $amenityId) {
+        $amenityFilters = $request->input('amenities', []);
+        if (!is_array($amenityFilters)) {
+            $amenityFilters = array_filter(array_map('trim', explode(',', (string) $amenityFilters)));
+        }
+        if (!empty($amenityFilters)) {
+            foreach ($amenityFilters as $amenityId) {
                 $query->whereHas('amenities', function($q) use ($amenityId) {
                     $q->where('amenities.id', $amenityId);
                 });
@@ -122,22 +150,33 @@ class RoomController extends Controller
         }
 
         if ($applyCombinationFilter) {
-            $roomsForCombination = (clone $query)->with('roomType')->get();
-            $combinationMeta = $this->resolveCombinationRoomTypeMeta($roomsForCombination, $requestedRooms, $requestedGuests);
+            $targetRooms = $remainingRoomsToSelect > 0 ? $remainingRoomsToSelect : $requestedRooms;
+            $targetGuests = $remainingRoomsToSelect > 0 ? $remainingGuestsToCover : $requestedGuests;
 
-            if (empty($combinationMeta['typeIds'])) {
-                $query->whereRaw('1 = 0');
-            } else {
-                $query->whereIn('room_type_id', $combinationMeta['typeIds']);
+            if ($targetRooms === 1) {
+                if ($targetGuests > 0) {
+                    $query->whereHas('roomType', function ($q) use ($targetGuests) {
+                        $q->where('max_guests', '>=', $targetGuests);
+                    });
+                }
+            } elseif ($targetRooms > 1 && $targetGuests > 0) {
+                $roomsForCombination = (clone $query)->with('roomType')->get();
+                $combinationMeta = $this->resolveCombinationRoomTypeMeta($roomsForCombination, $targetRooms, $targetGuests);
 
-                // Prioritize room types that appear in better-fit combinations when no explicit sort is requested.
-                if (!$request->filled('sort') && !empty($combinationMeta['priorityTypeIds'])) {
-                    $caseParts = [];
-                    foreach ($combinationMeta['priorityTypeIds'] as $index => $typeId) {
-                        $caseParts[] = 'WHEN ' . (int) $typeId . ' THEN ' . $index;
+                if (empty($combinationMeta['typeIds'])) {
+                    $query->whereRaw('1 = 0');
+                } else {
+                    $query->whereIn('room_type_id', $combinationMeta['typeIds']);
+
+                    // Prioritize room types that appear in better-fit combinations when no explicit sort is requested.
+                    if (!$request->filled('sort') && !empty($combinationMeta['priorityTypeIds'])) {
+                        $caseParts = [];
+                        foreach ($combinationMeta['priorityTypeIds'] as $index => $typeId) {
+                            $caseParts[] = 'WHEN ' . (int) $typeId . ' THEN ' . $index;
+                        }
+                        $caseSql = 'CASE rooms.room_type_id ' . implode(' ', $caseParts) . ' ELSE 999 END';
+                        $query->orderByRaw($caseSql)->orderBy('room_number');
                     }
-                    $caseSql = 'CASE rooms.room_type_id ' . implode(' ', $caseParts) . ' ELSE 999 END';
-                    $query->orderByRaw($caseSql)->orderBy('room_number');
                 }
             }
         }
@@ -154,8 +193,42 @@ class RoomController extends Controller
                 'total' => $rooms->total()
             ]);
         }
+
+        $selectionMeta = [
+            'requested_guests' => $requestedGuests,
+            'selected_capacity' => $selectedCapacity,
+            'remaining_guests' => $remainingGuestsToCover,
+            'remaining_rooms' => $remainingRoomsToSelect,
+            'selected_count' => $selectedRoomIds->count(),
+        ];
         
-        return view('customer.rooms.index', compact('rooms', 'roomTypes', 'amenities'));
+        return view('customer.rooms.index', compact('rooms', 'roomTypes', 'amenities', 'selectionMeta'));
+    }
+
+    private function parseSelectedRoomIds(string $rawIds): Collection
+    {
+        return collect(explode(',', $rawIds))
+            ->map(fn ($id) => (int) trim((string) $id))
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+    }
+
+    private function resolveRequestedGuests(Request $request): int
+    {
+        $guests = 0;
+
+        if (is_numeric($request->input('guests'))) {
+            $guests = (int) $request->input('guests');
+        }
+
+        if ($guests <= 0) {
+            $adults = is_numeric($request->input('adults')) ? (int) $request->input('adults') : 0;
+            $children = is_numeric($request->input('children')) ? (int) $request->input('children') : 0;
+            $guests = $adults + $children;
+        }
+
+        return max(0, $guests);
     }
 
     /**
