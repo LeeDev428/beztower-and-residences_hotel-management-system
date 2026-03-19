@@ -18,6 +18,12 @@
         if (request('guests')) {
             $baseParams['guests'] = request('guests');
         }
+        if (request('adults')) {
+            $baseParams['adults'] = request('adults');
+        }
+        if (request()->has('children')) {
+            $baseParams['children'] = request('children');
+        }
         $baseParams['rooms'] = $requestedRooms;
 
         $detailsParams = $baseParams;
