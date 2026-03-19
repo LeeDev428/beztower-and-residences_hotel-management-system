@@ -134,6 +134,7 @@
                 'adults' => request('adults'),
                 'children' => request('children'),
                 'rooms' => $requestedRooms,
+                'selected_rooms' => $selectedRoomIds->implode(','),
                 'room_ids' => $selectedRoomIds->all(),
             ];
             $selectionCheckoutUrl = route('booking.checkout', $selectedRoomIds->first()) . '?' . http_build_query(array_filter($checkoutParams, fn ($value) => !is_null($value) && $value !== ''));
