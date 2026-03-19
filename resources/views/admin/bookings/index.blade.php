@@ -64,21 +64,21 @@
                         <div style="font-size: 0.75rem; color: var(--text-muted);">{{ $booking->created_at->format('M d, Y') }}</div>
                     </td>
                     <td style="padding: 1rem 0.75rem;">
-                        <div style="font-weight: 600;">{{ $booking->guest->name }}</div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">{{ $booking->guest->email }}</div>
+                        <div style="font-weight: 600;">{{ optional($booking->guest)->name ?? 'Guest not available' }}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">{{ optional($booking->guest)->email ?? 'No email' }}</div>
                     </td>
                     <td style="padding: 1rem 0.75rem;">
                         @if($booking->rooms->isNotEmpty())
                             <div style="font-weight: 600;">{{ $booking->rooms->count() }} room(s)</div>
                             <div style="font-size: 0.875rem; color: var(--text-muted);">
-                                Room {{ $booking->rooms->first()->room_number }}
+                                Room {{ optional($booking->rooms->first())->room_number ?? 'Unassigned' }}
                                 @if($booking->rooms->count() > 1)
                                     +{{ $booking->rooms->count() - 1 }} more
                                 @endif
                             </div>
                         @else
-                            <div style="font-weight: 600;">{{ $booking->room->room_number }}</div>
-                            <div style="font-size: 0.875rem; color: var(--text-muted);">{{ $booking->roomType->name }}</div>
+                            <div style="font-weight: 600;">{{ optional($booking->room)->room_number ?? 'Unassigned' }}</div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);">{{ optional($booking->roomType)->name ?? 'Room type not available' }}</div>
                         @endif
                     </td>
                     <td style="padding: 1rem 0.75rem;">
