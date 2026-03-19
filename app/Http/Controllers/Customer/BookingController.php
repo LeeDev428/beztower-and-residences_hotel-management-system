@@ -25,18 +25,34 @@ class BookingController extends Controller
     {
         $room->load(['roomType', 'photos']);
 
-        $preselectedRoomIds = collect($request->input('room_ids', []))
-            ->map(fn ($id) => (int) $id)
+        $roomIdsInput = $request->input('room_ids', []);
+        $preselectedRoomIds = collect();
+
+        if (is_array($roomIdsInput)) {
+            $preselectedRoomIds = collect($roomIdsInput);
+        } elseif (is_string($roomIdsInput) && trim($roomIdsInput) !== '') {
+            $preselectedRoomIds = collect(explode(',', $roomIdsInput));
+        }
+
+        if ($request->filled('selected_rooms')) {
+            $selectedRoomsFromQuery = collect(explode(',', (string) $request->input('selected_rooms')));
+            $preselectedRoomIds = $preselectedRoomIds->merge($selectedRoomsFromQuery);
+        }
+
+        $preselectedRoomIds = $preselectedRoomIds
+            ->map(fn ($id) => (int) trim((string) $id))
             ->filter(fn ($id) => $id > 0)
             ->unique()
             ->values();
 
-        if ($preselectedRoomIds->isEmpty() && $request->filled('selected_rooms')) {
-            $preselectedRoomIds = collect(explode(',', (string) $request->input('selected_rooms')))
-                ->map(fn ($id) => (int) trim($id))
+        if ($preselectedRoomIds->isEmpty() && $request->filled('room_id')) {
+            $preselectedRoomIds = collect([(int) $request->input('room_id')])
                 ->filter(fn ($id) => $id > 0)
-                ->unique()
                 ->values();
+        }
+
+        if ($preselectedRoomIds->isEmpty()) {
+            $preselectedRoomIds = collect([(int) $room->id]);
         }
 
         $preselectedRooms = Room::with(['roomType', 'photos'])
@@ -55,8 +71,8 @@ class BookingController extends Controller
 
         // For multi-room bookings, force explicit room-by-room selection first.
         // This avoids auto-populating unselected rooms on checkout.
-        if ($requestedRooms > 1 && $resolvedPreselectedIds->count() < $requestedRooms) {
-            $selectedForFlow = $resolvedPreselectedIds;
+        if ($requestedRooms > 1 && $preselectedRoomIds->count() < $requestedRooms) {
+            $selectedForFlow = $preselectedRoomIds;
 
             $remainingRooms = max($requestedRooms - $selectedForFlow->count(), 0);
 
