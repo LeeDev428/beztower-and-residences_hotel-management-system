@@ -42,16 +42,21 @@ class BookingController extends Controller
         $preselectedRooms = Room::with(['roomType', 'photos'])
             ->whereIn('id', $preselectedRoomIds)
             ->whereNull('archived_at')
-            ->where('status', 'available')
             ->get();
+
+        $resolvedPreselectedIds = $preselectedRooms
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
 
         $requestedRooms = (int) $request->integer('rooms', $preselectedRooms->count() ?: 1);
         $requestedRooms = max(1, min(12, $requestedRooms));
 
         // For multi-room bookings, force explicit room-by-room selection first.
         // This avoids auto-populating unselected rooms on checkout.
-        if ($requestedRooms > 1 && $preselectedRooms->count() < $requestedRooms) {
-            $selectedForFlow = $preselectedRooms->pluck('id')->map(fn ($id) => (int) $id)->values();
+        if ($requestedRooms > 1 && $resolvedPreselectedIds->count() < $requestedRooms) {
+            $selectedForFlow = $resolvedPreselectedIds;
 
             $remainingRooms = max($requestedRooms - $selectedForFlow->count(), 0);
 
