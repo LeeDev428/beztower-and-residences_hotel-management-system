@@ -103,6 +103,8 @@
     <input type="hidden" id="ctxCheckIn"  value="{{ request('check_in') }}">
     <input type="hidden" id="ctxCheckOut" value="{{ request('check_out') }}">
     <input type="hidden" id="ctxGuests"   value="{{ request('guests') }}">
+    <input type="hidden" id="ctxAdults"   value="{{ request('adults') }}">
+    <input type="hidden" id="ctxChildren" value="{{ request('children') }}">
     <input type="hidden" id="ctxRooms"    value="{{ request('rooms') }}">
     <input type="hidden" id="ctxSelectedRooms" value="{{ request('selected_rooms') }}">
 
@@ -115,9 +117,13 @@
             ->values();
 
         $requestedGuests = (int) ($selectionMeta['requested_guests'] ?? (int) request('guests', 0));
+        if ($requestedGuests <= 0) {
+            $requestedGuests = max((int) request('adults', 0) + (int) request('children', 0), 0);
+        }
         $selectedCapacity = (int) ($selectionMeta['selected_capacity'] ?? 0);
         $remainingGuests = (int) ($selectionMeta['remaining_guests'] ?? max($requestedGuests - $selectedCapacity, 0));
         $remainingRooms = max($requestedRooms - $selectedRoomIds->count(), 0);
+        $selectedRoomSummary = collect($selectionMeta['selected_rooms_summary'] ?? []);
 
         $selectionCheckoutUrl = '';
         if ($selectedRoomIds->count() >= $requestedRooms && $selectedRoomIds->isNotEmpty()) {
@@ -125,6 +131,8 @@
                 'check_in' => request('check_in'),
                 'check_out' => request('check_out'),
                 'guests' => request('guests'),
+                'adults' => request('adults'),
+                'children' => request('children'),
                 'rooms' => $requestedRooms,
                 'room_ids' => $selectedRoomIds->all(),
             ];
@@ -144,6 +152,21 @@
                         | Covered by selected rooms: <strong>{{ $selectedCapacity }}</strong>
                         | Remaining guests: <strong>{{ $remainingGuests }}</strong>
                         | Rooms left to pick: <strong>{{ $remainingRooms }}</strong>
+                    </div>
+                @endif
+                @if($selectedRoomSummary->isNotEmpty())
+                    <div style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.2rem;">
+                        @foreach($selectedRoomSummary as $selectedRoom)
+                            <span style="display:inline-flex; align-items:center; gap:0.25rem; background:#2c2c2c; color:#fff; border-radius:999px; padding:0.2rem 0.55rem; font-size:0.78rem; font-weight:600;">
+                                {{ $selectedRoom['room_type'] ?? 'Room' }}
+                                @if(!empty($selectedRoom['room_number']))
+                                    ({{ $selectedRoom['room_number'] }})
+                                @endif
+                                @if(isset($selectedRoom['capacity']))
+                                    - {{ (int) $selectedRoom['capacity'] }} pax
+                                @endif
+                            </span>
+                        @endforeach
                     </div>
                 @endif
             </div>
@@ -1005,12 +1028,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const ctxCheckIn  = document.getElementById('ctxCheckIn').value;
             const ctxCheckOut = document.getElementById('ctxCheckOut').value;
             const ctxGuests   = document.getElementById('ctxGuests').value;
+            const ctxAdults   = document.getElementById('ctxAdults').value;
+            const ctxChildren = document.getElementById('ctxChildren').value;
             const ctxRooms    = document.getElementById('ctxRooms').value;
             const ctxSelectedRooms = document.getElementById('ctxSelectedRooms').value;
             if (ctxCheckIn)  params.append('check_in', ctxCheckIn);
             if (ctxCheckOut) params.append('check_out', ctxCheckOut);
             // Use ctxGuests as fallback when no guests filter UI is present
             if (!guests && ctxGuests) params.append('guests', ctxGuests);
+            if (ctxAdults) params.append('adults', ctxAdults);
+            if (ctxChildren !== '') params.append('children', ctxChildren);
             if (ctxRooms) params.append('rooms', ctxRooms);
             if (ctxSelectedRooms) params.append('selected_rooms', ctxSelectedRooms);
             
