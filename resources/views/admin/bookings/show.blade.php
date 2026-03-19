@@ -36,11 +36,11 @@
                             <div style="font-weight: 600;">{{ $booking->rooms->count() }} room(s)</div>
                             <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.35rem;">
                                 @foreach($booking->rooms as $reservedRoom)
-                                    Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
+                                    Room {{ $reservedRoom->room_number }} - {{ optional($reservedRoom->roomType)->name ?? 'N/A' }}@if(!$loop->last), @endif
                                 @endforeach
                             </div>
                         @else
-                            <div style="font-weight: 600;">{{ $booking->room->room_number }} - {{ $booking->roomType->name }}</div>
+                            <div style="font-weight: 600;">{{ optional($booking->room)->room_number ?? 'Unassigned' }} - {{ optional($booking->roomType)->name ?? 'N/A' }}</div>
                         @endif
                     </div>
                     <div>
@@ -121,20 +121,20 @@
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
                 <div>
                     <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Name</div>
-                    <div style="font-weight: 600;">{{ $booking->guest->name }}</div>
+                    <div style="font-weight: 600;">{{ optional($booking->guest)->name ?? 'Guest not available' }}</div>
                 </div>
                 <div>
                     <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Email</div>
-                    <div style="font-weight: 600;">{{ $booking->guest->email }}</div>
+                    <div style="font-weight: 600;">{{ optional($booking->guest)->email ?? 'No email' }}</div>
                 </div>
                 <div>
                     <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Phone</div>
-                    <div style="font-weight: 600;">{{ $booking->guest->phone }}</div>
+                    <div style="font-weight: 600;">{{ optional($booking->guest)->phone ?? 'No phone' }}</div>
                 </div>
-                @if($booking->guest->address)
+                @if(optional($booking->guest)->address)
                 <div>
                     <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Address</div>
-                    <div style="font-weight: 600;">{{ $booking->guest->address }}</div>
+                    <div style="font-weight: 600;">{{ optional($booking->guest)->address }}</div>
                 </div>
                 @endif
                 {{-- @if($booking->guest->id_photo)
