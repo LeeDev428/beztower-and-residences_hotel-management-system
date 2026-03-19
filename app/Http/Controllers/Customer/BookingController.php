@@ -59,6 +59,8 @@ class BookingController extends Controller
                 'check_in' => $request->input('check_in'),
                 'check_out' => $request->input('check_out'),
                 'guests' => $request->input('guests'),
+                'adults' => $request->input('adults'),
+                'children' => $request->input('children'),
                 'rooms' => $requestedRooms,
                 'selected_rooms' => $selectedForFlow->implode(','),
             ])->with('warning', 'Please select ' . $remainingRooms . ' more room(s) before checkout.');
