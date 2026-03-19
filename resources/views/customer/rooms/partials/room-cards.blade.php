@@ -9,40 +9,29 @@
         $isSelected = $selectedRoomIds->contains((int) $room->id);
 
         $baseParams = [];
-        if (request('check_in'))  $baseParams['check_in'] = request('check_in');
-        if (request('check_out')) $baseParams['check_out'] = request('check_out');
-        if (request('guests'))    $baseParams['guests'] = request('guests');
+        if (request('check_in')) {
+            $baseParams['check_in'] = request('check_in');
+        }
+        if (request('check_out')) {
+            $baseParams['check_out'] = request('check_out');
+        }
+        if (request('guests')) {
+            $baseParams['guests'] = request('guests');
+        }
         $baseParams['rooms'] = $requestedRooms;
 
         $detailsParams = $baseParams;
         $detailsParams['origin'] = 'learn_more';
         $detailsParams['selection_action'] = 'view';
         $detailsParams['current_selected'] = $isSelected ? '1' : '0';
-        $learnMoreSelectedIds = $selectedRoomIds;
 
-        if ($learnMoreSelectedIds->isNotEmpty()) {
-            $detailsParams['selected_rooms'] = $learnMoreSelectedIds->implode(',');
-        } else {
-            unset($detailsParams['selected_rooms']);
+        if ($selectedRoomIds->isNotEmpty()) {
+            $detailsParams['selected_rooms'] = $selectedRoomIds->implode(',');
         }
-        $btnUrl  = route('rooms.show', $room) . ($detailsParams ? '?' . http_build_query($detailsParams) : '');
 
-        $selectParams = $baseParams;
-        if ($nextSelectedRoomIds->isNotEmpty()) {
-            $selectParams['selected_rooms'] = $nextSelectedRoomIds->implode(',');
-        }
-        $selectUrl = route('rooms.index') . '?' . http_build_query($selectParams);
-
-        $deselectedRoomIds = $selectedRoomIds->reject(fn ($id) => (int) $id === (int) $room->id)->values();
-        $deselectParams = $baseParams;
-        if ($deselectedRoomIds->isNotEmpty()) {
-            $deselectParams['selected_rooms'] = $deselectedRoomIds->implode(',');
-        } else {
-            unset($deselectParams['selected_rooms']);
-        }
-        $deselectUrl = route('rooms.index') . '?' . http_build_query($deselectParams);
-
+        $btnUrl = route('rooms.show', $room) . '?' . http_build_query($detailsParams);
     @endphp
+
     <div class="room-card">
         <div class="room-image">
             @if($room->photos->count() > 0)
@@ -51,6 +40,21 @@
                 <img src="https://via.placeholder.com/400x300/d4af37/2c2c2c?text={{ urlencode($room->roomType->name) }}" alt="{{ $room->roomType->name }}">
             @endif
             <div class="room-badge">{{ $room->status }}</div>
+            @if($isSelected)
+                <div style="position:absolute;top:10px;right:10px;background:#27ae60;color:#fff;padding:0.4rem 0.7rem;border-radius:6px;font-size:0.8rem;font-weight:700;">Selected</div>
+            @endif
+        </div>
+
+        <div class="room-details">
+            <h3>{{ $room->roomType->name }}</h3>
+
+            <div class="room-info">
+                <span><i class="fas fa-users"></i> Up to {{ $room->roomType->max_guests }} Guests</span>
+                <span><i class="fas fa-bed"></i> {{ $room->roomType->bed_type }}</span>
+            </div>
+
+            <p class="room-description">{{ Str::limit($room->roomType->description, 100) }}</p>
+
             @if($room->amenities->count() > 0)
                 <div class="room-amenities">
                     @foreach($room->amenities->take(4) as $amenity)
@@ -60,7 +64,7 @@
                     @endforeach
                 </div>
             @endif
-            
+
             <div class="room-footer">
                 <div class="room-price">
                     <span class="price-label">From</span>
