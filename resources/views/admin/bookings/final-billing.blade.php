@@ -231,38 +231,45 @@
 
             <!-- PWD/Senior Discount -->
             <x-admin.card title="PWD / Senior Citizen Discount">
+                @if($reservedRooms->count() > 1)
+                    <div style="background: #e8f5e9; border-left: 4px solid var(--success); border-radius: 6px; padding: 0.85rem 1rem; font-size: 0.85rem; color: #1b5e20;">
+                        <i class="fas fa-check-circle"></i>&nbsp;
+                        For multi-room bookings, PWD/Senior discount is applied per room under <strong>Manual Adjustment → Per-Room Billing</strong>.
+                    </div>
+                    <input type="hidden" name="pwd_senior_discount" id="pwdSeniorDiscountInput" value="0">
+                @else
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem 1rem; background: var(--light-gray); border-radius: 8px;">
+                        <input type="checkbox" id="hasPwdSenior" name="has_pwd_senior" value="1"
+                            {{ $booking->has_pwd_senior ? 'checked' : '' }}
+                            onchange="togglePwdSenior()"
+                            style="width: 18px; height: 18px; accent-color: var(--success); cursor: pointer;">
+                        <label for="hasPwdSenior" style="font-weight: 700; cursor: pointer; font-size: 0.95rem; margin: 0;">Apply PWD/Senior Discount (20%)</label>
+                    </div>
 
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; padding: 0.75rem 1rem; background: var(--light-gray); border-radius: 8px;">
-                    <input type="checkbox" id="hasPwdSenior" name="has_pwd_senior" value="1"
-                        {{ $booking->has_pwd_senior ? 'checked' : '' }}
-                        onchange="togglePwdSenior()"
-                        style="width: 18px; height: 18px; accent-color: var(--success); cursor: pointer;">
-                    <label for="hasPwdSenior" style="font-weight: 700; cursor: pointer; font-size: 0.95rem; margin: 0;">Apply PWD/Senior Discount (20%)</label>
-                </div>
-
-                <div id="pwdSeniorSection" style="display: {{ $booking->has_pwd_senior ? 'block' : 'none' }};">
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Number of PWD/Senior Citizens</label>
-                        <select name="pwd_senior_count" id="pwdSeniorCount" onchange="calculatePwdDiscount()"
-                            style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; background: white; outline: none;">
-                            <option value="0">Select count</option>
-                            @for($i = 1; $i <= $booking->number_of_guests; $i++)
-                            <option value="{{ $i }}" {{ ($booking->pwd_senior_count ?? 0) == $i ? 'selected' : '' }}>
-                                {{ $i }} {{ $i == 1 ? 'Person' : 'People' }}
-                            </option>
-                            @endfor
-                        </select>
+                    <div id="pwdSeniorSection" style="display: {{ $booking->has_pwd_senior ? 'block' : 'none' }};">
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Number of PWD/Senior Citizens</label>
+                            <select name="pwd_senior_count" id="pwdSeniorCount" onchange="calculatePwdDiscount()"
+                                style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; background: white; outline: none;">
+                                <option value="0">Select count</option>
+                                @for($i = 1; $i <= $booking->number_of_guests; $i++)
+                                <option value="{{ $i }}" {{ ($booking->pwd_senior_count ?? 0) == $i ? 'selected' : '' }}>
+                                    {{ $i }} {{ $i == 1 ? 'Person' : 'People' }}
+                                </option>
+                                @endfor
+                            </select>
+                        </div>
+                        <div style="background: #fff9e6; border-left: 4px solid #f0ad4e; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.82rem; color: #5a4000; margin-bottom: 1rem;">
+                            <i class="fas fa-exclamation-triangle"></i>&nbsp;
+                            Discount applies to individual's share only (20% of total · guests)
+                        </div>
+                        <div style="background: var(--light-gray); border-radius: 10px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 700; font-size: 0.95rem;">Discount Amount:</span>
+                            <span style="font-size: 1.4rem; font-weight: 800; color: var(--success);" id="pwdDiscountAmount">-₱{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</span>
+                        </div>
+                        <input type="hidden" name="pwd_senior_discount" id="pwdSeniorDiscountInput" value="{{ $booking->pwd_senior_discount ?? 0 }}">
                     </div>
-                    <div style="background: #fff9e6; border-left: 4px solid #f0ad4e; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.82rem; color: #5a4000; margin-bottom: 1rem;">
-                        <i class="fas fa-exclamation-triangle"></i>&nbsp;
-                        Discount applies to individual's share only (20% of total · guests)
-                    </div>
-                    <div style="background: var(--light-gray); border-radius: 10px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: 700; font-size: 0.95rem;">Discount Amount:</span>
-                        <span style="font-size: 1.4rem; font-weight: 800; color: var(--success);" id="pwdDiscountAmount">-₱{{ number_format($booking->pwd_senior_discount ?? 0, 2) }}</span>
-                    </div>
-                    <input type="hidden" name="pwd_senior_discount" id="pwdSeniorDiscountInput" value="{{ $booking->pwd_senior_discount ?? 0 }}">
-                </div>
+                @endif
 
             </x-admin.card>
         </div>
@@ -440,15 +447,9 @@ function calculatePerRoomNetAdjustmentTotal() {
         const discountTypeInput = row.querySelector('.room-discount-type');
 
         const additional = parseFloat(additionalInput?.value) || 0;
-        let discount = parseFloat(discountInput?.value) || 0;
         const discountType = discountTypeInput?.value || 'none';
-
-        if (discountType === 'none') {
-            discount = 0;
-            if (discountInput) {
-                discountInput.value = '0';
-            }
-        }
+        const syncedDiscount = syncPerRoomDiscountInput(row, discountType);
+        const discount = syncedDiscount !== null ? syncedDiscount : (parseFloat(discountInput?.value) || 0);
 
         const roomTotalValue = roomBase + additional - discount;
         const roomDisplay = document.getElementById('roomNetTotalDisplay_' + roomId);
@@ -504,6 +505,38 @@ function getManualAdjustmentTotal() {
     return parseFloat(document.getElementById('manualAdjustment').value) || 0;
 }
 
+function syncPerRoomDiscountInput(row, discountType = null) {
+    const roomBase = parseFloat(row.dataset.roomBaseTotal) || 0;
+    const discountInput = row.querySelector('.room-discount-amount');
+    const resolvedType = discountType || row.querySelector('.room-discount-type')?.value || 'none';
+
+    if (!discountInput) {
+        return null;
+    }
+
+    if (resolvedType === 'pwd' || resolvedType === 'senior') {
+        const autoDiscount = roomBase * 0.20;
+        discountInput.value = autoDiscount.toFixed(2);
+        discountInput.readOnly = true;
+        discountInput.style.background = '#f3f4f6';
+        discountInput.style.cursor = 'not-allowed';
+        return autoDiscount;
+    }
+
+    if (resolvedType === 'none') {
+        discountInput.value = '0';
+        discountInput.readOnly = true;
+        discountInput.style.background = '#f3f4f6';
+        discountInput.style.cursor = 'not-allowed';
+        return 0;
+    }
+
+    discountInput.readOnly = false;
+    discountInput.style.background = 'white';
+    discountInput.style.cursor = 'text';
+    return parseFloat(discountInput.value) || 0;
+}
+
 function incrementCounter(type) {
     const input = document.getElementById(type + 'Hours');
     const currentValue = parseInt(input.value);
@@ -545,6 +578,10 @@ function togglePwdSenior() {
     const checkbox = document.getElementById('hasPwdSenior');
     const section = document.getElementById('pwdSeniorSection');
 
+    if (!checkbox || !section) {
+        return;
+    }
+
     if (checkbox.checked) {
         section.style.display = 'block';
         calculatePwdDiscount();
@@ -559,13 +596,22 @@ function togglePwdSenior() {
 
 function calculatePwdDiscount() {
     const checkbox = document.getElementById('hasPwdSenior');
+    const pwdDiscountInput = document.getElementById('pwdSeniorDiscountInput');
+    const pwdDiscountAmount = document.getElementById('pwdDiscountAmount');
+    const pwdDiscountDisplay = document.getElementById('pwdDiscountDisplay');
+    const pwdSeniorCount = document.getElementById('pwdSeniorCount');
+
+    if (!checkbox || !pwdDiscountInput || !pwdDiscountAmount || !pwdDiscountDisplay || !pwdSeniorCount) {
+        calculateTotal();
+        return;
+    }
     if (!checkbox.checked) return;
 
-    const count = parseInt(document.getElementById('pwdSeniorCount').value);
+    const count = parseInt(pwdSeniorCount.value);
     if (count === 0) {
-        document.getElementById('pwdSeniorDiscountInput').value = 0;
-        document.getElementById('pwdDiscountAmount').textContent = '-₱0.00';
-        document.getElementById('pwdDiscountDisplay').textContent = '-₱0.00';
+        pwdDiscountInput.value = 0;
+        pwdDiscountAmount.textContent = '-₱0.00';
+        pwdDiscountDisplay.textContent = '-₱0.00';
         calculateTotal();
         return;
     }
@@ -575,9 +621,9 @@ function calculatePwdDiscount() {
     const individualShare = (roomTotal + earlyCheckinAmt + lateCheckoutAmt) / numberOfGuests;
     const discount = (individualShare * 0.20) * count;
 
-    document.getElementById('pwdSeniorDiscountInput').value = discount.toFixed(2);
-    document.getElementById('pwdDiscountAmount').textContent = '-₱' + discount.toLocaleString('en-PH', {minimumFractionDigits: 2});
-    document.getElementById('pwdDiscountDisplay').textContent = '-₱' + discount.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    pwdDiscountInput.value = discount.toFixed(2);
+    pwdDiscountAmount.textContent = '-₱' + discount.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    pwdDiscountDisplay.textContent = '-₱' + discount.toLocaleString('en-PH', {minimumFractionDigits: 2});
 
     calculateTotal();
 }
@@ -585,7 +631,8 @@ function calculatePwdDiscount() {
 function calculateTotal() {
     const earlyCheckin = parseFloat(document.getElementById('earlyCheckinChargeInput').value) || 0;
     const lateCheckout = parseFloat(document.getElementById('lateCheckoutChargeInput').value) || 0;
-    const pwdDiscount  = parseFloat(document.getElementById('pwdSeniorDiscountInput').value) || 0;
+    const pwdDiscountInput = document.getElementById('pwdSeniorDiscountInput');
+    const pwdDiscount  = pwdDiscountInput ? (parseFloat(pwdDiscountInput.value) || 0) : 0;
     const manualAdjust = getManualAdjustmentTotal();
 
     const grossTotal = roomTotal + earlyCheckin + lateCheckout - pwdDiscount + manualAdjust;
@@ -604,6 +651,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.room-additional-charge, .room-discount-amount, .room-discount-type').forEach(input => {
         input.addEventListener('change', calculateTotal);
         input.addEventListener('input', calculateTotal);
+    });
+
+    document.querySelectorAll('[data-room-row="1"]').forEach(row => {
+        const typeInput = row.querySelector('.room-discount-type');
+        syncPerRoomDiscountInput(row, typeInput ? typeInput.value : 'none');
     });
 
     document.querySelectorAll('.room-manual-adjustment').forEach(input => {
