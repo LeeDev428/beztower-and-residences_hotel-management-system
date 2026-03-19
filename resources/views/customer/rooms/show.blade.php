@@ -1076,6 +1076,8 @@
                         if (request('check_in'))  $ctx['check_in'] = request('check_in');
                         if (request('check_out')) $ctx['check_out'] = request('check_out');
                         if (request('guests'))    $ctx['guests'] = request('guests');
+                        if (request('adults'))    $ctx['adults'] = request('adults');
+                        if (request()->has('children')) $ctx['children'] = request('children');
                         $ctx['rooms'] = $requestedRooms;
 
                         $continueUrl = route('rooms.index');
@@ -1112,6 +1114,8 @@
                             'check_in' => request('check_in'),
                             'check_out' => request('check_out'),
                             'guests' => request('guests'),
+                            'adults' => request('adults'),
+                            'children' => request('children'),
                             'rooms' => $requestedRooms,
                             'selected_rooms' => $selectedRoomIds->implode(','),
                             'room_ids' => $selectedRoomIds->all(),
