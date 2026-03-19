@@ -648,8 +648,35 @@
                         <div class="form-group-full">
                             <label class="form-label">Room Assignment <span class="required">*</span></label>
                             <div id="availabilityByType" style="font-size: 0.9rem; color: #666; margin-bottom: 0.7rem;">Select check-in and check-out dates to load available rooms.</div>
-                            <div id="autoAssignedRoomsSummary" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:8px;padding:0.9rem;font-size:0.9rem;color:#444;">Rooms will be automatically assigned after selecting dates.</div>
-                            <div id="autoSelectedRoomInputs"></div>
+                            @php
+                                $lockedRoomMeta = (isset($preselectedRooms) && $preselectedRooms->count() > 0)
+                                    ? $preselectedRooms->map(function ($selectedRoom) {
+                                        return [
+                                            'id' => (int) $selectedRoom->id,
+                                            'room_number' => $selectedRoom->room_number,
+                                            'room_type' => $selectedRoom->roomType->name ?? 'Room',
+                                            'price' => (float) ($selectedRoom->roomType->base_price ?? 0),
+                                            'capacity' => (int) ($selectedRoom->roomType->max_guests ?? 0),
+                                        ];
+                                    })->values()
+                                    : collect();
+                            @endphp
+                            <div id="autoAssignedRoomsSummary" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:8px;padding:0.9rem;font-size:0.9rem;color:#444;">
+                                @if($lockedRoomMeta->isNotEmpty())
+                                    {!! $lockedRoomMeta->map(function ($lockedRoom) {
+                                        return '<div style="padding:0.2rem 0;">Room ' . e($lockedRoom['room_number']) . ' - ' . e($lockedRoom['room_type']) . ' (₱' . number_format((float) $lockedRoom['price'], 2) . '/night)</div>';
+                                    })->implode('') !!}
+                                @else
+                                    Rooms will be automatically assigned after selecting dates.
+                                @endif
+                            </div>
+                            <div id="autoSelectedRoomInputs">
+                                @if($lockedRoomMeta->isNotEmpty())
+                                    @foreach($lockedRoomMeta as $lockedRoom)
+                                        <input type="hidden" name="room_ids[]" value="{{ $lockedRoom['id'] }}">
+                                    @endforeach
+                                @endif
+                            </div>
                         </div>
                     </div>
                     
@@ -804,6 +831,8 @@
                     <div class="price-breakdown-title">
                         <i class="fas fa-receipt"></i> Price Details
                     </div>
+
+                    <div id="selectedRoomsPriceList" style="margin-bottom: 0.4rem; font-size: 0.9rem; color:#444;"></div>
                     
                     <div class="price-row">
                         <span class="price-label">Room Rate × <span id="nightsCount">1</span> night</span>
@@ -913,7 +942,8 @@
 
         const basePrice = {{ $room->roomType->base_price }};
         const preferredRoomId = {{ $room->id }};
-        const lockedSelectedRoomIds = @json(isset($preselectedRooms) ? $preselectedRooms->pluck('id')->values()->all() : []);
+        const lockedSelectedRooms = @json($lockedRoomMeta->values()->all());
+        const lockedSelectedRoomIds = lockedSelectedRooms.map((roomData) => Number(roomData.id));
         const isRoomCountLocked = {{ (isset($preselectedRooms) && $preselectedRooms->count() > 0) ? 'true' : 'false' }};
         const fallbackRoomCapacity = {{ (int) ($room->roomType->max_guests ?? 1) }};
         let availableRooms = [];
@@ -949,13 +979,46 @@
 
         function getSelectedRoomNightlyTotal() {
             const selectedIds = new Set(getSelectedRoomIds());
+            const roomPriceMap = new Map();
+
+            lockedSelectedRooms.forEach((lockedRoom) => {
+                roomPriceMap.set(Number(lockedRoom.id), Number(lockedRoom.price || 0));
+            });
+
+            availableRooms.forEach((availableRoom) => {
+                roomPriceMap.set(Number(availableRoom.id), Number(availableRoom.price || 0));
+            });
+
             let total = 0;
-            availableRooms.forEach((room) => {
-                if (selectedIds.has(room.id)) {
-                    total += Number(room.price || 0);
+            selectedIds.forEach((selectedId) => {
+                if (roomPriceMap.has(Number(selectedId))) {
+                    total += Number(roomPriceMap.get(Number(selectedId)) || 0);
                 }
             });
             return total;
+        }
+
+        function renderSelectedRoomsPriceList(selectedRoomEntries, nights) {
+            const container = document.getElementById('selectedRoomsPriceList');
+            if (!container) {
+                return;
+            }
+
+            if (!selectedRoomEntries || selectedRoomEntries.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = selectedRoomEntries.map((selectedRoom) => {
+                const nightly = Number(selectedRoom.price || 0);
+                const total = nightly * nights;
+                const nightlyText = nightly.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const totalText = total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return `<div style="display:flex;justify-content:space-between;gap:0.8rem;padding:0.22rem 0;">
+                    <span>Room ${selectedRoom.room_number} - ${selectedRoom.room_type}</span>
+                    <span>₱${nightlyText}/night (₱${totalText})</span>
+                </div>`;
+            }).join('');
         }
 
         async function loadAvailableRooms() {
@@ -1012,6 +1075,26 @@
             const summary = document.getElementById('autoAssignedRoomsSummary');
             const hiddenInputs = document.getElementById('autoSelectedRoomInputs');
             hiddenInputs.innerHTML = '';
+
+            if (isRoomCountLocked && lockedSelectedRooms.length > 0) {
+                const selectedRooms = lockedSelectedRooms.slice(0, requestedRooms);
+
+                selectedRooms.forEach((roomData) => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'room_ids[]';
+                    input.value = roomData.id;
+                    hiddenInputs.appendChild(input);
+                });
+
+                syncGuestLimit(selectedRooms);
+
+                summary.innerHTML = selectedRooms.map((roomData) => {
+                    const nightly = Number(roomData.price || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<div style="padding:0.2rem 0;">Room ${roomData.room_number} - ${roomData.room_type} (₱${nightly}/night)</div>`;
+                }).join('');
+                return;
+            }
 
             if (!availableRooms.length) {
                 summary.innerHTML = '<span style="color:#b00020;">No available rooms found for the selected date range.</span>';
@@ -1130,6 +1213,25 @@
             const nights = parseInt(document.getElementById('totalNights').value) || 1;
             const selectedNightlyTotal = getSelectedRoomNightlyTotal();
             const subtotal = (selectedNightlyTotal > 0 ? selectedNightlyTotal : basePrice) * nights;
+
+            const selectedIds = new Set(getSelectedRoomIds());
+            const selectedRoomEntries = [];
+
+            lockedSelectedRooms.forEach((lockedRoom) => {
+                if (selectedIds.has(Number(lockedRoom.id))) {
+                    selectedRoomEntries.push(lockedRoom);
+                }
+            });
+
+            if (selectedRoomEntries.length === 0 && availableRooms.length > 0) {
+                availableRooms.forEach((availableRoom) => {
+                    if (selectedIds.has(Number(availableRoom.id))) {
+                        selectedRoomEntries.push(availableRoom);
+                    }
+                });
+            }
+
+            renderSelectedRoomsPriceList(selectedRoomEntries, nights);
             
             // Calculate extras
             let extrasTotal = 0;
