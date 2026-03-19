@@ -36,9 +36,6 @@ class RoomController extends Controller
             $selectedCapacity = (int) $selectedRooms->sum(function (Room $room) {
                 return (int) optional($room->roomType)->max_guests;
             });
-
-            // Keep already selected rooms out of candidate list to reduce duplicate picks.
-            $query->whereNotIn('rooms.id', $selectedRoomIds->all());
         }
 
         $remainingRoomsToSelect = max($requestedRooms - $selectedRoomIds->count(), 0);
@@ -155,8 +152,14 @@ class RoomController extends Controller
 
             if ($targetRooms === 1) {
                 if ($targetGuests > 0) {
-                    $query->whereHas('roomType', function ($q) use ($targetGuests) {
-                        $q->where('max_guests', '>=', $targetGuests);
+                    $query->where(function ($filtered) use ($targetGuests, $selectedRoomIds) {
+                        $filtered->whereHas('roomType', function ($q) use ($targetGuests) {
+                            $q->where('max_guests', '>=', $targetGuests);
+                        });
+
+                        if ($selectedRoomIds->isNotEmpty()) {
+                            $filtered->orWhereIn('rooms.id', $selectedRoomIds->all());
+                        }
                     });
                 }
             } elseif ($targetRooms > 1 && $targetGuests > 0) {
@@ -164,9 +167,19 @@ class RoomController extends Controller
                 $combinationMeta = $this->resolveCombinationRoomTypeMeta($roomsForCombination, $targetRooms, $targetGuests);
 
                 if (empty($combinationMeta['typeIds'])) {
-                    $query->whereRaw('1 = 0');
+                    if ($selectedRoomIds->isNotEmpty()) {
+                        $query->whereIn('rooms.id', $selectedRoomIds->all());
+                    } else {
+                        $query->whereRaw('1 = 0');
+                    }
                 } else {
-                    $query->whereIn('room_type_id', $combinationMeta['typeIds']);
+                    $query->where(function ($filtered) use ($combinationMeta, $selectedRoomIds) {
+                        $filtered->whereIn('room_type_id', $combinationMeta['typeIds']);
+
+                        if ($selectedRoomIds->isNotEmpty()) {
+                            $filtered->orWhereIn('rooms.id', $selectedRoomIds->all());
+                        }
+                    });
 
                     // Prioritize room types that appear in better-fit combinations when no explicit sort is requested.
                     if (!$request->filled('sort') && !empty($combinationMeta['priorityTypeIds'])) {
