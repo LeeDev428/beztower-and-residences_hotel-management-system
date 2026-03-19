@@ -114,6 +114,11 @@
             ->unique()
             ->values();
 
+        $requestedGuests = (int) ($selectionMeta['requested_guests'] ?? (int) request('guests', 0));
+        $selectedCapacity = (int) ($selectionMeta['selected_capacity'] ?? 0);
+        $remainingGuests = (int) ($selectionMeta['remaining_guests'] ?? max($requestedGuests - $selectedCapacity, 0));
+        $remainingRooms = max($requestedRooms - $selectedRoomIds->count(), 0);
+
         $selectionCheckoutUrl = '';
         if ($selectedRoomIds->count() >= $requestedRooms && $selectedRoomIds->isNotEmpty()) {
             $checkoutParams = [
@@ -129,8 +134,18 @@
 
     @if($requestedRooms > 1)
         <div style="margin-bottom: 1rem; padding: 0.9rem 1rem; background: #fff9e6; border: 1px solid #f1dfab; border-radius: 8px; display:flex; justify-content:space-between; gap:0.8rem; align-items:center; flex-wrap: wrap;">
-            <div style="font-size: 0.92rem; color:#5f4b1b;">
-                Room Selection Progress: <strong>{{ $selectedRoomIds->count() }}</strong> of <strong>{{ $requestedRooms }}</strong> selected
+            <div style="font-size: 0.92rem; color:#5f4b1b; display:flex; flex-direction:column; gap:0.2rem;">
+                <div>
+                    Room Selection Progress: <strong>{{ $selectedRoomIds->count() }}</strong> of <strong>{{ $requestedRooms }}</strong> selected
+                </div>
+                @if($requestedGuests > 0)
+                    <div>
+                        Guests to accommodate: <strong>{{ $requestedGuests }}</strong>
+                        | Covered by selected rooms: <strong>{{ $selectedCapacity }}</strong>
+                        | Remaining guests: <strong>{{ $remainingGuests }}</strong>
+                        | Rooms left to pick: <strong>{{ $remainingRooms }}</strong>
+                    </div>
+                @endif
             </div>
             @if($selectionCheckoutUrl)
                 <a href="{{ $selectionCheckoutUrl }}" style="text-decoration:none; background: linear-gradient(135deg, #d4af37, #f4e4c1); color:#2c2c2c; padding:0.55rem 0.9rem; border-radius:6px; font-weight:700; font-size:0.85rem;">
