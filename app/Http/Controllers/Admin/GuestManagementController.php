@@ -87,6 +87,8 @@ class GuestManagementController extends Controller
 
     public function show(Guest $guest)
     {
+        $bookings = collect();
+
         $stats = [
             'total_bookings' => 0,
             'completed_bookings' => 0,
@@ -121,6 +123,10 @@ class GuestManagementController extends Controller
                     $guest->load($relationsToLoad);
                 }
 
+                $bookings = $guest->relationLoaded('bookings')
+                    ? ($guest->bookings ?? collect())
+                    : collect();
+
                 $bookingQuery = $guest->bookings();
                 $stats['total_bookings'] = $bookingQuery->count();
 
@@ -136,7 +142,7 @@ class GuestManagementController extends Controller
                     $stats['last_booking_date'] = (clone $bookingQuery)->latest('created_at')->first()?->created_at;
                 }
 
-                $allPayments = $guest->bookings->flatMap(function ($booking) {
+                $allPayments = $bookings->flatMap(function ($booking) {
                     return $booking->payments ?? collect();
                 });
 
@@ -155,7 +161,7 @@ class GuestManagementController extends Controller
             // Keep default safe stats and continue rendering profile page.
         }
 
-        return view('admin.guests.show', compact('guest', 'stats'));
+        return view('admin.guests.show', compact('guest', 'stats', 'bookings'));
     }
 
     public function update(Request $request, Guest $guest)
