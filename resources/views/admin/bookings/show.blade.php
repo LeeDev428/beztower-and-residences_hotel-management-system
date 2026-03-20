@@ -24,11 +24,11 @@
                     </div>
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Check-in</div>
-                        <div style="font-weight: 600;">{{ $booking->check_in_date->format('F d, Y') }}</div>
+                        <div style="font-weight: 600;">{{ optional($booking->check_in_date)->format('F d, Y') ?? 'N/A' }}</div>
                     </div>
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Check-out</div>
-                        <div style="font-weight: 600;">{{ $booking->check_out_date->format('F d, Y') }}</div>
+                        <div style="font-weight: 600;">{{ optional($booking->check_out_date)->format('F d, Y') ?? 'N/A' }}</div>
                     </div>
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Room</div>
@@ -67,15 +67,17 @@
             <div style="margin-bottom: 1rem;">
                 <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Currently Assigned Room(s)</div>
                 @if($booking->rooms->isNotEmpty())
-                    <div style="font-weight: 600; font-size: 0.9rem; color: #333;">
+                            <div style="font-weight: 600; font-size: 0.9rem; color: #333;">
                         @foreach($booking->rooms as $assignedRoom)
-                            <div style="padding: 0.25rem 0;">Room {{ $assignedRoom->room_number }} — {{ $assignedRoom->roomType->name ?? 'N/A' }}</div>
+                            <div style="padding: 0.25rem 0;">Room {{ $assignedRoom->room_number }} — {{ optional($assignedRoom->roomType)->name ?? 'N/A' }}</div>
                         @endforeach
                     </div>
                 @else
                     <div style="font-weight: 600;">
-                        {{ $booking->room->room_number }} — {{ $booking->room->roomType->name ?? 'N/A' }}
-                        <x-admin.badge :status="$booking->room->status" />
+                        {{ optional($booking->room)->room_number ?? 'Unassigned' }} — {{ optional(optional($booking->room)->roomType)->name ?? 'N/A' }}
+                        @if(optional($booking->room)->status)
+                            <x-admin.badge :status="optional($booking->room)->status" />
+                        @endif
                     </div>
                 @endif
             </div>
@@ -89,7 +91,7 @@
                         <select id="currentRoomSelect" name="current_room_id" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                             @foreach($booking->rooms as $assignedRoom)
                                 <option value="{{ $assignedRoom->id }}" data-room-type-id="{{ $assignedRoom->room_type_id }}">
-                                    Room {{ $assignedRoom->room_number }} — {{ $assignedRoom->roomType->name }}
+                                    Room {{ $assignedRoom->room_number }} — {{ optional($assignedRoom->roomType)->name ?? 'N/A' }}
                                 </option>
                             @endforeach
                         </select>
@@ -169,15 +171,15 @@
     <div id="idPhotoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; padding: 2rem;" onclick="closeIdPhotoModal()">
         <div style="position: relative; max-width: 90%; max-height: 90%; margin: auto; top: 50%; transform: translateY(-50%);">
             <button onclick="closeIdPhotoModal()" style="position: absolute; top: -40px; right: 0; background: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.5rem; cursor: pointer; color: #2c2c2c;">&times;</button>
-            @if($booking->guest->id_photo && !str_ends_with($booking->guest->id_photo, '.pdf'))
-                <img src="{{ asset('storage/' . $booking->guest->id_photo) }}" alt="ID Photo" style="max-width: 100%; max-height: 80vh; display: block; margin: auto; border-radius: 8px;">
+            @if(optional($booking->guest)->id_photo && !str_ends_with(optional($booking->guest)->id_photo, '.pdf'))
+                <img src="{{ asset('storage/' . optional($booking->guest)->id_photo) }}" alt="ID Photo" style="max-width: 100%; max-height: 80vh; display: block; margin: auto; border-radius: 8px;">
             @endif
         </div>
     </div>
     
     <script>
         function openIdPhotoModal() {
-            @if($booking->guest->id_photo && !str_ends_with($booking->guest->id_photo, '.pdf'))
+            @if(optional($booking->guest)->id_photo && !str_ends_with(optional($booking->guest)->id_photo, '.pdf'))
                 document.getElementById('idPhotoModal').style.display = 'block';
             @endif
         }
@@ -201,7 +203,7 @@
         <x-admin.card title="Payment">
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Room Rate ({{ $booking->total_nights }} nights)</span>
+                    <span>Room Rate ({{ $booking->total_nights ?? 0 }} nights)</span>
                     <span style="font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
                 </div>
                 @if(($booking->final_total ?? $booking->total_amount) != $booking->total_amount)
@@ -271,7 +273,7 @@
         <form method="POST" action="{{ route('admin.bookings.reschedule', $booking) }}">
             @csrf
             <div class="alert alert-info mb-3">
-                <i class="fas fa-info-circle"></i> Original Check-in: <strong>{{ $booking->check_in_date->format('M d, Y') }}</strong>
+                <i class="fas fa-info-circle"></i> Original Check-in: <strong>{{ optional($booking->check_in_date)->format('M d, Y') ?? 'N/A' }}</strong>
             </div>
             <div style="margin-bottom: 1rem;">
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New Check-in Date</label>
