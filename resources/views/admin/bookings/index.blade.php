@@ -61,7 +61,7 @@
                 <tr style="border-bottom: 1px solid var(--border-gray);">
                     <td style="padding: 1rem 0.75rem;">
                         <div style="font-weight: 600;">{{ $booking->booking_reference }}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ $booking->created_at->format('M d, Y') }}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">{{ optional($booking->created_at)->format('M d, Y') ?? 'N/A' }}</div>
                     </td>
                     <td style="padding: 1rem 0.75rem;">
                         <div style="font-weight: 600;">{{ optional($booking->guest)->name ?? 'Guest not available' }}</div>
@@ -82,8 +82,8 @@
                         @endif
                     </td>
                     <td style="padding: 1rem 0.75rem;">
-                        <div>{{ $booking->check_in_date->format('M d') }} - {{ $booking->check_out_date->format('M d, Y') }}</div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">{{ $booking->total_nights }} nights</div>
+                        <div>{{ optional($booking->check_in_date)->format('M d') ?? 'N/A' }} - {{ optional($booking->check_out_date)->format('M d, Y') ?? 'N/A' }}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">{{ $booking->total_nights ?? 0 }} nights</div>
                     </td>
                     <td style="padding: 1rem 0.75rem;">
                         @if($booking->payments->whereIn('payment_status', ['verified', 'completed'])->first())
