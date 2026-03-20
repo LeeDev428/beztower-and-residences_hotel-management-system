@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class BookingManagementController extends Controller
@@ -272,14 +273,14 @@ class BookingManagementController extends Controller
             $pivotDiscountType = $currentRoom->pivot->discount_type;
 
             $booking->rooms()->detach($currentRoom->id);
-            $booking->rooms()->attach($newRoom->id, [
+            $booking->rooms()->attach($newRoom->id, $this->filterBookingRoomPivotPayload([
                 'nightly_rate' => $pivotRate,
                 'manual_adjustment' => $pivotManualAdjustment,
                 'additional_charge' => $pivotAdditionalCharge,
                 'additional_charge_reason' => $pivotAdditionalReason,
                 'discount_amount' => $pivotDiscountAmount,
                 'discount_type' => $pivotDiscountType,
-            ]);
+            ]));
 
             if ((int) $booking->room_id === (int) $currentRoom->id) {
                 $booking->update(['room_id' => $newRoom->id]);
@@ -434,13 +435,13 @@ class BookingManagementController extends Controller
                 $perRoomNetAdjustment = $perRoomAdditional - $perRoomDiscount;
                 $manualAdjustment += $perRoomNetAdjustment;
 
-                $booking->rooms()->updateExistingPivot($reservedRoom->id, [
+                $booking->rooms()->updateExistingPivot($reservedRoom->id, $this->filterBookingRoomPivotPayload([
                     'manual_adjustment' => $perRoomNetAdjustment,
                     'additional_charge' => $perRoomAdditional,
                     'additional_charge_reason' => $perRoomAdditionalReason,
                     'discount_amount' => $perRoomDiscount,
                     'discount_type' => $perRoomDiscountType,
-                ]);
+                ]));
             }
         } elseif ($booking->rooms->isNotEmpty() && isset($validated['room_manual_adjustments'])) {
             $manualAdjustment = 0;
@@ -449,9 +450,9 @@ class BookingManagementController extends Controller
                 $perRoomAdjustment = (float) ($validated['room_manual_adjustments'][$reservedRoom->id] ?? 0);
                 $manualAdjustment += $perRoomAdjustment;
 
-                $booking->rooms()->updateExistingPivot($reservedRoom->id, [
+                $booking->rooms()->updateExistingPivot($reservedRoom->id, $this->filterBookingRoomPivotPayload([
                     'manual_adjustment' => $perRoomAdjustment,
-                ]);
+                ]));
             }
         }
 
@@ -603,5 +604,26 @@ class BookingManagementController extends Controller
         );
 
         return back()->with('success', 'Booking rescheduled successfully!');
+    }
+
+    private function filterBookingRoomPivotPayload(array $payload): array
+    {
+        static $bookingRoomColumns = null;
+
+        if ($bookingRoomColumns === null) {
+            try {
+                $bookingRoomColumns = Schema::hasTable('booking_rooms')
+                    ? Schema::getColumnListing('booking_rooms')
+                    : [];
+            } catch (\Throwable $e) {
+                $bookingRoomColumns = [];
+            }
+        }
+
+        if (empty($bookingRoomColumns)) {
+            return array_intersect_key($payload, array_flip(['nightly_rate']));
+        }
+
+        return array_intersect_key($payload, array_flip($bookingRoomColumns));
     }
 }
