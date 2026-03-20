@@ -44,7 +44,7 @@
                         @endif
                     </td>
                     <td style="padding: 1rem 0.75rem; text-align: right;">
-                        <x-admin.button type="outline" size="sm" href="{{ route('admin.guests.show', $guest) }}">
+                        <x-admin.button type="outline" size="sm" href="{{ route('admin.guests.show', $guest->id ?? $guest->guest_id) }}">
                             View Profile
                         </x-admin.button>
                     </td>
