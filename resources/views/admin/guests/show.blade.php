@@ -9,7 +9,6 @@
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
-    <!-- Guest Info -->
     <div>
         <x-admin.card title="Guest Information">
             <form method="POST" action="{{ route('admin.guests.update', $guestRouteKey ?? ($guest->id ?? $guest->guest_id)) }}">
@@ -37,17 +36,16 @@
                         <textarea name="address" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px; min-height: 100px;" {{ optional(auth()->user())->role === 'manager' ? 'readonly' : '' }}>{{ $guest->address }}</textarea>
                     </div>
                     @if(optional(auth()->user())->role === 'admin')
-                    <x-admin.button type="primary">Update Information</x-admin.button>
+                        <x-admin.button type="primary">Update Information</x-admin.button>
                     @elseif(optional(auth()->user())->role === 'manager')
-                    <div style="padding: 0.75rem; background: var(--light-gray); border-radius: 8px; text-align: center; color: var(--text-muted); font-size: 0.875rem;">
-                        <i class="fas fa-eye"></i> View Only Mode
-                    </div>
+                        <div style="padding: 0.75rem; background: var(--light-gray); border-radius: 8px; text-align: center; color: var(--text-muted); font-size: 0.875rem;">
+                            <i class="fas fa-eye"></i> View Only Mode
+                        </div>
                     @endif
                 </div>
             </form>
         </x-admin.card>
 
-        <!-- Stats -->
         <x-admin.card title="Statistics" style="margin-top: 1.5rem;">
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 <div style="display: flex; justify-content: space-between;">
@@ -70,64 +68,64 @@
         </x-admin.card>
     </div>
 
-    <!-- Booking History -->
     <x-admin.card title="Booking History">
-        @if($bookings->count() > 0)
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-            @foreach($bookings as $booking)
-            <div style="padding: 1.5rem; border: 1px solid var(--border-gray); border-radius: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                    <div>
-                        <div style="font-weight: 700; font-size: 1.125rem;">{{ $booking->booking_reference ?? ('BOOKING-' . $booking->id) }}</div>
-                        <div style="color: var(--text-muted); font-size: 0.875rem;">{{ optional($booking->created_at)->format('F d, Y') ?? 'N/A' }}</div>
-                    </div>
-                    <x-admin.badge :status="$booking->status ?? 'pending'" />
-                </div>
+        @if($bookings->isNotEmpty())
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                @foreach($bookings as $booking)
+                    @php
+                        $loadedRooms = $booking->relationLoaded('rooms') ? ($booking->rooms ?? collect()) : collect();
+                        $loadedRoom = $booking->relationLoaded('room') ? $booking->room : null;
+                        $roomLabel = 'Room N/A';
 
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                    <div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">Room</div>
-                        <div style="font-weight: 600;">
-                            @php
-                                $loadedRooms = $booking->relationLoaded('rooms') ? ($booking->rooms ?? collect()) : collect();
-                                $loadedRoom = $booking->relationLoaded('room') ? $booking->room : null;
-                            @endphp
-                            @if($loadedRooms->isNotEmpty())
-                                Room {{ optional($loadedRooms->first())->room_number ?? 'N/A' }}@if($loadedRooms->count() > 1) +{{ $loadedRooms->count() - 1 }} more@endif
-                            @elseif($loadedRoom)
-                                Room {{ $loadedRoom->room_number ?? 'N/A' }}
+                        if ($loadedRooms->isNotEmpty()) {
+                            $firstRoomNumber = optional($loadedRooms->first())->room_number ?? 'N/A';
+                            $extraRooms = $loadedRooms->count() > 1 ? ' +' . ($loadedRooms->count() - 1) . ' more' : '';
+                            $roomLabel = 'Room ' . $firstRoomNumber . $extraRooms;
+                        } elseif ($loadedRoom) {
+                            $roomLabel = 'Room ' . ($loadedRoom->room_number ?? 'N/A');
+                        }
+
+                        $bookingRouteKey = $booking->id ?? $booking->booking_id ?? null;
+                    @endphp
+
+                    <div style="padding: 1.5rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 1.125rem;">{{ $booking->booking_reference ?? ('BOOKING-' . ($booking->id ?? 'N/A')) }}</div>
+                                <div style="color: var(--text-muted); font-size: 0.875rem;">{{ optional($booking->created_at)->format('F d, Y') ?? 'N/A' }}</div>
+                            </div>
+                            <x-admin.badge :status="$booking->status ?? 'pending'" />
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                            <div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">Room</div>
+                                <div style="font-weight: 600;">{{ $roomLabel }}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">Check-in</div>
+                                <div style="font-weight: 600;">{{ optional($booking->check_in_date)->format('M d, Y') ?? 'N/A' }}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">Amount</div>
+                                <div style="font-weight: 700; color: var(--primary-gold);">₱{{ number_format($booking->final_total ?? $booking->total_amount ?? 0, 2) }}</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1rem;">
+                            @if($bookingRouteKey)
+                                <x-admin.button type="outline" size="sm" href="{{ route('admin.bookings.show', $bookingRouteKey) }}">
+                                    Learn More
+                                </x-admin.button>
                             @else
-                                Room N/A
+                                <span style="display:inline-block; padding:0.45rem 0.75rem; border:1px solid var(--border-gray); border-radius:8px; color:var(--text-muted); font-size:0.875rem;">Details Unavailable</span>
                             @endif
                         </div>
                     </div>
-                    <div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">Check-in</div>
-                        <div style="font-weight: 600;">{{ optional($booking->check_in_date)->format('M d, Y') ?? 'N/A' }}</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">Amount</div>
-                        <div style="font-weight: 700; color: var(--primary-gold);">₱{{ number_format($booking->final_total ?? $booking->total_amount, 2) }}</div>
-                    </div>
-                </div>
-
-                <div style="margin-top: 1rem;">
-                    @php
-                        $bookingRouteKey = $booking->id ?? $booking->booking_id ?? null;
-                    @endphp
-                    @if($bookingRouteKey)
-                        <x-admin.button type="outline" size="sm" href="{{ route('admin.bookings.show', $bookingRouteKey) }}">
-                          Learn More
-                        </x-admin.button>
-                    @else
-                        <span style="display:inline-block; padding:0.45rem 0.75rem; border:1px solid var(--border-gray); border-radius:8px; color:var(--text-muted); font-size:0.875rem;">Details Unavailable</span>
-                    @endif
-                </div>
+                @endforeach
             </div>
-            @endforeach
-        </div>
         @else
-        <p style="text-align: center; padding: 3rem; color: var(--text-muted);">No booking history</p>
+            <p style="text-align: center; padding: 3rem; color: var(--text-muted);">No booking history</p>
         @endif
     </x-admin.card>
 </div>
