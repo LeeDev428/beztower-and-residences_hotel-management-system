@@ -176,7 +176,7 @@ class ReportController extends Controller
 
     private function exportRevenue($startDate, $endDate)
     {
-        $payments = Payment::with(['booking.guest', 'booking.room'])
+        $payments = Payment::with(['booking.guest', 'booking.room', 'booking.rooms'])
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereIn('payment_status', ['verified', 'completed'])
             ->get();
@@ -208,7 +208,11 @@ class ReportController extends Controller
             $sheet->setCellValue('A' . $row, $payment->created_at->format('Y-m-d'));
             $sheet->setCellValue('B' . $row, $payment->booking->booking_reference);
             $sheet->setCellValue('C' . $row, $payment->booking->guest->name);
-            $sheet->setCellValue('D' . $row, $payment->booking->room->room_number);
+            $roomLabel = $payment->booking->rooms->isNotEmpty()
+                ? ('Room ' . optional($payment->booking->rooms->first())->room_number . ($payment->booking->rooms->count() > 1 ? (' +' . ($payment->booking->rooms->count() - 1) . ' more') : ''))
+                : ('Room ' . (optional($payment->booking->room)->room_number ?? 'N/A'));
+
+            $sheet->setCellValue('D' . $row, $roomLabel);
             $sheet->setCellValue('E' . $row, ucfirst(str_replace('_', ' ', $payment->payment_type)));
             $sheet->setCellValue('F' . $row, $payment->booking->check_in_date->format('Y-m-d'));
             $sheet->setCellValue('G' . $row, $payment->booking->check_out_date->format('Y-m-d'));
