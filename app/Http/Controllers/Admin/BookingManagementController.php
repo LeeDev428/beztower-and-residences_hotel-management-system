@@ -621,7 +621,7 @@ class BookingManagementController extends Controller
         }
 
         if (empty($bookingRoomColumns)) {
-            return array_intersect_key($payload, array_flip(['nightly_rate']));
+            return [];
         }
 
         return array_intersect_key($payload, array_flip($bookingRoomColumns));
