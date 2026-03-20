@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Guest;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 
@@ -178,7 +179,7 @@ class GuestManagementController extends Controller
     public function update(Request $request, $guestIdentifier)
     {
         $guest = $this->resolveGuestByIdentifier($guestIdentifier);
-        $guestKeyColumn = $this->getGuestPrimaryKeyColumn();
+        $guestKeyColumn = $this->getGuestPrimaryKeyColumn($guest);
         $guestKeyValue = $guest->{$guestKeyColumn} ?? ($guest->id ?? $guest->guest_id ?? $guestIdentifier);
 
         $validated = $request->validate([
@@ -194,34 +195,57 @@ class GuestManagementController extends Controller
         return back()->with('success', 'Guest information updated successfully!');
     }
 
-    private function getGuestPrimaryKeyColumn(): string
+    private function getGuestPrimaryKeyColumn(?Guest $guest = null): string
     {
-        try {
-            if (Schema::hasTable('guests')) {
-                $columns = Schema::getColumnListing('guests');
-
-                if (in_array('id', $columns, true)) {
-                    return 'id';
-                }
-
-                if (in_array('guest_id', $columns, true)) {
-                    return 'guest_id';
-                }
+        if ($guest instanceof Guest) {
+            if (array_key_exists('id', $guest->getAttributes())) {
+                return 'id';
             }
-        } catch (\Throwable $e) {
-            // Fall through to default key.
+
+            if (array_key_exists('guest_id', $guest->getAttributes())) {
+                return 'guest_id';
+            }
+
+            return $guest->getKeyName();
         }
 
-        return 'id';
+        return (new Guest())->getKeyName();
     }
 
     private function resolveGuestByIdentifier($guestIdentifier): Guest
     {
-        $guestKeyColumn = $this->getGuestPrimaryKeyColumn();
-        $guest = Guest::query()->where($guestKeyColumn, $guestIdentifier)->first();
+        $candidateColumns = array_values(array_unique(array_filter([
+            (new Guest())->getKeyName(),
+            'id',
+            'guest_id',
+        ])));
 
-        if ($guest instanceof Guest) {
-            return $guest;
+        foreach ($candidateColumns as $column) {
+            try {
+                $guest = Guest::query()->where($column, $guestIdentifier)->first();
+
+                if ($guest instanceof Guest) {
+                    return $guest;
+                }
+            } catch (QueryException $e) {
+                // Column likely does not exist in this schema; try next candidate.
+                continue;
+            }
+        }
+
+        // Fallback: load a limited set and match in memory for legacy schemas.
+        try {
+            $guests = Guest::query()->limit(500)->get();
+
+            foreach ($candidateColumns as $column) {
+                $guest = $guests->firstWhere($column, $guestIdentifier);
+
+                if ($guest instanceof Guest) {
+                    return $guest;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignore and throw model not found below.
         }
 
         throw (new ModelNotFoundException())->setModel(Guest::class, [$guestIdentifier]);
