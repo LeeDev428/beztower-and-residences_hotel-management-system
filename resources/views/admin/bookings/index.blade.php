@@ -103,7 +103,7 @@
                         <x-admin.badge :status="$booking->status" />
                     </td>
                     <td style="padding: 1rem 0.75rem; text-align: right; font-weight: 700; color: var(--primary-gold);">
-                        ₱{{ number_format($booking->total_amount, 2) }}
+                        ₱{{ number_format($booking->final_total ?? $booking->total_amount, 2) }}
                     </td>
                     <td style="padding: 1rem 0.75rem; text-align: right;">
                         <x-admin.button type="outline" size="sm" href="{{ route('admin.bookings.show', $booking) }}">
