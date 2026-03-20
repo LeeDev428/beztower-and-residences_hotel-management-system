@@ -344,7 +344,14 @@
                     </svg>
                     Bookings
                     @php
-                        $pendingCount = \App\Models\Booking::where('status', 'pending')->count();
+                        $pendingCount = 0;
+                        try {
+                            if (\Illuminate\Support\Facades\Schema::hasTable('bookings') && \Illuminate\Support\Facades\Schema::hasColumn('bookings', 'status')) {
+                                $pendingCount = \App\Models\Booking::where('status', 'pending')->count();
+                            }
+                        } catch (\Throwable $e) {
+                            $pendingCount = 0;
+                        }
                     @endphp
                     @if($pendingCount > 0)
                     <span class="nav-badge">{{ $pendingCount }}</span>
@@ -367,7 +374,16 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                     </svg>
                     Contact Messages
-                    @php $unreadMsgs = \App\Models\ContactMessage::where('is_read', false)->count(); @endphp
+                    @php
+                        $unreadMsgs = 0;
+                        try {
+                            if (\Illuminate\Support\Facades\Schema::hasTable('contact_messages') && \Illuminate\Support\Facades\Schema::hasColumn('contact_messages', 'is_read')) {
+                                $unreadMsgs = \App\Models\ContactMessage::where('is_read', false)->count();
+                            }
+                        } catch (\Throwable $e) {
+                            $unreadMsgs = 0;
+                        }
+                    @endphp
                     @if($unreadMsgs > 0)
                         <span class="nav-badge">{{ $unreadMsgs }}</span>
                     @endif
@@ -382,7 +398,14 @@
                     </svg>
                     Payments
                     @php
-                        $pendingPayments = \App\Models\Payment::where('payment_status', 'pending')->count();
+                        $pendingPayments = 0;
+                        try {
+                            if (\Illuminate\Support\Facades\Schema::hasTable('payments') && \Illuminate\Support\Facades\Schema::hasColumn('payments', 'payment_status')) {
+                                $pendingPayments = \App\Models\Payment::where('payment_status', 'pending')->count();
+                            }
+                        } catch (\Throwable $e) {
+                            $pendingPayments = 0;
+                        }
                     @endphp
                     @if($pendingPayments > 0)
                     <span class="nav-badge">{{ $pendingPayments }}</span>
@@ -450,7 +473,23 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                     </svg>
                     @php
-                        $notifCount = \App\Models\Booking::where('status', 'pending')->count() + \App\Models\Payment::where('payment_status', 'pending')->count();
+                        $notifCount = 0;
+                        try {
+                            $pendingBookingsCount = 0;
+                            $pendingPaymentsCount = 0;
+
+                            if (\Illuminate\Support\Facades\Schema::hasTable('bookings') && \Illuminate\Support\Facades\Schema::hasColumn('bookings', 'status')) {
+                                $pendingBookingsCount = \App\Models\Booking::where('status', 'pending')->count();
+                            }
+
+                            if (\Illuminate\Support\Facades\Schema::hasTable('payments') && \Illuminate\Support\Facades\Schema::hasColumn('payments', 'payment_status')) {
+                                $pendingPaymentsCount = \App\Models\Payment::where('payment_status', 'pending')->count();
+                            }
+
+                            $notifCount = $pendingBookingsCount + $pendingPaymentsCount;
+                        } catch (\Throwable $e) {
+                            $notifCount = 0;
+                        }
                     @endphp
                     @if($notifCount > 0)
                     <span class="notification-badge"></span>
