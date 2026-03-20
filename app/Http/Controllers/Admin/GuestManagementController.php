@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Guest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 class GuestManagementController extends Controller
 {
@@ -17,11 +16,21 @@ class GuestManagementController extends Controller
         $guestTableColumns = [];
         $hasBookingsGuestForeignKey = false;
         $hasGuestCreatedAt = false;
+        $hasFirstNameColumn = false;
+        $hasLastNameColumn = false;
+        $hasNameColumn = false;
+        $hasEmailColumn = false;
+        $hasPhoneColumn = false;
 
         try {
             if (Schema::hasTable('guests')) {
                 $guestTableColumns = Schema::getColumnListing('guests');
                 $hasGuestCreatedAt = in_array('created_at', $guestTableColumns, true);
+                $hasFirstNameColumn = in_array('first_name', $guestTableColumns, true);
+                $hasLastNameColumn = in_array('last_name', $guestTableColumns, true);
+                $hasNameColumn = in_array('name', $guestTableColumns, true);
+                $hasEmailColumn = in_array('email', $guestTableColumns, true);
+                $hasPhoneColumn = in_array('phone', $guestTableColumns, true);
             }
 
             $hasBookingsGuestForeignKey = Schema::hasTable('bookings')
@@ -41,24 +50,24 @@ class GuestManagementController extends Controller
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                if (Schema::hasColumn('guests', 'first_name')) {
+            $query->where(function($q) use ($search, $hasFirstNameColumn, $hasLastNameColumn, $hasNameColumn, $hasEmailColumn, $hasPhoneColumn) {
+                if ($hasFirstNameColumn) {
                     $q->orWhere('first_name', 'LIKE', "%{$search}%");
                 }
 
-                if (Schema::hasColumn('guests', 'last_name')) {
+                if ($hasLastNameColumn) {
                     $q->orWhere('last_name', 'LIKE', "%{$search}%");
                 }
 
-                if (Schema::hasColumn('guests', 'name')) {
+                if ($hasNameColumn) {
                     $q->orWhere('name', 'LIKE', "%{$search}%");
                 }
 
-                if (Schema::hasColumn('guests', 'email')) {
+                if ($hasEmailColumn) {
                     $q->orWhere('email', 'LIKE', "%{$search}%");
                 }
 
-                if (Schema::hasColumn('guests', 'phone')) {
+                if ($hasPhoneColumn) {
                     $q->orWhere('phone', 'LIKE', "%{$search}%");
                 }
             });
