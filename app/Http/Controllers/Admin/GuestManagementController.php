@@ -95,23 +95,23 @@ class GuestManagementController extends Controller
 
     public function show($guestIdentifier)
     {
-        $guest = $this->resolveGuestByIdentifier($guestIdentifier);
-        $bookings = collect();
-
-        $stats = [
-            'total_bookings' => 0,
-            'completed_bookings' => 0,
-            'total_spent' => 0,
-            'upcoming_bookings' => 0,
-            'last_booking_date' => null,
-            'verified_payments' => 0,
-            'pending_payments' => 0,
-            'failed_payments' => 0,
-        ];
-
-        $relationsToLoad = [];
-
         try {
+            $guest = $this->resolveGuestByIdentifier($guestIdentifier);
+            $bookings = collect();
+
+            $stats = [
+                'total_bookings' => 0,
+                'completed_bookings' => 0,
+                'total_spent' => 0,
+                'upcoming_bookings' => 0,
+                'last_booking_date' => null,
+                'verified_payments' => 0,
+                'pending_payments' => 0,
+                'failed_payments' => 0,
+            ];
+
+            $relationsToLoad = [];
+
             $hasBookingsTable = Schema::hasTable('bookings');
             $hasPaymentsTable = Schema::hasTable('payments');
             $hasBookingRoomsTable = Schema::hasTable('booking_rooms');
@@ -162,18 +162,39 @@ class GuestManagementController extends Controller
                 $stats['pending_payments'] = $allPayments->where('payment_status', 'pending')->count();
                 $stats['failed_payments'] = $allPayments->where('payment_status', 'failed')->count();
             }
+
+            $guestRouteKey = $guest->id ?? $guest->guest_id ?? $guestIdentifier;
+
+            try {
+                // Render immediately so Blade/layout exceptions are caught and can fall back safely.
+                $html = view('admin.guests.show', compact('guest', 'stats', 'bookings', 'guestRouteKey'))->render();
+                return response($html, 200);
+            } catch (\Throwable $renderException) {
+                Log::error('Guest profile primary view render failed. Serving fallback view.', [
+                    'guest_identifier' => $guestIdentifier,
+                    'message' => $renderException->getMessage(),
+                ]);
+
+                return response()->view('admin.guests.show-fallback', [
+                    'guest' => $guest,
+                    'guestIdentifier' => $guestIdentifier,
+                ], 200);
+            }
         } catch (\Throwable $e) {
             $guestKeyColumn = $this->getGuestPrimaryKeyColumn();
             Log::warning('Guest profile fallback mode enabled due to schema mismatch.', [
-                'guest_key' => $guest->{$guestKeyColumn} ?? $guestIdentifier,
+                'guest_key' => isset($guest) ? ($guest->{$guestKeyColumn} ?? $guestIdentifier) : $guestIdentifier,
                 'message' => $e->getMessage(),
             ]);
-            // Keep default safe stats and continue rendering profile page.
+            // Keep guest route available even if full profile computation fails.
+            $guest = isset($guest) ? $guest : new Guest();
+            $guestRouteKey = $guest->id ?? $guest->guest_id ?? $guestIdentifier;
+
+            return response()->view('admin.guests.show-fallback', [
+                'guest' => $guest,
+                'guestIdentifier' => $guestRouteKey,
+            ], 200);
         }
-
-        $guestRouteKey = $guest->id ?? $guest->guest_id ?? $guestIdentifier;
-
-        return view('admin.guests.show', compact('guest', 'stats', 'bookings', 'guestRouteKey'));
     }
 
     public function update(Request $request, $guestIdentifier)
