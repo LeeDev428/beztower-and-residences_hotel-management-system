@@ -201,17 +201,26 @@
     <div>
         <!-- Payment Summary -->
         <x-admin.card title="Payment">
+            @php
+                $baseRoomTotal = (float) ($booking->total_amount ?? 0);
+                $grossAmount = (float) ($grossTotal ?? $baseRoomTotal);
+                $billingAdjustmentDelta = round($grossAmount - $baseRoomTotal, 2);
+            @endphp
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Room Rate ({{ $booking->total_nights ?? 0 }} nights)</span>
-                    <span style="font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
+                    <span>Room Charges ({{ $booking->total_nights ?? 0 }} nights)</span>
+                    <span style="font-weight: 600;">₱{{ number_format($baseRoomTotal, 2) }}</span>
                 </div>
-                @if(($booking->final_total ?? $booking->total_amount) != $booking->total_amount)
+                @if(abs($billingAdjustmentDelta) > 0.00001)
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Billing Adjustment (Gross)</span>
-                    <span style="font-weight: 600;">₱{{ number_format($grossTotal, 2) }}</span>
+                    <span>Billing Adjustment</span>
+                    <span style="font-weight: 600; color: {{ $billingAdjustmentDelta < 0 ? '#2e7d32' : '#c62828' }};">{{ $billingAdjustmentDelta < 0 ? '-₱' : '+₱' }}{{ number_format(abs($billingAdjustmentDelta), 2) }}</span>
                 </div>
                 @endif
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Gross Total (After Billing)</span>
+                    <span style="font-weight: 700;">₱{{ number_format($grossAmount, 2) }}</span>
+                </div>
                 <div style="display: flex; justify-content: space-between; color: #2e7d32;">
                     <span>Verified Payments</span>
                     <span style="font-weight: 700;">-₱{{ number_format($verifiedPaymentsTotal, 2) }}</span>
