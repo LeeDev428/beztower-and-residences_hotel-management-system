@@ -30,7 +30,7 @@ class GuestManagementController extends Controller
 
     public function show(Guest $guest)
     {
-        $guest->load(['bookings.room', 'bookings.payments']);
+        $guest->load(['bookings.room', 'bookings.roomType', 'bookings.rooms.roomType', 'bookings.payments']);
         
         // Calculate total spent from verified payments
         $totalSpent = $guest->bookings->flatMap(function($booking) {
