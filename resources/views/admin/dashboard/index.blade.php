@@ -70,16 +70,22 @@
                         @foreach($recentBookings as $booking)
                         <tr style="border-bottom: 1px solid var(--border-gray);">
                             <td style="padding: 1rem 0.75rem;">
-                                <div style="font-weight: 600;">{{ $booking->guest->name }}</div>
-                                <div style="font-size: 0.875rem; color: var(--text-muted);">{{ $booking->guest->email }}</div>
+                                <div style="font-weight: 600;">{{ optional($booking->guest)->name ?? 'Guest not available' }}</div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">{{ optional($booking->guest)->email ?? 'No email' }}</div>
                             </td>
-                            <td style="padding: 1rem 0.75rem;">{{ $booking->room->room_number }}</td>
-                            <td style="padding: 1rem 0.75rem;">{{ $booking->check_in_date->format('M d, Y') }}</td>
+                            <td style="padding: 1rem 0.75rem;">
+                                @if($booking->rooms->isNotEmpty())
+                                    Room {{ optional($booking->rooms->first())->room_number ?? 'N/A' }}@if($booking->rooms->count() > 1) +{{ $booking->rooms->count() - 1 }} more@endif
+                                @else
+                                    Room {{ optional($booking->room)->room_number ?? 'N/A' }}
+                                @endif
+                            </td>
+                            <td style="padding: 1rem 0.75rem;">{{ optional($booking->check_in_date)->format('M d, Y') ?? 'N/A' }}</td>
                             <td style="padding: 1rem 0.75rem;">
                                 <x-admin.badge :status="$booking->status" />
                             </td>
                             <td style="padding: 1rem 0.75rem; text-align: right; font-weight: 600;">
-                                ₱{{ number_format($booking->total_amount, 2) }}
+                                ₱{{ number_format($booking->final_total ?? $booking->total_amount, 2) }}
                             </td>
                         </tr>
                         @endforeach
@@ -99,8 +105,14 @@
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                     @foreach($arrivalsToday as $arrival)
                     <div style="padding: 0.75rem; background: var(--light-gray); border-radius: 8px;">
-                        <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ $arrival->guest->name }}</div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">Room {{ $arrival->room->room_number }}</div>
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ optional($arrival->guest)->name ?? 'Guest not available' }}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">
+                            @if($arrival->rooms->isNotEmpty())
+                                Room {{ optional($arrival->rooms->first())->room_number ?? 'N/A' }}@if($arrival->rooms->count() > 1) +{{ $arrival->rooms->count() - 1 }} more@endif
+                            @else
+                                Room {{ optional($arrival->room)->room_number ?? 'N/A' }}
+                            @endif
+                        </div>
                     </div>
                     @endforeach
                 </div>
