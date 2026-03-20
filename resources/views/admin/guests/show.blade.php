@@ -112,9 +112,16 @@
                 </div>
 
                 <div style="margin-top: 1rem;">
-                    <x-admin.button type="outline" size="sm" href="{{ route('admin.bookings.show', $booking) }}">
-                      Learn More
-                    </x-admin.button>
+                    @php
+                        $bookingRouteKey = $booking->id ?? $booking->booking_id ?? null;
+                    @endphp
+                    @if($bookingRouteKey)
+                        <x-admin.button type="outline" size="sm" href="{{ route('admin.bookings.show', $bookingRouteKey) }}">
+                          Learn More
+                        </x-admin.button>
+                    @else
+                        <span style="display:inline-block; padding:0.45rem 0.75rem; border:1px solid var(--border-gray); border-radius:8px; color:var(--text-muted); font-size:0.875rem;">Details Unavailable</span>
+                    @endif
                 </div>
             </div>
             @endforeach
