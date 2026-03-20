@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Guest;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 
@@ -77,7 +78,13 @@ class GuestManagementController extends Controller
         if ($hasGuestCreatedAt) {
             $query->latest();
         } else {
-            $query->orderByDesc('id');
+            $fallbackSortColumn = in_array('id', $guestTableColumns, true)
+                ? 'id'
+                : (in_array('guest_id', $guestTableColumns, true) ? 'guest_id' : null);
+
+            if ($fallbackSortColumn !== null) {
+                $query->orderByDesc($fallbackSortColumn);
+            }
         }
 
         $guests = $query->paginate(20);
@@ -85,8 +92,9 @@ class GuestManagementController extends Controller
         return view('admin.guests.index', compact('guests'));
     }
 
-    public function show(Guest $guest)
+    public function show($guestIdentifier)
     {
+        $guest = $this->resolveGuestByIdentifier($guestIdentifier);
         $bookings = collect();
 
         $stats = [
@@ -154,22 +162,29 @@ class GuestManagementController extends Controller
                 $stats['failed_payments'] = $allPayments->where('payment_status', 'failed')->count();
             }
         } catch (\Throwable $e) {
+            $guestKeyColumn = $this->getGuestPrimaryKeyColumn();
             Log::warning('Guest profile fallback mode enabled due to schema mismatch.', [
-                'guest_id' => $guest->id,
+                'guest_key' => $guest->{$guestKeyColumn} ?? $guestIdentifier,
                 'message' => $e->getMessage(),
             ]);
             // Keep default safe stats and continue rendering profile page.
         }
 
-        return view('admin.guests.show', compact('guest', 'stats', 'bookings'));
+        $guestRouteKey = $guest->id ?? $guest->guest_id ?? $guestIdentifier;
+
+        return view('admin.guests.show', compact('guest', 'stats', 'bookings', 'guestRouteKey'));
     }
 
-    public function update(Request $request, Guest $guest)
+    public function update(Request $request, $guestIdentifier)
     {
+        $guest = $this->resolveGuestByIdentifier($guestIdentifier);
+        $guestKeyColumn = $this->getGuestPrimaryKeyColumn();
+        $guestKeyValue = $guest->{$guestKeyColumn} ?? ($guest->id ?? $guest->guest_id ?? $guestIdentifier);
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:guests,email,' . $guest->id,
+            'email' => 'required|email|unique:guests,email,' . $guestKeyValue . ',' . $guestKeyColumn,
             'phone' => 'required|string|max:20',
             'address' => 'nullable|string',
         ]);
@@ -177,5 +192,38 @@ class GuestManagementController extends Controller
         $guest->update($validated);
 
         return back()->with('success', 'Guest information updated successfully!');
+    }
+
+    private function getGuestPrimaryKeyColumn(): string
+    {
+        try {
+            if (Schema::hasTable('guests')) {
+                $columns = Schema::getColumnListing('guests');
+
+                if (in_array('id', $columns, true)) {
+                    return 'id';
+                }
+
+                if (in_array('guest_id', $columns, true)) {
+                    return 'guest_id';
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fall through to default key.
+        }
+
+        return 'id';
+    }
+
+    private function resolveGuestByIdentifier($guestIdentifier): Guest
+    {
+        $guestKeyColumn = $this->getGuestPrimaryKeyColumn();
+        $guest = Guest::query()->where($guestKeyColumn, $guestIdentifier)->first();
+
+        if ($guest instanceof Guest) {
+            return $guest;
+        }
+
+        throw (new ModelNotFoundException())->setModel(Guest::class, [$guestIdentifier]);
     }
 }
