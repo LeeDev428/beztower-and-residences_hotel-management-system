@@ -72,26 +72,32 @@
 
     <!-- Booking History -->
     <x-admin.card title="Booking History">
-        @if($guest->bookings->count() > 0)
+        @if($bookings->count() > 0)
         <div style="display: flex; flex-direction: column; gap: 1rem;">
-            @foreach($guest->bookings as $booking)
+            @foreach($bookings as $booking)
             <div style="padding: 1.5rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                     <div>
-                        <div style="font-weight: 700; font-size: 1.125rem;">{{ $booking->booking_reference }}</div>
+                        <div style="font-weight: 700; font-size: 1.125rem;">{{ $booking->booking_reference ?? ('BOOKING-' . $booking->id) }}</div>
                         <div style="color: var(--text-muted); font-size: 0.875rem;">{{ optional($booking->created_at)->format('F d, Y') ?? 'N/A' }}</div>
                     </div>
-                    <x-admin.badge :status="$booking->status" />
+                    <x-admin.badge :status="$booking->status ?? 'pending'" />
                 </div>
 
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted);">Room</div>
                         <div style="font-weight: 600;">
-                            @if($booking->rooms->isNotEmpty())
-                                Room {{ optional($booking->rooms->first())->room_number ?? 'N/A' }}@if($booking->rooms->count() > 1) +{{ $booking->rooms->count() - 1 }} more@endif
+                            @php
+                                $loadedRooms = $booking->relationLoaded('rooms') ? ($booking->rooms ?? collect()) : collect();
+                                $loadedRoom = $booking->relationLoaded('room') ? $booking->room : null;
+                            @endphp
+                            @if($loadedRooms->isNotEmpty())
+                                Room {{ optional($loadedRooms->first())->room_number ?? 'N/A' }}@if($loadedRooms->count() > 1) +{{ $loadedRooms->count() - 1 }} more@endif
+                            @elseif($loadedRoom)
+                                Room {{ $loadedRoom->room_number ?? 'N/A' }}
                             @else
-                                Room {{ optional($booking->room)->room_number ?? 'N/A' }}
+                                Room N/A
                             @endif
                         </div>
                     </div>
