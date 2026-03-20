@@ -31,6 +31,7 @@
         $roomAdditionalReasons = [];
         $roomDiscountAmounts = [];
         $roomDiscountTypes = [];
+        $roomPwdSeniorCounts = [];
         $roomBaseTotals = [];
         $pivotManualAdjustmentTotal = 0.0;
 
@@ -46,6 +47,14 @@
 
             $nightlyRate = (float) ($reservedRoom->pivot->nightly_rate ?? $reservedRoom->effective_price ?? $reservedRoom->roomType->base_price ?? 0);
             $roomBaseTotals[$reservedRoom->id] = $nightlyRate * (int) ($booking->total_nights ?? $booking->number_of_nights ?? 0);
+
+            $roomCapacity = max(1, (int) ($reservedRoom->roomType->max_guests ?? 1));
+            $roomPerPersonShare = $roomBaseTotals[$reservedRoom->id] / $roomCapacity;
+            $existingDiscount = $roomDiscountAmounts[$reservedRoom->id];
+            $derivedCount = ($roomPerPersonShare > 0 && in_array($roomDiscountTypes[$reservedRoom->id], ['pwd', 'senior'], true))
+                ? (int) round($existingDiscount / ($roomPerPersonShare * 0.20))
+                : 0;
+            $roomPwdSeniorCounts[$reservedRoom->id] = max(0, min($derivedCount, $roomCapacity));
         }
 
         if ($reservedRooms->count() > 1 && abs($pivotManualAdjustmentTotal) < 0.00001 && abs((float) ($booking->manual_adjustment ?? 0)) > 0.00001) {
@@ -290,7 +299,7 @@
                                     $roomDiscount = (float) ($roomDiscountAmounts[$roomId] ?? 0);
                                     $roomDisplayTotal = $roomBaseTotal + $roomAdditional - $roomDiscount;
                                 @endphp
-                                <div data-room-row="1" data-room-id="{{ $roomId }}" data-room-base-total="{{ $roomBaseTotal }}" style="border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.65rem 0.75rem;">
+                                <div data-room-row="1" data-room-id="{{ $roomId }}" data-room-base-total="{{ $roomBaseTotal }}" data-room-capacity="{{ max(1, (int) ($reservedRoom->roomType->max_guests ?? 1)) }}" style="border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.65rem 0.75rem;">
                                     <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.45rem;">
                                         Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name ?? 'N/A' }}
                                     </div>
@@ -354,6 +363,21 @@
                                                 <option value="other" {{ ($roomDiscountTypes[$roomId] ?? '') === 'other' ? 'selected' : '' }}>Other</option>
                                             </select>
                                         </div>
+                                    </div>
+                                    <div class="room-pwd-count-section" style="margin-top:0.55rem; display: none;">
+                                        <label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:0.3rem;">PWD/Senior Guest Count</label>
+                                        <select
+                                            name="room_pwd_senior_counts[{{ $roomId }}]"
+                                            class="room-pwd-senior-count"
+                                            onchange="calculateTotal()"
+                                            style="width: 100%; border: 1px solid var(--border-gray); border-radius: 8px; outline: none; padding: 0.55rem 0.65rem; font-size: 0.83rem; box-sizing:border-box;"
+                                        >
+                                            @for($count = 0; $count <= max(1, (int) ($reservedRoom->roomType->max_guests ?? 1)); $count++)
+                                                <option value="{{ $count }}" {{ ($roomPwdSeniorCounts[$roomId] ?? 0) === $count ? 'selected' : '' }}>
+                                                    {{ $count === 0 ? 'Select count' : ($count . ' ' . ($count === 1 ? 'Person' : 'People')) }}
+                                                </option>
+                                            @endfor
+                                        </select>
                                     </div>
                                     <div style="margin-top:0.5rem;display:flex;justify-content:space-between;align-items:center;background:#f8f8f8;border-radius:6px;padding:0.4rem 0.55rem;font-size:0.82rem;">
                                         <span style="color:var(--text-muted);">Room Total</span>
@@ -507,7 +531,10 @@ function getManualAdjustmentTotal() {
 
 function syncPerRoomDiscountInput(row, discountType = null) {
     const roomBase = parseFloat(row.dataset.roomBaseTotal) || 0;
+    const roomCapacity = Math.max(parseInt(row.dataset.roomCapacity || '1', 10), 1);
     const discountInput = row.querySelector('.room-discount-amount');
+    const pwdCountSection = row.querySelector('.room-pwd-count-section');
+    const pwdCountSelect = row.querySelector('.room-pwd-senior-count');
     const resolvedType = discountType || row.querySelector('.room-discount-type')?.value || 'none';
 
     if (!discountInput) {
@@ -515,12 +542,31 @@ function syncPerRoomDiscountInput(row, discountType = null) {
     }
 
     if (resolvedType === 'pwd' || resolvedType === 'senior') {
-        const autoDiscount = roomBase * 0.20;
+        if (pwdCountSection) {
+            pwdCountSection.style.display = 'block';
+        }
+
+        const selectedCountRaw = pwdCountSelect ? parseInt(pwdCountSelect.value || '0', 10) : 0;
+        const selectedCount = Math.max(0, Math.min(isNaN(selectedCountRaw) ? 0 : selectedCountRaw, roomCapacity));
+        const perPersonShare = roomBase / roomCapacity;
+        const autoDiscount = selectedCount > 0 ? (perPersonShare * 0.20 * selectedCount) : 0;
+
+        if (pwdCountSelect && String(selectedCount) !== pwdCountSelect.value) {
+            pwdCountSelect.value = String(selectedCount);
+        }
+
         discountInput.value = autoDiscount.toFixed(2);
         discountInput.readOnly = true;
         discountInput.style.background = '#f3f4f6';
         discountInput.style.cursor = 'not-allowed';
         return autoDiscount;
+    }
+
+    if (pwdCountSection) {
+        pwdCountSection.style.display = 'none';
+    }
+    if (pwdCountSelect) {
+        pwdCountSelect.value = '0';
     }
 
     if (resolvedType === 'none') {
