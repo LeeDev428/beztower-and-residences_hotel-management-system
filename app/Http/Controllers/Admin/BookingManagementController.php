@@ -370,6 +370,8 @@ class BookingManagementController extends Controller
             'room_discount_amounts.*' => 'nullable|numeric|min:0',
             'room_discount_types' => 'nullable|array',
             'room_discount_types.*' => 'nullable|in:none,pwd,senior,other',
+            'room_pwd_senior_counts' => 'nullable|array',
+            'room_pwd_senior_counts.*' => 'nullable|integer|min:0',
             'room_manual_adjustments' => 'nullable|array',
             'room_manual_adjustments.*' => 'nullable|numeric',
             'adjustment_reason' => 'nullable|string|max:500',
@@ -392,6 +394,23 @@ class BookingManagementController extends Controller
                 $perRoomAdditionalReason = $validated['room_additional_reasons'][$roomId] ?? null;
                 $perRoomDiscountType = $validated['room_discount_types'][$roomId] ?? 'none';
                 $perRoomDiscount = (float) ($validated['room_discount_amounts'][$roomId] ?? 0);
+                $roomPwdSeniorCount = (int) ($validated['room_pwd_senior_counts'][$roomId] ?? 0);
+
+                $roomCapacity = max(1, (int) ($reservedRoom->roomType->max_guests ?? 1));
+                $roomNights = (int) ($booking->total_nights ?? $booking->number_of_nights ?? 0);
+                $roomNightlyRate = (float) ($reservedRoom->pivot->nightly_rate ?? $reservedRoom->effective_price ?? $reservedRoom->roomType->base_price ?? 0);
+                $roomBaseTotal = $roomNightlyRate * max(1, $roomNights);
+
+                $roomPwdSeniorCount = max(0, min($roomPwdSeniorCount, $roomCapacity));
+
+                if (in_array($perRoomDiscountType, ['pwd', 'senior'], true)) {
+                    if ($roomPwdSeniorCount <= 0) {
+                        $perRoomDiscount = 0;
+                    } else {
+                        $perPersonShare = $roomBaseTotal / $roomCapacity;
+                        $perRoomDiscount = round($perPersonShare * 0.20 * $roomPwdSeniorCount, 2);
+                    }
+                }
 
                 if ($perRoomDiscountType === 'none') {
                     $perRoomDiscount = 0;
