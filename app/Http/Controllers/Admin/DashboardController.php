@@ -68,7 +68,7 @@ class DashboardController extends Controller
         $inProgressRooms = Housekeeping::where('status', 'in_progress')->count();
 
         // Recent Bookings
-        $recentBookings = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
+        $recentBookings = Booking::with(['guest', 'room', 'roomType'])
             ->latest()
             ->take(5)
             ->get();
