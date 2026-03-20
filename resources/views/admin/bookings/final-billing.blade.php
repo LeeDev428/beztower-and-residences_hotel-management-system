@@ -45,10 +45,10 @@
             $roomDiscountAmounts[$reservedRoom->id] = (float) ($reservedRoom->pivot->discount_amount ?? 0);
             $roomDiscountTypes[$reservedRoom->id] = $reservedRoom->pivot->discount_type ?? 'none';
 
-            $nightlyRate = (float) ($reservedRoom->pivot->nightly_rate ?? $reservedRoom->effective_price ?? $reservedRoom->roomType->base_price ?? 0);
+            $nightlyRate = (float) ($reservedRoom->pivot->nightly_rate ?? $reservedRoom->effective_price ?? optional($reservedRoom->roomType)->base_price ?? 0);
             $roomBaseTotals[$reservedRoom->id] = $nightlyRate * (int) ($booking->total_nights ?? $booking->number_of_nights ?? 0);
 
-            $roomCapacity = max(1, (int) ($reservedRoom->roomType->max_guests ?? 1));
+            $roomCapacity = max(1, (int) (optional($reservedRoom->roomType)->max_guests ?? 1));
             $roomPerPersonShare = $roomBaseTotals[$reservedRoom->id] / $roomCapacity;
             $existingDiscount = $roomDiscountAmounts[$reservedRoom->id];
             $derivedCount = ($roomPerPersonShare > 0 && in_array($roomDiscountTypes[$reservedRoom->id], ['pwd', 'senior'], true))
@@ -88,7 +88,7 @@
                 </tr>
                 <tr>
                     <td style="padding: 7px 0; color: var(--text-muted);">Guest</td>
-                    <td style="padding: 7px 0; font-weight: 700;">{{ $booking->guest->name }}</td>
+                    <td style="padding: 7px 0; font-weight: 700;">{{ $booking->guest->name ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td style="padding: 7px 0; color: var(--text-muted);">Rooms</td>
@@ -120,11 +120,11 @@
                 <div style="font-weight: 700; margin-bottom: 0.5rem; font-size: 0.88rem; color: #333;">Per-Room Charges</div>
                 @foreach($reservedRooms as $reservedRoom)
                     @php
-                        $nightlyRate = (float) ($reservedRoom->pivot->nightly_rate ?? $reservedRoom->effective_price ?? $reservedRoom->roomType->base_price ?? 0);
+                        $nightlyRate = (float) ($reservedRoom->pivot->nightly_rate ?? $reservedRoom->effective_price ?? optional($reservedRoom->roomType)->base_price ?? 0);
                         $roomTotal = $nightlyRate * (int) ($booking->total_nights ?? $booking->number_of_nights ?? 0);
                     @endphp
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f1f1f1;font-size:0.86rem;">
-                        <span style="color:var(--text-muted);">Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}<br><small>₱{{ number_format($nightlyRate, 2) }} x {{ $booking->total_nights ?? $booking->number_of_nights }} night(s)</small></span>
+                        <span style="color:var(--text-muted);">Room {{ $reservedRoom->room_number }} - {{ optional($reservedRoom->roomType)->name ?? 'N/A' }}<br><small>₱{{ number_format($nightlyRate, 2) }} x {{ $booking->total_nights ?? $booking->number_of_nights }} night(s)</small></span>
                         <span style="font-weight:700;">₱{{ number_format($roomTotal, 2) }}</span>
                     </div>
                 @endforeach
@@ -299,9 +299,9 @@
                                     $roomDiscount = (float) ($roomDiscountAmounts[$roomId] ?? 0);
                                     $roomDisplayTotal = $roomBaseTotal + $roomAdditional - $roomDiscount;
                                 @endphp
-                                <div data-room-row="1" data-room-id="{{ $roomId }}" data-room-base-total="{{ $roomBaseTotal }}" data-room-capacity="{{ max(1, (int) ($reservedRoom->roomType->max_guests ?? 1)) }}" style="border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.65rem 0.75rem;">
+                                <div data-room-row="1" data-room-id="{{ $roomId }}" data-room-base-total="{{ $roomBaseTotal }}" data-room-capacity="{{ max(1, (int) (optional($reservedRoom->roomType)->max_guests ?? 1)) }}" style="border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.65rem 0.75rem;">
                                     <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.45rem;">
-                                        Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name ?? 'N/A' }}
+                                        Room {{ $reservedRoom->room_number }} - {{ optional($reservedRoom->roomType)->name ?? 'N/A' }}
                                     </div>
                                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.5rem;">
                                         <div>
@@ -372,7 +372,7 @@
                                             onchange="calculateTotal()"
                                             style="width: 100%; border: 1px solid var(--border-gray); border-radius: 8px; outline: none; padding: 0.55rem 0.65rem; font-size: 0.83rem; box-sizing:border-box;"
                                         >
-                                            @for($count = 0; $count <= max(1, (int) ($reservedRoom->roomType->max_guests ?? 1)); $count++)
+                                            @for($count = 0; $count <= max(1, (int) (optional($reservedRoom->roomType)->max_guests ?? 1)); $count++)
                                                 <option value="{{ $count }}" {{ ($roomPwdSeniorCounts[$roomId] ?? 0) === $count ? 'selected' : '' }}>
                                                     {{ $count === 0 ? 'Select count' : ($count . ' ' . ($count === 1 ? 'Person' : 'People')) }}
                                                 </option>
