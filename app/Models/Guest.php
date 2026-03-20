@@ -24,11 +24,19 @@ class Guest extends Model
 
     public function getNameAttribute()
     {
-        return $this->first_name . ' ' . $this->last_name;
+        $firstName = trim((string) ($this->attributes['first_name'] ?? ''));
+        $lastName = trim((string) ($this->attributes['last_name'] ?? ''));
+        $combined = trim($firstName . ' ' . $lastName);
+
+        if ($combined !== '') {
+            return $combined;
+        }
+
+        return (string) ($this->attributes['name'] ?? 'Guest');
     }
 
     public function getFullNameAttribute()
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->name;
     }
 }
