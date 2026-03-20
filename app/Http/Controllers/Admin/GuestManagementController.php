@@ -5,25 +5,72 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Guest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class GuestManagementController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Guest::withCount('bookings');
+        $query = Guest::query();
+
+        $guestTableColumns = [];
+        $hasBookingsGuestForeignKey = false;
+        $hasGuestCreatedAt = false;
+
+        try {
+            if (Schema::hasTable('guests')) {
+                $guestTableColumns = Schema::getColumnListing('guests');
+                $hasGuestCreatedAt = in_array('created_at', $guestTableColumns, true);
+            }
+
+            $hasBookingsGuestForeignKey = Schema::hasTable('bookings')
+                && in_array('guest_id', Schema::getColumnListing('bookings'), true);
+        } catch (\Throwable $e) {
+            $guestTableColumns = [];
+            $hasBookingsGuestForeignKey = false;
+            $hasGuestCreatedAt = false;
+        }
+
+        if ($hasBookingsGuestForeignKey) {
+            $query->withCount('bookings');
+        } else {
+            $query->select('guests.*')->selectRaw('0 as bookings_count');
+        }
 
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('first_name', 'LIKE', "%{$search}%")
-                  ->orWhere('last_name', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%")
-                  ->orWhere('phone', 'LIKE', "%{$search}%");
+                if (Schema::hasColumn('guests', 'first_name')) {
+                    $q->orWhere('first_name', 'LIKE', "%{$search}%");
+                }
+
+                if (Schema::hasColumn('guests', 'last_name')) {
+                    $q->orWhere('last_name', 'LIKE', "%{$search}%");
+                }
+
+                if (Schema::hasColumn('guests', 'name')) {
+                    $q->orWhere('name', 'LIKE', "%{$search}%");
+                }
+
+                if (Schema::hasColumn('guests', 'email')) {
+                    $q->orWhere('email', 'LIKE', "%{$search}%");
+                }
+
+                if (Schema::hasColumn('guests', 'phone')) {
+                    $q->orWhere('phone', 'LIKE', "%{$search}%");
+                }
             });
         }
 
-        $guests = $query->latest()->paginate(20);
+        if ($hasGuestCreatedAt) {
+            $query->latest();
+        } else {
+            $query->orderByDesc('id');
+        }
+
+        $guests = $query->paginate(20);
 
         return view('admin.guests.index', compact('guests'));
     }
