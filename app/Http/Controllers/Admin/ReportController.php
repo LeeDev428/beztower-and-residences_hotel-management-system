@@ -40,7 +40,7 @@ class ReportController extends Controller
             ->keyBy('status');
 
         // Payments in range
-        $recentBookings = Booking::with(['guest', 'room', 'roomType'])
+        $recentBookings = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
             ->whereBetween('created_at', [$startDate, $endDate])
             ->latest()
             ->take(50)
@@ -291,7 +291,7 @@ class ReportController extends Controller
 
     private function exportBookings($startDate, $endDate)
     {
-        $bookings = Booking::with(['guest', 'room', 'roomType'])
+        $bookings = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
             ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
 
@@ -327,11 +327,15 @@ class ReportController extends Controller
             $sheet->setCellValue('C' . $row, $booking->guest->name);
             $sheet->setCellValue('D' . $row, $booking->guest->email);
             $sheet->setCellValue('E' . $row, $booking->guest->phone);
-            $sheet->setCellValue('F' . $row, $booking->room->room_number);
+            $roomLabel = $booking->rooms->isNotEmpty()
+                ? ('Room ' . optional($booking->rooms->first())->room_number . ($booking->rooms->count() > 1 ? (' +' . ($booking->rooms->count() - 1) . ' more') : ''))
+                : ('Room ' . (optional($booking->room)->room_number ?? 'N/A'));
+
+            $sheet->setCellValue('F' . $row, $roomLabel);
             $sheet->setCellValue('G' . $row, $booking->check_in_date->format('Y-m-d'));
             $sheet->setCellValue('H' . $row, $booking->check_out_date->format('Y-m-d'));
             $sheet->setCellValue('I' . $row, $booking->number_of_guests);
-            $sheet->setCellValue('J' . $row, $booking->total_amount);
+            $sheet->setCellValue('J' . $row, $booking->final_total ?? $booking->total_amount);
             $sheet->setCellValue('K' . $row, $booking->status);
             $row++;
         }
