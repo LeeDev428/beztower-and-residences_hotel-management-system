@@ -254,7 +254,7 @@ class BookingManagementController extends Controller
                 return back()->with('error', 'Room transfer must stay within the same room type as the selected assigned room.');
             }
 
-            $pivotRate = (float) ($currentRoom->pivot->nightly_rate ?? $currentRoom->effective_price ?? $currentRoom->roomType->base_price ?? 0);
+            $pivotRate = (float) ($currentRoom->pivot->nightly_rate ?? $currentRoom->effective_price ?? optional($currentRoom->roomType)->base_price ?? 0);
             $pivotManualAdjustment = (float) ($currentRoom->pivot->manual_adjustment ?? 0);
             $pivotAdditionalCharge = (float) ($currentRoom->pivot->additional_charge ?? 0);
             $pivotAdditionalReason = $currentRoom->pivot->additional_charge_reason;
@@ -396,9 +396,9 @@ class BookingManagementController extends Controller
                 $perRoomDiscount = (float) ($validated['room_discount_amounts'][$roomId] ?? 0);
                 $roomPwdSeniorCount = (int) ($validated['room_pwd_senior_counts'][$roomId] ?? 0);
 
-                $roomCapacity = max(1, (int) ($reservedRoom->roomType->max_guests ?? 1));
+                $roomCapacity = max(1, (int) (optional($reservedRoom->roomType)->max_guests ?? 1));
                 $roomNights = (int) ($booking->total_nights ?? $booking->number_of_nights ?? 0);
-                $roomNightlyRate = (float) ($reservedRoom->pivot->nightly_rate ?? $reservedRoom->effective_price ?? $reservedRoom->roomType->base_price ?? 0);
+                $roomNightlyRate = (float) ($reservedRoom->pivot->nightly_rate ?? $reservedRoom->effective_price ?? optional($reservedRoom->roomType)->base_price ?? 0);
                 $roomBaseTotal = $roomNightlyRate * max(1, $roomNights);
 
                 $roomPwdSeniorCount = max(0, min($roomPwdSeniorCount, $roomCapacity));
