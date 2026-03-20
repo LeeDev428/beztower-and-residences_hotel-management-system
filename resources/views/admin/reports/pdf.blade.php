@@ -182,11 +182,17 @@
                     <td>{{ $i + 1 }}</td>
                     <td style="font-weight: 600; color: #d4af37;">{{ $booking->booking_reference }}</td>
                     <td>{{ $booking->guest->name ?? 'N/A' }}</td>
-                    <td> {{ $booking->roomType->name ?? '' }}</td>
+                    <td>
+                        @if($booking->rooms->isNotEmpty())
+                            Room {{ optional($booking->rooms->first())->room_number ?? 'N/A' }}@if($booking->rooms->count() > 1) +{{ $booking->rooms->count() - 1 }} more@endif
+                        @else
+                            Room {{ optional($booking->room)->room_number ?? 'N/A' }}
+                        @endif
+                    </td>
                     <td>{{ \Carbon\Carbon::parse($booking->check_in_date)->format('M d, Y') }}</td>
                     <td>{{ \Carbon\Carbon::parse($booking->check_out_date)->format('M d, Y') }}</td>
                     <td style="text-align: center;">{{ $booking->total_nights ?? $booking->number_of_nights ?? '-' }}</td>
-                    <td style="text-align: right; font-weight: 600;">{{ number_format($booking->total_amount, 2) }}</td>
+                    <td style="text-align: right; font-weight: 600;">{{ number_format($booking->final_total ?? $booking->total_amount, 2) }}</td>
                     <td><span class="badge badge-{{ $booking->status }}">{{ str_replace('_', ' ', $booking->status) }}</span></td>
                 </tr>
                 @empty
