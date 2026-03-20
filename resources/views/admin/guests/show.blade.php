@@ -78,8 +78,8 @@
             <div style="padding: 1.5rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                     <div>
-                        <div style="font-weight: 700; font-size: 1.125rem;">{{ $booking->reference_number }}</div>
-                        <div style="color: var(--text-muted); font-size: 0.875rem;">{{ $booking->created_at->format('F d, Y') }}</div>
+                        <div style="font-weight: 700; font-size: 1.125rem;">{{ $booking->booking_reference }}</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">{{ optional($booking->created_at)->format('F d, Y') ?? 'N/A' }}</div>
                     </div>
                     <x-admin.badge :status="$booking->status" />
                 </div>
@@ -87,15 +87,21 @@
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted);">Room</div>
-                        <div style="font-weight: 600;">{{ $booking->room->room_number }}</div>
+                        <div style="font-weight: 600;">
+                            @if($booking->rooms->isNotEmpty())
+                                Room {{ optional($booking->rooms->first())->room_number ?? 'N/A' }}@if($booking->rooms->count() > 1) +{{ $booking->rooms->count() - 1 }} more@endif
+                            @else
+                                Room {{ optional($booking->room)->room_number ?? 'N/A' }}
+                            @endif
+                        </div>
                     </div>
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted);">Check-in</div>
-                        <div style="font-weight: 600;">{{ $booking->check_in_date->format('M d, Y') }}</div>
+                        <div style="font-weight: 600;">{{ optional($booking->check_in_date)->format('M d, Y') ?? 'N/A' }}</div>
                     </div>
                     <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted);">Amount</div>
-                        <div style="font-weight: 700; color: var(--primary-gold);">₱{{ number_format($booking->total_amount, 2) }}</div>
+                        <div style="font-weight: 700; color: var(--primary-gold);">₱{{ number_format($booking->final_total ?? $booking->total_amount, 2) }}</div>
                     </div>
                 </div>
 
