@@ -12,7 +12,7 @@
     <!-- Guest Info -->
     <div>
         <x-admin.card title="Guest Information">
-            <form method="POST" action="{{ route('admin.guests.update', $guest) }}">
+            <form method="POST" action="{{ route('admin.guests.update', $guestRouteKey ?? ($guest->id ?? $guest->guest_id)) }}">
                 @csrf
                 @method('PUT')
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
