@@ -26,6 +26,7 @@
     <!-- Booking Details + Final Total -->
     @php
         $reservedRooms = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+        $isMultiRoomBilling = $reservedRooms->count() > 1;
         $roomManualAdjustments = [];
         $roomAdditionalCharges = [];
         $roomAdditionalReasons = [];
@@ -64,7 +65,7 @@
             }
         }
 
-        if ($reservedRooms->count() > 1) {
+        if ($isMultiRoomBilling) {
             $initialManualAdjustment = 0;
             foreach ($reservedRooms as $reservedRoom) {
                 $roomId = $reservedRoom->id;
@@ -142,7 +143,7 @@
                     <span style="color: var(--text-muted);">Room Charges</span>
                     <span style="font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
                 </div>
-                @if($reservedRooms->count() > 1)
+                @if($isMultiRoomBilling)
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--text-muted);">Per-Room Additional Charges</span>
                     <span style="font-weight: 600;" id="perRoomAdditionalDisplay">₱{{ number_format($initialPerRoomAdditionalTotal, 2) }}</span>
@@ -168,10 +169,12 @@
                     <span style="color: var(--success); font-weight: 600;">Verified Payments</span>
                     <span style="font-weight: 700; color: var(--success);" id="verifiedPaymentsDisplay">-₱{{ number_format($verifiedPaymentsTotal, 2) }}</span>
                 </div>
+                @if(!$isMultiRoomBilling)
                 <div style="display: flex; justify-content: space-between; padding: 5px 0;">
                     <span style="color: var(--text-muted);">Manual Adjustment</span>
                     <span style="font-weight: 600;" id="manualAdjustmentDisplay">₱{{ number_format($initialManualAdjustment, 2) }}</span>
                 </div>
+                @endif
             </div>
         </x-admin.card>
     </div>
@@ -675,17 +678,22 @@ function calculatePwdDiscount() {
 }
 
 function calculateTotal() {
+    const hasPerRoomBilling = document.querySelectorAll('[data-room-row="1"]').length > 0;
+    const perRoomNetAdjustment = hasPerRoomBilling ? (calculatePerRoomNetAdjustmentTotal() || 0) : null;
     const earlyCheckin = parseFloat(document.getElementById('earlyCheckinChargeInput').value) || 0;
     const lateCheckout = parseFloat(document.getElementById('lateCheckoutChargeInput').value) || 0;
     const pwdDiscountInput = document.getElementById('pwdSeniorDiscountInput');
     const pwdDiscount  = pwdDiscountInput ? (parseFloat(pwdDiscountInput.value) || 0) : 0;
-    const manualAdjust = getManualAdjustmentTotal();
+    const manualAdjust = hasPerRoomBilling ? perRoomNetAdjustment : getManualAdjustmentTotal();
 
     const grossTotal = roomTotal + earlyCheckin + lateCheckout - pwdDiscount + manualAdjust;
     const balanceDue = Math.max(grossTotal - verifiedPaymentsTotal, 0);
 
     document.getElementById('grandTotal').textContent = '₱' + balanceDue.toLocaleString('en-PH', {minimumFractionDigits: 2});
-    document.getElementById('manualAdjustmentDisplay').textContent = '₱' + manualAdjust.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const manualAdjustmentDisplay = document.getElementById('manualAdjustmentDisplay');
+    if (manualAdjustmentDisplay) {
+        manualAdjustmentDisplay.textContent = '₱' + manualAdjust.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    }
 }
 
 function toggleGcashQR() {
