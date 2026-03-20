@@ -74,11 +74,7 @@
                                 <div style="font-size: 0.875rem; color: var(--text-muted);">{{ optional($booking->guest)->email ?? 'No email' }}</div>
                             </td>
                             <td style="padding: 1rem 0.75rem;">
-                                @if($booking->rooms->isNotEmpty())
-                                    Room {{ optional($booking->rooms->first())->room_number ?? 'N/A' }}@if($booking->rooms->count() > 1) +{{ $booking->rooms->count() - 1 }} more@endif
-                                @else
-                                    Room {{ optional($booking->room)->room_number ?? 'N/A' }}
-                                @endif
+                                Room {{ optional($booking->room)->room_number ?? 'N/A' }}
                             </td>
                             <td style="padding: 1rem 0.75rem;">{{ optional($booking->check_in_date)->format('M d, Y') ?? 'N/A' }}</td>
                             <td style="padding: 1rem 0.75rem;">
@@ -107,11 +103,7 @@
                     <div style="padding: 0.75rem; background: var(--light-gray); border-radius: 8px;">
                         <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ optional($arrival->guest)->name ?? 'Guest not available' }}</div>
                         <div style="font-size: 0.875rem; color: var(--text-muted);">
-                            @if($arrival->rooms->isNotEmpty())
-                                Room {{ optional($arrival->rooms->first())->room_number ?? 'N/A' }}@if($arrival->rooms->count() > 1) +{{ $arrival->rooms->count() - 1 }} more@endif
-                            @else
-                                Room {{ optional($arrival->room)->room_number ?? 'N/A' }}
-                            @endif
+                            Room {{ optional($arrival->room)->room_number ?? 'N/A' }}
                         </div>
                     </div>
                     @endforeach
