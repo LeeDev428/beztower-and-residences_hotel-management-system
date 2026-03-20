@@ -157,7 +157,12 @@ class BookingManagementController extends Controller
             }
 
             try {
-                Mail::to($booking->guest->email)->send(new BookingCancelled($booking));
+                $guestEmail = optional($booking->guest)->email;
+                if (!empty($guestEmail)) {
+                    Mail::to($guestEmail)->send(new BookingCancelled($booking));
+                } else {
+                    Log::warning('Skipped cancellation email from status update: guest email missing for booking #' . $booking->booking_reference);
+                }
             } catch (\Exception $e) {
                 Log::error('Failed to send cancellation email from status update: ' . $e->getMessage());
             }
@@ -189,10 +194,15 @@ class BookingManagementController extends Controller
             }
             
             // Send thank-you email after checkout
-            Log::info('About to send checkout thank-you email to: ' . $booking->guest->email);
+            $guestEmail = optional($booking->guest)->email;
+            Log::info('About to send checkout thank-you email to: ' . ($guestEmail ?: '[missing-email]'));
             try {
-                Mail::to($booking->guest->email)->send(new CheckoutThankYou($booking));
-                Log::info('Checkout thank-you email sent successfully to: ' . $booking->guest->email);
+                if (!empty($guestEmail)) {
+                    Mail::to($guestEmail)->send(new CheckoutThankYou($booking));
+                    Log::info('Checkout thank-you email sent successfully to: ' . $guestEmail);
+                } else {
+                    Log::warning('Skipped checkout thank-you email: guest email missing for booking #' . $booking->booking_reference);
+                }
             } catch (\Exception $e) {
                 Log::error('Failed to send checkout thank-you email: ' . $e->getMessage());
                 Log::error('Stack trace: ' . $e->getTraceAsString());
@@ -519,7 +529,12 @@ class BookingManagementController extends Controller
         // Send cancellation email
         $booking->load('guest');
         try {
-            Mail::to($booking->guest->email)->send(new BookingCancelled($booking));
+            $guestEmail = optional($booking->guest)->email;
+            if (!empty($guestEmail)) {
+                Mail::to($guestEmail)->send(new BookingCancelled($booking));
+            } else {
+                Log::warning('Skipped cancellation email: guest email missing for booking #' . $booking->booking_reference);
+            }
         } catch (\Exception $e) {
             Log::error('Failed to send cancellation email: ' . $e->getMessage());
         }
