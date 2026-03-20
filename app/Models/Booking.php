@@ -129,7 +129,7 @@ class Booking extends Model
 
         try {
             if (!Schema::hasTable('booking_rooms')) {
-                self::$bookingRoomPivotColumnsCache = ['nightly_rate'];
+                self::$bookingRoomPivotColumnsCache = [];
                 return self::$bookingRoomPivotColumnsCache;
             }
 
@@ -139,13 +139,11 @@ class Booking extends Model
                 fn ($column) => in_array($column, $existingColumns, true)
             ));
 
-            self::$bookingRoomPivotColumnsCache = !empty($availableColumns)
-                ? $availableColumns
-                : ['nightly_rate'];
+            self::$bookingRoomPivotColumnsCache = $availableColumns;
 
             return self::$bookingRoomPivotColumnsCache;
         } catch (\Throwable $e) {
-            self::$bookingRoomPivotColumnsCache = ['nightly_rate'];
+            self::$bookingRoomPivotColumnsCache = [];
             return self::$bookingRoomPivotColumnsCache;
         }
     }
