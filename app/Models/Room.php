@@ -99,6 +99,6 @@ class Room extends Model
     // Effective price is base price (room discounts are disabled globally)
     public function getEffectivePriceAttribute()
     {
-        return round((float) $this->roomType->base_price, 2);
+        return round((float) (optional($this->roomType)->base_price ?? 0), 2);
     }
 }
