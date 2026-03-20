@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Room extends Model
 {
+    protected static ?array $bookingRoomPivotColumnsCache = null;
+
     protected $fillable = [
         'room_type_id',
         'room_number',
@@ -74,16 +77,49 @@ class Room extends Model
 
     public function reservationBookings()
     {
+        $pivotColumns = $this->getBookingRoomPivotColumns();
+
         return $this->belongsToMany(Booking::class, 'booking_rooms')
-            ->withPivot(
-                'nightly_rate',
-                'manual_adjustment',
-                'additional_charge',
-                'additional_charge_reason',
-                'discount_amount',
-                'discount_type'
-            )
+            ->withPivot($pivotColumns)
             ->withTimestamps();
+    }
+
+    protected function getBookingRoomPivotColumns(): array
+    {
+        if (self::$bookingRoomPivotColumnsCache !== null) {
+            return self::$bookingRoomPivotColumnsCache;
+        }
+
+        $preferredColumns = [
+            'nightly_rate',
+            'manual_adjustment',
+            'additional_charge',
+            'additional_charge_reason',
+            'discount_amount',
+            'discount_type',
+        ];
+
+        try {
+            if (!Schema::hasTable('booking_rooms')) {
+                self::$bookingRoomPivotColumnsCache = ['nightly_rate'];
+                return self::$bookingRoomPivotColumnsCache;
+            }
+
+            $existingColumns = Schema::getColumnListing('booking_rooms');
+            $availableColumns = array_values(array_filter(
+                $preferredColumns,
+                fn ($column) => in_array($column, $existingColumns, true)
+            ));
+
+            self::$bookingRoomPivotColumnsCache = !empty($availableColumns)
+                ? $availableColumns
+                : ['nightly_rate'];
+
+            return self::$bookingRoomPivotColumnsCache;
+        } catch (\Throwable $e) {
+            self::$bookingRoomPivotColumnsCache = ['nightly_rate'];
+            return self::$bookingRoomPivotColumnsCache;
+        }
     }
 
     public function housekeeping()
