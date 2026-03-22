@@ -201,7 +201,13 @@ class BookingController extends Controller
             }
 
             $hasConflict = Booking::query()
-                ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                ->where(function ($statusQuery) {
+                    $statusQuery
+                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                        ->orWhereHas('payments', function ($paymentQuery) {
+                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                        });
+                })
                 ->where('check_in_date', '<', $validated['check_out_date'])
                 ->where('check_out_date', '>', $validated['check_in_date'])
                 ->where(function ($query) use ($selectedRoomIds) {
@@ -334,12 +340,24 @@ class BookingController extends Controller
             ->where('status', 'available')
             ->whereNull('archived_at')
             ->whereDoesntHave('bookings', function ($query) use ($validated) {
-                $query->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                $query->where(function ($statusQuery) {
+                    $statusQuery
+                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                        ->orWhereHas('payments', function ($paymentQuery) {
+                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                        });
+                })
                     ->where('check_in_date', '<', $validated['check_out_date'])
                     ->where('check_out_date', '>', $validated['check_in_date']);
             })
             ->whereDoesntHave('reservationBookings', function ($query) use ($validated) {
-                $query->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                $query->where(function ($statusQuery) {
+                    $statusQuery
+                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                        ->orWhereHas('payments', function ($paymentQuery) {
+                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                        });
+                })
                     ->where('check_in_date', '<', $validated['check_out_date'])
                     ->where('check_out_date', '>', $validated['check_in_date']);
             })
