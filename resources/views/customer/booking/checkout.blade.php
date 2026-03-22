@@ -459,6 +459,112 @@
             margin-right: 0.5rem;
         }
 
+        .legal-consent-box {
+            margin-top: 1.25rem;
+            padding: 1rem;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .legal-consent-box label {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            cursor: pointer;
+            color: #2c2c2c;
+            font-size: 0.93rem;
+            line-height: 1.55;
+        }
+
+        .legal-consent-box input[type="checkbox"] {
+            margin-top: 0.2rem;
+            width: 18px;
+            height: 18px;
+            accent-color: #d4af37;
+            cursor: pointer;
+        }
+
+        .legal-link {
+            color: #b38c17;
+            text-decoration: underline;
+            font-weight: 600;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .legal-link:hover {
+            color: #8f6d0e;
+        }
+
+        .legal-note {
+            margin-top: 0.75rem;
+            color: #666;
+            font-size: 0.88rem;
+        }
+
+        .legal-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 99999;
+        }
+
+        .legal-modal.show {
+            display: flex;
+        }
+
+        .legal-modal-card {
+            width: 100%;
+            max-width: 760px;
+            max-height: 82vh;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .legal-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.2rem;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .legal-modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c2c2c;
+        }
+
+        .legal-modal-close {
+            border: none;
+            background: none;
+            font-size: 1.5rem;
+            line-height: 1;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .legal-modal-content {
+            padding: 1rem 1.2rem 1.2rem;
+            overflow-y: auto;
+            white-space: pre-line;
+            color: #2f2f2f;
+            line-height: 1.6;
+            font-size: 0.92rem;
+        }
+
         /* Guest Recommendation */
         .guest-recommendation {
             margin-top: 0.8rem;
@@ -763,6 +869,22 @@
                         <textarea name="special_requests" class="form-textarea" 
                                   placeholder="Any special requests or preferences..."></textarea>
                     </div>
+
+                    <div class="legal-consent-box">
+                        <label for="termsAccepted">
+                            <input type="checkbox" id="termsAccepted" name="terms_accepted" value="1" required>
+                            <span>
+                                I agree to the
+                                <button type="button" class="legal-link" data-legal-open="terms">Terms &amp; Conditions</button>
+                                and
+                                <button type="button" class="legal-link" data-legal-open="privacy">Privacy Policy</button>.
+                            </span>
+                        </label>
+                        <div class="legal-note">By submitting this booking, you confirm that all provided information is accurate.</div>
+                        @error('terms_accepted')
+                            <div style="color:#dc3545;font-size:0.85rem;margin-top:0.55rem;">{{ $message }}</div>
+                        @enderror
+                    </div>
                     
                     <button type="submit" class="submit-booking-btn" id="bookingSubmitBtn">
                         <i class="fas fa-check-circle"></i> Submit Reservation
@@ -859,7 +981,92 @@
         </div>
     </div>
 
+    <div class="legal-modal" id="legalModal" aria-hidden="true">
+        <div class="legal-modal-card" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle">
+            <div class="legal-modal-header">
+                <div class="legal-modal-title" id="legalModalTitle">Terms &amp; Conditions</div>
+                <button type="button" class="legal-modal-close" data-legal-close>&times;</button>
+            </div>
+            <div class="legal-modal-content" id="legalModalContent"></div>
+        </div>
+    </div>
+
     <script>
+        const legalTermsText = `Full payment is expected upon check-in
+Check-in Time: 2:00 PM
+Check-out Time: 12:00 PM
+Early check-in or late check-out is subject to room availability on the day and must be reconfirmed with the front desk. Fee: PHP 150.00 per hour (maximum of 5 hours only)
+Non-smoking is strictly prohibited inside the building premises
+Rooms are not soundproof; please be considerate of other guests. No loud music or noise after 10:00 PM
+Lost/damaged card/key will be charged PHP 200.00 each
+Bedding, pillow/case, towels, toiletries, and bottled water are issued once only. Additional requests will be charged accordingly and must be coordinated with the front desk
+Upon check-out, stains or dirt that cannot be easily cleaned will incur extra cleaning charges
+All appliances, equipment, utensils, and other items must be complete upon check-out; otherwise, corresponding charges will apply
+Any damage to hotel property will be charged
+Extension of hours or days must be reported to the front desk on or before 10:00 AM, and corresponding fees must be settled
+Failure to pay for two days will automatically result in suspension of access and utilities until full payment is received
+Surrender the envelope to the front desk for room inspection/inventory before leaving the building`;
+
+        const legalPrivacyText = `At Bez Tower Residences, your privacy is important to us. When you use our online reservation system, we collect only the information necessary to make your booking smooth and secure.
+
+We ensure that your personal details such as your name, address, contact information, and payment details are kept confidential and used solely to manage your reservation and enhance your experience with us.
+
+We are committed to protecting your personal data in accordance with the Data Privacy Act of 2012 (Republic Act No. 10173) of the Philippines. Your information will not be shared with unauthorized parties and will only be used for purposes directly related to your stay or as required by law.`;
+
+        const legalModal = document.getElementById('legalModal');
+        const legalModalTitle = document.getElementById('legalModalTitle');
+        const legalModalContent = document.getElementById('legalModalContent');
+
+        function openLegalModal(type) {
+            if (!legalModal || !legalModalTitle || !legalModalContent) {
+                return;
+            }
+
+            if (type === 'privacy') {
+                legalModalTitle.textContent = 'Privacy Policy';
+                legalModalContent.textContent = legalPrivacyText;
+            } else {
+                legalModalTitle.textContent = 'Terms & Conditions';
+                legalModalContent.textContent = legalTermsText;
+            }
+
+            legalModal.classList.add('show');
+            legalModal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeLegalModal() {
+            if (!legalModal) {
+                return;
+            }
+
+            legalModal.classList.remove('show');
+            legalModal.setAttribute('aria-hidden', 'true');
+        }
+
+        document.querySelectorAll('[data-legal-open]').forEach((trigger) => {
+            trigger.addEventListener('click', () => {
+                openLegalModal(trigger.getAttribute('data-legal-open'));
+            });
+        });
+
+        document.querySelectorAll('[data-legal-close]').forEach((closeTrigger) => {
+            closeTrigger.addEventListener('click', closeLegalModal);
+        });
+
+        if (legalModal) {
+            legalModal.addEventListener('click', (event) => {
+                if (event.target === legalModal) {
+                    closeLegalModal();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeLegalModal();
+            }
+        });
+
         const selectedSidebarRooms = @json($sidebarRoomMedia->all());
         let currentSidebarRoomIndex = 0;
         let currentSidebarImageIndex = 0;
@@ -1316,6 +1523,14 @@
         document.getElementById('bookingForm').addEventListener('submit', function (event) {
             const requestedRooms = Math.max(1, parseInt(document.getElementById('numberOfRooms').value || '1', 10));
             const selected = getSelectedRoomIds();
+            const termsAccepted = document.getElementById('termsAccepted');
+
+            if (!termsAccepted || !termsAccepted.checked) {
+                event.preventDefault();
+                alert('Please agree to the Terms & Conditions and Privacy Policy before submitting your reservation.');
+                return;
+            }
+
             if (selected.length !== requestedRooms) {
                 event.preventDefault();
                 alert(`Only ${selected.length} room(s) can be assigned. Please adjust your room count or date range.`);
