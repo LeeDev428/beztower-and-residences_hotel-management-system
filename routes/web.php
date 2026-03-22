@@ -88,6 +88,7 @@ Route::prefix('admin')->group(function () {
             Route::post('/{booking}/final-billing', [BookingManagementController::class, 'updateFinalBilling'])->name('admin.bookings.updateFinalBilling');
             Route::post('/{booking}/cancel', [BookingManagementController::class, 'cancelBooking'])->name('admin.bookings.cancel');
             Route::post('/{booking}/reschedule', [BookingManagementController::class, 'rescheduleBooking'])->name('admin.bookings.reschedule');
+            Route::post('/{booking}/reschedule-request', [BookingManagementController::class, 'sendRescheduleRequest'])->name('admin.bookings.rescheduleRequest');
             Route::post('/{booking}/assign-room', [BookingManagementController::class, 'assignRoom'])->name('admin.bookings.assignRoom');
         });
         
