@@ -71,8 +71,10 @@
                 $roomId = $reservedRoom->id;
                 $initialManualAdjustment += (float) ($roomAdditionalCharges[$roomId] ?? 0) - (float) ($roomDiscountAmounts[$roomId] ?? 0);
             }
+            $initialOverallManualAdjustment = round((float) ($booking->manual_adjustment ?? 0) - $initialManualAdjustment, 2);
         } else {
             $initialManualAdjustment = (float) ($booking->manual_adjustment ?? 0);
+            $initialOverallManualAdjustment = 0;
         }
 
         $initialPerRoomAdditionalTotal = array_sum($roomAdditionalCharges);
@@ -143,6 +145,10 @@
                     <span style="color: var(--text-muted);">Room Charges</span>
                     <span style="font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
                 </div>
+                <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
+                    <span style="color: var(--text-muted);">VAT (12%) Included</span>
+                    <span style="font-weight: 600;">₱{{ number_format((float) ($booking->tax_amount ?? 0), 2) }}</span>
+                </div>
                 @if($isMultiRoomBilling)
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--text-muted);">Per-Room Additional Charges</span>
@@ -151,6 +157,10 @@
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--success); font-weight: 600;">Per-Room Discounts</span>
                     <span style="font-weight: 700; color: var(--success);" id="perRoomDiscountDisplay">-₱{{ number_format($initialPerRoomDiscountTotal, 2) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
+                    <span style="color: var(--text-muted);">Overall Total Adjustment</span>
+                    <span style="font-weight: 600;" id="overallManualAdjustmentDisplay">₱{{ number_format($initialOverallManualAdjustment, 2) }}</span>
                 </div>
                 @endif
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
@@ -392,6 +402,17 @@
                         <input type="hidden" name="manual_adjustment" id="manualAdjustment" value="{{ $initialManualAdjustment }}">
                         <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.55rem;">Each room has independent additional charges and discounts. Grand total is automatically combined at the bottom.</p>
                     </div>
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Overall Total Adjustment (All Rooms)</label>
+                        <div style="display: flex; align-items: center; border: 1px solid var(--border-gray); border-radius: 8px; overflow: hidden;">
+                            <span style="padding: 0.65rem 0.85rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.9rem;">₱</span>
+                            <input type="number" name="overall_manual_adjustment" id="overallManualAdjustment"
+                                value="{{ $initialOverallManualAdjustment }}" step="0.01"
+                                style="flex: 1; border: none; outline: none; padding: 0.65rem 0.85rem; font-size: 0.9rem;"
+                                onchange="calculateTotal()">
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">Use this for whole-booking adjustments (e.g., manual down payment recorded outside system).</p>
+                    </div>
                 @else
                     <div style="margin-bottom: 1.25rem;">
                         <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Adjustment Amount</label>
@@ -404,6 +425,7 @@
                         </div>
                         <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">Positive for additional charges, negative for discounts</p>
                     </div>
+                    <input type="hidden" name="overall_manual_adjustment" id="overallManualAdjustment" value="0">
                 @endif
                 <div>
                     <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Reason for Adjustment</label>
@@ -684,7 +706,8 @@ function calculateTotal() {
     const lateCheckout = parseFloat(document.getElementById('lateCheckoutChargeInput').value) || 0;
     const pwdDiscountInput = document.getElementById('pwdSeniorDiscountInput');
     const pwdDiscount  = pwdDiscountInput ? (parseFloat(pwdDiscountInput.value) || 0) : 0;
-    const manualAdjust = hasPerRoomBilling ? perRoomNetAdjustment : getManualAdjustmentTotal();
+    const overallManualAdjust = parseFloat(document.getElementById('overallManualAdjustment')?.value || '0') || 0;
+    const manualAdjust = hasPerRoomBilling ? (perRoomNetAdjustment + overallManualAdjust) : getManualAdjustmentTotal();
 
     const grossTotal = roomTotal + earlyCheckin + lateCheckout - pwdDiscount + manualAdjust;
     const balanceDue = Math.max(grossTotal - verifiedPaymentsTotal, 0);
@@ -693,6 +716,11 @@ function calculateTotal() {
     const manualAdjustmentDisplay = document.getElementById('manualAdjustmentDisplay');
     if (manualAdjustmentDisplay) {
         manualAdjustmentDisplay.textContent = '₱' + manualAdjust.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    }
+
+    const overallManualAdjustmentDisplay = document.getElementById('overallManualAdjustmentDisplay');
+    if (overallManualAdjustmentDisplay) {
+        overallManualAdjustmentDisplay.textContent = '₱' + overallManualAdjust.toLocaleString('en-PH', {minimumFractionDigits: 2});
     }
 }
 
