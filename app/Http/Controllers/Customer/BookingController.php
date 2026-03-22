@@ -580,6 +580,11 @@ class BookingController extends Controller
             ->where('booking_reference', $reference)
             ->firstOrFail();
 
+        $existingSubmittedPayment = $booking->payments()
+            ->whereIn('payment_status', ['pending', 'verified', 'completed'])
+            ->latest('id')
+            ->first();
+
         // Calculate payment amount based on option
         if ($booking->payment_option === 'full_payment') {
             $paymentAmount = $booking->total_amount;
@@ -589,7 +594,7 @@ class BookingController extends Controller
             $paymentPercentage = 30.00;
         }
 
-        return view('customer.booking.payment', compact('booking', 'paymentAmount', 'paymentPercentage'));
+        return view('customer.booking.payment', compact('booking', 'paymentAmount', 'paymentPercentage', 'existingSubmittedPayment'));
     }
 
     public function processPayment(Request $request, $reference)
@@ -601,6 +606,18 @@ class BookingController extends Controller
         ]);
 
         $booking = Booking::where('booking_reference', $reference)->firstOrFail();
+
+        $existingSubmittedPayment = $booking->payments()
+            ->whereIn('payment_status', ['pending', 'verified', 'completed'])
+            ->latest('id')
+            ->first();
+
+        if ($existingSubmittedPayment) {
+            return redirect()->route('booking.payment', ['reference' => $reference])
+                ->withErrors([
+                    'error' => 'Payment proof was already submitted for this booking. If you already submitted, please wait for verification.',
+                ]);
+        }
 
         try {
             DB::beginTransaction();
