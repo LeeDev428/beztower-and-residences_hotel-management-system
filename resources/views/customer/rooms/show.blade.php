@@ -976,8 +976,14 @@
                 <div class="price-section">
                     {{-- <div class="price-label">Price:</div> --}}
                     <div class="price-wrapper">
-                        <span class="price-amount">₱{{ number_format($room->roomType->base_price, 2) }}</span>
+                        <span class="price-amount">₱{{ number_format($room->effective_price, 2) }}</span>
                         <span class="price-period">/night</span>
+                        @if((float) ($room->roomType->discount_percentage ?? 0) > 0)
+                            <div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
+                                <span style="text-decoration: line-through;">₱{{ number_format((float) $room->roomType->base_price, 2) }}</span>
+                                <span class="discount-badge">{{ number_format((float) $room->roomType->discount_percentage, 0) }}% OFF</span>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -1487,7 +1493,7 @@
     </footer>
 
     <script>
-        const basePrice = {{ $room->roomType->base_price }};
+        const basePrice = {{ (float) $room->effective_price }};
 
         // Change main image when clicking thumbnails
         function changeImage(src, element) {
