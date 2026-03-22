@@ -9,6 +9,9 @@ use App\Models\Room;
 use App\Models\ActivityLog;
 use App\Mail\BookingCancelled;
 use App\Mail\CheckoutThankYou;
+use App\Mail\RescheduleConfirmation;
+use App\Mail\RescheduleRejection;
+use App\Mail\RescheduleRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -127,6 +130,13 @@ class BookingManagementController extends Controller
             $hasVerifiedPayment = $booking->payments()->whereIn('payment_status', ['verified', 'completed'])->exists();
             if (!$hasVerifiedPayment) {
                 return back()->with('error', 'Check-in is not allowed until payment is verified in the Payment Module.');
+            }
+        }
+
+        if ($targetStatus === 'rescheduled') {
+            $hasVerifiedPayment = $booking->payments()->whereIn('payment_status', ['verified', 'completed'])->exists();
+            if (!$hasVerifiedPayment) {
+                return back()->with('error', 'Rescheduling status is not allowed until payment is verified in the Payment Module.');
             }
         }
 
@@ -558,52 +568,187 @@ class BookingManagementController extends Controller
     public function rescheduleBooking(Request $request, Booking $booking)
     {
         $validated = $request->validate([
-            'new_check_in_date' => 'required|date|after:today',
+            'new_check_in_date' => 'required|date',
             'new_check_out_date' => 'required|date|after:new_check_in_date',
         ]);
 
-        // Validate rescheduling eligibility
-        if (!$booking->canReschedule()) {
-            return back()->with('error', 'This booking cannot be rescheduled. Must be cancelled and within 1 week.');
+        $requestedCheckInDate = Carbon::parse($validated['new_check_in_date'])->startOfDay();
+        $requestedCheckOutDate = Carbon::parse($validated['new_check_out_date'])->startOfDay();
+
+        if (in_array($booking->status, ['checked_in', 'checked_out'], true)) {
+            return back()->with('error', 'Booking cannot be rescheduled after check-in or check-out.');
         }
 
-        if (!$booking->isValidRescheduleDate($validated['new_check_in_date'])) {
-            return back()->with('error', 'New check-in date must be within 1 month of the original check-in date.');
+        $hasVerifiedPayment = $booking->payments()->whereIn('payment_status', ['verified', 'completed'])->exists();
+        if (!$hasVerifiedPayment) {
+            return back()->with('error', 'Rescheduling is not allowed until payment is verified in the Payment Module.');
+        }
+
+        $baseCheckInDate = Carbon::parse($booking->original_check_in_date ?? $booking->check_in_date)->startOfDay();
+        $minAllowedDate = $baseCheckInDate->copy()->addDay();
+        $maxAllowedDate = $baseCheckInDate->copy()->addDays(14);
+
+        if ($requestedCheckInDate->lt($minAllowedDate) || $requestedCheckInDate->gt($maxAllowedDate)) {
+            $this->sendRescheduleRejectionEmail($booking, $requestedCheckInDate);
+
+            return back()->with('error', 'New check-in date must be within 14 days from the original check-in date.');
+        }
+
+        [$isAvailable, $availabilityMessage] = $this->validateRescheduleAvailability($booking, $requestedCheckInDate, $requestedCheckOutDate);
+        if (!$isAvailable) {
+            $this->sendRescheduleRejectionEmail($booking, $requestedCheckInDate);
+
+            return back()->with('error', $availabilityMessage);
         }
 
         // Store original date if not already stored
         if (!$booking->original_check_in_date) {
             $booking->original_check_in_date = $booking->check_in_date;
+            $booking->save();
         }
 
         // Update booking dates
         $booking->update([
-            'check_in_date' => $validated['new_check_in_date'],
-            'check_out_date' => $validated['new_check_out_date'],
+            'check_in_date' => $requestedCheckInDate->toDateString(),
+            'check_out_date' => $requestedCheckOutDate->toDateString(),
             'rescheduled_at' => now(),
-            'status' => 'pending', // Reset to pending
+            'status' => 'rescheduled',
         ]);
 
         // Recalculate nights
-        $checkIn = Carbon::parse($validated['new_check_in_date']);
-        $checkOut = Carbon::parse($validated['new_check_out_date']);
-        $nights = $checkIn->diffInDays($checkOut);
-        $booking->update(['number_of_nights' => $nights]);
+        $nights = $requestedCheckInDate->diffInDays($requestedCheckOutDate);
+        $booking->update(['total_nights' => max(1, $nights)]);
 
         // Log the activity
         ActivityLog::log(
             'booking_reschedule',
-            'Rescheduled booking #' . $booking->booking_reference . ' to ' . Carbon::parse($validated['new_check_in_date'])->format('M d, Y'),
+            'Rescheduled booking #' . $booking->booking_reference . ' to ' . $requestedCheckInDate->format('M d, Y'),
             'App\Models\Booking',
             $booking->id,
             [
                 'original_date' => $booking->original_check_in_date,
-                'new_check_in' => $validated['new_check_in_date'],
-                'new_check_out' => $validated['new_check_out_date'],
+                'new_check_in' => $requestedCheckInDate->toDateString(),
+                'new_check_out' => $requestedCheckOutDate->toDateString(),
             ]
         );
 
-        return back()->with('success', 'Booking rescheduled successfully!');
+        $this->sendRescheduleConfirmationEmail($booking);
+
+        return back()->with('success', 'Booking rescheduled successfully. Confirmation email sent to guest.');
+    }
+
+    public function sendRescheduleRequest(Booking $booking)
+    {
+        if (in_array($booking->status, ['checked_in', 'checked_out'], true)) {
+            return back()->with('error', 'Reschedule request cannot be sent for checked-in or checked-out bookings.');
+        }
+
+        try {
+            $guestEmail = optional($booking->guest)->email;
+            if (!empty($guestEmail)) {
+                Mail::to($guestEmail)->send(new RescheduleRequest($booking));
+            } else {
+                return back()->with('error', 'Guest email is missing. Unable to send reschedule request.');
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to send admin-initiated reschedule request email: ' . $e->getMessage());
+            return back()->with('error', 'Failed to send reschedule request email. Please try again.');
+        }
+
+        ActivityLog::log(
+            'booking_reschedule_request',
+            'Sent admin-initiated reschedule request email for booking #' . $booking->booking_reference,
+            'App\\Models\\Booking',
+            $booking->id,
+            [
+                'base_check_in_date' => optional($booking->original_check_in_date ?? $booking->check_in_date)?->toDateString(),
+            ]
+        );
+
+        return back()->with('success', 'Reschedule request email sent to guest.');
+    }
+
+    private function validateRescheduleAvailability(Booking $booking, Carbon $newCheckInDate, Carbon $newCheckOutDate): array
+    {
+        $booking->loadMissing(['rooms.roomType', 'room.roomType']);
+
+        $requiredRoomTypeCounts = [];
+
+        if ($booking->rooms->isNotEmpty()) {
+            foreach ($booking->rooms as $reservedRoom) {
+                $typeId = (int) ($reservedRoom->room_type_id ?? 0);
+                if ($typeId > 0) {
+                    $requiredRoomTypeCounts[$typeId] = ($requiredRoomTypeCounts[$typeId] ?? 0) + 1;
+                }
+            }
+        } elseif ($booking->room) {
+            $typeId = (int) ($booking->room->room_type_id ?? 0);
+            if ($typeId > 0) {
+                $requiredRoomTypeCounts[$typeId] = 1;
+            }
+        }
+
+        if (empty($requiredRoomTypeCounts)) {
+            return [false, 'Unable to validate room availability because booked room type is missing.'];
+        }
+
+        $activeBookingStatuses = ['pending', 'confirmed', 'checked_in', 'rescheduled'];
+        $checkInDate = $newCheckInDate->toDateString();
+        $checkOutDate = $newCheckOutDate->toDateString();
+
+        foreach ($requiredRoomTypeCounts as $roomTypeId => $requiredCount) {
+            $availableCount = Room::query()
+                ->where('room_type_id', $roomTypeId)
+                ->whereNull('archived_at')
+                ->whereIn('status', ['available', 'occupied'])
+                ->whereDoesntHave('blockDates', function ($q) use ($checkInDate, $checkOutDate) {
+                    $q->where('start_date', '<', $checkOutDate)
+                        ->where('end_date', '>', $checkInDate);
+                })
+                ->whereDoesntHave('bookings', function ($q) use ($booking, $checkInDate, $checkOutDate, $activeBookingStatuses) {
+                    $q->where('bookings.id', '!=', $booking->id)
+                        ->whereIn('bookings.status', $activeBookingStatuses)
+                        ->where('bookings.check_in_date', '<', $checkOutDate)
+                        ->where('bookings.check_out_date', '>', $checkInDate);
+                })
+                ->whereDoesntHave('reservationBookings', function ($q) use ($booking, $checkInDate, $checkOutDate, $activeBookingStatuses) {
+                    $q->where('bookings.id', '!=', $booking->id)
+                        ->whereIn('bookings.status', $activeBookingStatuses)
+                        ->where('bookings.check_in_date', '<', $checkOutDate)
+                        ->where('bookings.check_out_date', '>', $checkInDate);
+                })
+                ->count();
+
+            if ($availableCount < $requiredCount) {
+                return [false, 'Your requested date is not available. Please provide another preferred date within the allowed period.'];
+            }
+        }
+
+        return [true, null];
+    }
+
+    private function sendRescheduleConfirmationEmail(Booking $booking): void
+    {
+        try {
+            $guestEmail = optional($booking->guest)->email;
+            if (!empty($guestEmail)) {
+                Mail::to($guestEmail)->send(new RescheduleConfirmation($booking));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to send reschedule confirmation email: ' . $e->getMessage());
+        }
+    }
+
+    private function sendRescheduleRejectionEmail(Booking $booking, Carbon $requestedCheckInDate): void
+    {
+        try {
+            $guestEmail = optional($booking->guest)->email;
+            if (!empty($guestEmail)) {
+                Mail::to($guestEmail)->send(new RescheduleRejection($booking, $requestedCheckInDate->toDateString()));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to send reschedule rejection email: ' . $e->getMessage());
+        }
     }
 
     private function filterBookingRoomPivotPayload(array $payload): array
