@@ -39,6 +39,12 @@ Route::prefix('admin')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('admin.login');
     Route::post('/login', [AuthController::class, 'login'])->name('admin.login.post');
     Route::post('/logout', [AuthController::class, 'logout'])->name('admin.logout');
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('admin.password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('admin.password.email');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('admin.password.update');
+
+    // Compatibility route name used by Laravel reset notifications.
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
 
     // Protected Admin Routes
     Route::middleware(['auth', 'admin'])->group(function () {
