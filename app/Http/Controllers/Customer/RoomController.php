@@ -15,7 +15,8 @@ class RoomController extends Controller
     public function index(Request $request)
     {
         $query = Room::with(['roomType', 'amenities', 'photos'])
-            ->where('status', 'available'); // Only show available rooms
+            ->where('status', 'available')
+            ->whereNull('archived_at'); // Only show active, available rooms
 
         $requestedRooms = max(1, min(12, (int) $request->input('rooms', 1)));
         $requestedGuests = $this->resolveRequestedGuests($request);
@@ -478,7 +479,7 @@ class RoomController extends Controller
         })
         ->values();
         
-        $totalRooms = Room::where('status', 'available')->count();
+        $totalRooms = Room::where('status', 'available')->whereNull('archived_at')->count();
         
         return response()->json([
             'booked_dates' => $bookedDates,
