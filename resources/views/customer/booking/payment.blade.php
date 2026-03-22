@@ -433,7 +433,7 @@
                     @else
                         <div class="summary-row">
                             <span>Room: {{ $booking->room->roomType->name }}</span>
-                            <span>₱{{ number_format($booking->room->roomType->base_price, 2) }}/night</span>
+                            <span>₱{{ number_format((float) ($booking->room->effective_price ?? $booking->room->roomType->base_price), 2) }}/night</span>
                         </div>
                     @endif
                     <div class="summary-row">
@@ -443,6 +443,10 @@
                     <div class="summary-row">
                         <span>Subtotal</span>
                         <span>₱{{ number_format($booking->subtotal, 2) }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>VAT (12%) Included in Room Charges</span>
+                        <span>₱{{ number_format((float) ($booking->tax_amount ?? 0), 2) }}</span>
                     </div>
                     @if($booking->extras_total > 0)
                         <div class="summary-section">
