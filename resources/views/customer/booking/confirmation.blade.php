@@ -598,10 +598,14 @@
                             @endforeach
                         @else
                             <div class="price-row">
-                                <span>Room Rate (₱{{ number_format($booking->room->roomType->base_price, 2) }} × {{ $booking->total_nights }} {{ $booking->total_nights == 1 ? 'night' : 'nights' }})</span>
+                                <span>Room Rate (₱{{ number_format((float) ($booking->room->effective_price ?? $booking->room->roomType->base_price), 2) }} × {{ $booking->total_nights }} {{ $booking->total_nights == 1 ? 'night' : 'nights' }})</span>
                                 <span>₱{{ number_format($booking->subtotal, 2) }}</span>
                             </div>
                         @endif
+                        <div class="price-row">
+                            <span>VAT (12%) Included in Room Charges</span>
+                            <span>₱{{ number_format((float) ($booking->tax_amount ?? 0), 2) }}</span>
+                        </div>
                         @if($booking->extras_total > 0)
                             <div class="price-row">
                                 <span>Additional Services</span>
