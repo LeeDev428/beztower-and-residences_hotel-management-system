@@ -118,8 +118,8 @@ Route::prefix('admin')->group(function () {
         Route::prefix('payments')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('admin.payments.index');
             Route::get('/{payment}', [\App\Http\Controllers\Admin\PaymentController::class, 'show'])->name('admin.payments.show');
-            Route::post('/{payment}/verify', [\App\Http\Controllers\Admin\PaymentController::class, 'verify'])->name('admin.payments.verify')->middleware('role:admin,manager');
-            Route::post('/{payment}/reject', [\App\Http\Controllers\Admin\PaymentController::class, 'reject'])->name('admin.payments.reject')->middleware('role:admin,manager');
+            Route::post('/{payment}/verify', [\App\Http\Controllers\Admin\PaymentController::class, 'verify'])->name('admin.payments.verify')->middleware('role:admin,manager,receptionist');
+            Route::post('/{payment}/reject', [\App\Http\Controllers\Admin\PaymentController::class, 'reject'])->name('admin.payments.reject')->middleware('role:admin,manager,receptionist');
         });
 
         // Reports
