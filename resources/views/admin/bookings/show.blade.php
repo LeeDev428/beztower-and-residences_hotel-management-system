@@ -211,6 +211,10 @@
                     <span>Room Charges ({{ $booking->total_nights ?? 0 }} nights)</span>
                     <span style="font-weight: 600;">₱{{ number_format($baseRoomTotal, 2) }}</span>
                 </div>
+                <div style="display: flex; justify-content: space-between; color: #666;">
+                    <span>VAT (12%) Included</span>
+                    <span style="font-weight: 600;">₱{{ number_format((float) ($booking->tax_amount ?? 0), 2) }}</span>
+                </div>
                 @if(abs($billingAdjustmentDelta) > 0.00001)
                 <div style="display: flex; justify-content: space-between;">
                     <span>Billing Adjustment</span>
@@ -299,6 +303,9 @@
                         <x-admin.button type="primary">Update Status</x-admin.button>
                     @endif
                 </div>
+                @if(!$statusLocked)
+                    <small style="display:block; margin-top:0.5rem; color:#777;">Check-in option appears only on {{ optional($booking->check_in_date)->format('M d, Y') ?? 'N/A' }} and check-out option appears only on {{ optional($booking->check_out_date)->format('M d, Y') ?? 'N/A' }}.</small>
+                @endif
                 @if($statusLocked)
                     <small style="display:block; margin-top:0.5rem; color:#777;">Status is locked for {{ ucwords(str_replace('_', ' ', $booking->status)) }} bookings.</small>
                 @endif
