@@ -12,6 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
@@ -23,6 +24,7 @@ class ReportController extends Controller
     public function generatePdf(Request $request)
     {
         [$startDate, $endDate, $selectedMonth] = $this->resolveMonthlyPeriod($request);
+        $generatedBy = Auth::user()->name ?? 'System';
 
         // Stats
         $totalBookings  = Booking::whereBetween('created_at', [$startDate, $endDate])->count();
@@ -59,16 +61,16 @@ class ReportController extends Controller
         // Log activity
         ActivityLog::log(
             'report_generate',
-            'Generated PDF report for ' . Carbon::parse($startDate)->format('F Y')
+            'Generated PDF report for ' . Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y')
         );
 
         $pdf = Pdf::loadView('admin.reports.pdf', compact(
             'startDate', 'endDate', 'selectedMonth',
             'totalBookings', 'totalGuests', 'totalRooms', 'totalRevenue',
-            'bookingsByStatus', 'recentBookings', 'revenueByType'
+            'bookingsByStatus', 'recentBookings', 'revenueByType', 'generatedBy'
         ))->setPaper('a4', 'portrait');
 
-        $filename = 'hotel_report_' . Carbon::parse($startDate)->format('Y_m') . '.pdf';
+        $filename = 'hotel_report_' . Carbon::parse($startDate)->format('Y_m_d') . '_to_' . Carbon::parse($endDate)->format('Y_m_d') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -361,6 +363,24 @@ class ReportController extends Controller
 
     private function resolveMonthlyPeriod(Request $request): array
     {
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
+
+        if (!empty($startDateInput) && !empty($endDateInput)) {
+            $start = Carbon::parse($startDateInput)->startOfDay();
+            $end = Carbon::parse($endDateInput)->endOfDay();
+
+            if ($start->gt($end)) {
+                [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+            }
+
+            return [
+                $start->format('Y-m-d H:i:s'),
+                $end->format('Y-m-d H:i:s'),
+                null,
+            ];
+        }
+
         $month = $request->input('month');
 
         if ($month && preg_match('/^\d{4}-\d{2}$/', $month)) {
@@ -370,8 +390,8 @@ class ReportController extends Controller
         }
 
         return [
-            $anchor->copy()->startOfMonth()->format('Y-m-d'),
-            $anchor->copy()->endOfMonth()->format('Y-m-d'),
+            $anchor->copy()->startOfMonth()->format('Y-m-d H:i:s'),
+            $anchor->copy()->endOfMonth()->format('Y-m-d H:i:s'),
             $anchor->format('Y-m'),
         ];
     }
