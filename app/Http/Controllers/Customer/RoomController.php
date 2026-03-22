@@ -108,13 +108,25 @@ class RoomController extends Controller
             
             // Exclude rooms with conflicting bookings
             $query->whereDoesntHave('bookings', function($q) use ($checkIn, $checkOut) {
-                $q->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                $q->where(function ($statusQuery) {
+                    $statusQuery
+                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                        ->orWhereHas('payments', function ($paymentQuery) {
+                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                        });
+                })
                     ->where('check_in_date', '<', $checkOut)
                     ->where('check_out_date', '>', $checkIn);
             });
 
             $query->whereDoesntHave('reservationBookings', function($q) use ($checkIn, $checkOut) {
-                $q->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                $q->where(function ($statusQuery) {
+                    $statusQuery
+                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                        ->orWhereHas('payments', function ($paymentQuery) {
+                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                        });
+                })
                     ->where('check_in_date', '<', $checkOut)
                     ->where('check_out_date', '>', $checkIn);
             });
