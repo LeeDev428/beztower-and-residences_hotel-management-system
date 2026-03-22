@@ -75,22 +75,16 @@ class Booking extends Model
 
     public function canReschedule()
     {
-        if (!$this->cancelled_at) return false;
-        
-        // Must reschedule within 1 week of cancellation
-        $oneWeekFromCancellation = $this->cancelled_at->copy()->addWeek();
-        if (now()->greaterThan($oneWeekFromCancellation)) return false;
-        
-        return true;
+        return !in_array($this->status, ['checked_in', 'checked_out'], true);
     }
 
     public function isValidRescheduleDate($newDate)
     {
-        // New date must be within 1 month from original booking date
-        $originalCheckIn = $this->original_check_in_date ?? $this->check_in_date;
-        $maxRescheduleDate = \Carbon\Carbon::parse($originalCheckIn)->addMonth();
-        
-        return \Carbon\Carbon::parse($newDate)->lessThanOrEqualTo($maxRescheduleDate);
+        $baseCheckIn = \Carbon\Carbon::parse($this->original_check_in_date ?? $this->check_in_date)->startOfDay();
+        $requestedDate = \Carbon\Carbon::parse($newDate)->startOfDay();
+
+        return $requestedDate->gt($baseCheckIn)
+            && $requestedDate->lessThanOrEqualTo($baseCheckIn->copy()->addDays(14));
     }
 
     public function guest()
