@@ -232,14 +232,26 @@ class WalkInController extends Controller
             ->whereNull('archived_at')
             ->whereHas('roomType')
             ->whereDoesntHave('bookings', function ($query) use ($checkInDate, $checkOutDate) {
-                $query->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                $query->where(function ($statusQuery) {
+                    $statusQuery
+                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                        ->orWhereHas('payments', function ($paymentQuery) {
+                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                        });
+                })
                     ->where(function ($overlap) use ($checkInDate, $checkOutDate) {
                         $overlap->where('check_in_date', '<', $checkOutDate)
                             ->where('check_out_date', '>', $checkInDate);
                     });
             })
             ->whereDoesntHave('reservationBookings', function ($query) use ($checkInDate, $checkOutDate) {
-                $query->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                $query->where(function ($statusQuery) {
+                    $statusQuery
+                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                        ->orWhereHas('payments', function ($paymentQuery) {
+                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                        });
+                })
                     ->where(function ($overlap) use ($checkInDate, $checkOutDate) {
                         $overlap->where('check_in_date', '<', $checkOutDate)
                             ->where('check_out_date', '>', $checkInDate);
