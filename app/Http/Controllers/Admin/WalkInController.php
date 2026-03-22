@@ -50,8 +50,8 @@ class WalkInController extends Controller
                     'id' => $room->id,
                     'room_number' => $room->room_number,
                     'room_type' => $roomTypeName,
-                    'price' => $basePrice,
-                    'label' => $roomTypeName . ' - Room ' . $room->room_number . ' (PHP ' . number_format($basePrice, 2) . '/night)',
+                    'price' => (float) ($room->effective_price ?? $basePrice),
+                    'label' => $roomTypeName . ' - Room ' . $room->room_number . ' (PHP ' . number_format((float) ($room->effective_price ?? $basePrice), 2) . '/night)',
                 ];
             })
             ->values();
@@ -140,9 +140,10 @@ class WalkInController extends Controller
             $overallTotal = 0;
             $verifiedBy = Auth::id();
             $selectedRooms = Room::with('roomType')->whereIn('id', $selectedRoomIds)->get();
-            $nightlySubtotal = (float) $selectedRooms->sum(fn ($room) => (float) ($room->roomType?->base_price ?? 0));
+            $nightlySubtotal = (float) $selectedRooms->sum(fn ($room) => (float) ($room->effective_price ?? 0));
             $overallSubtotal = $nightlySubtotal * $nights;
             $overallTotal = round($overallSubtotal + $extrasTotal, 2);
+            $taxAmount = round($overallSubtotal * (12 / 112), 2);
             $reference = 'WI-' . strtoupper(Str::random(8));
 
             // Create one reservation (walk-ins are immediately checked-in)
@@ -156,7 +157,7 @@ class WalkInController extends Controller
                 'total_nights' => $nights,
                 'subtotal' => $overallSubtotal,
                 'extras_total' => $extrasTotal,
-                'tax_amount' => 0,
+                'tax_amount' => $taxAmount,
                 'total_amount' => $overallTotal,
                 'payment_option' => $paymentType,
                 'status' => 'checked_in',
@@ -166,7 +167,7 @@ class WalkInController extends Controller
             /** @var \App\Models\Room $selectedRoom */
             foreach ($selectedRooms as $selectedRoom) {
                 $booking->rooms()->attach($selectedRoom->id, [
-                    'nightly_rate' => (float) ($selectedRoom->roomType?->base_price ?? 0),
+                    'nightly_rate' => (float) ($selectedRoom->effective_price ?? 0),
                 ]);
                 $selectedRoom->update(['status' => 'occupied']);
             }
