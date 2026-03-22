@@ -148,6 +148,33 @@
             font-size: 0.9rem;
         }
 
+        .status-message {
+            background: #ecfdf3;
+            border-left: 4px solid #2f855a;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-message p {
+            color: #276749;
+            font-size: 0.9rem;
+        }
+
+        .forgot-password-link {
+            display: inline-block;
+            margin-top: 0.5rem;
+            color: #d4af37;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .forgot-password-link:hover {
+            color: #c49d2f;
+            text-decoration: underline;
+        }
+
         .submit-btn {
             width: 100%;
             padding: 1rem;
@@ -251,6 +278,12 @@
                 </div>
             @endif
 
+            @if (session('status'))
+                <div class="status-message">
+                    <p><i class="fas fa-check-circle"></i> {{ session('status') }}</p>
+                </div>
+            @endif
+
             <form action="{{ route('admin.login.post') }}" method="POST">
                 @csrf
                 
@@ -270,6 +303,7 @@
                         <input id="password" name="password" type="password" autocomplete="current-password" required 
                             placeholder="Enter your password">
                     </div>
+                    <a href="{{ route('admin.password.request') }}" class="forgot-password-link">Forgot Password?</a>
                 </div>
 
                 <button type="submit" class="submit-btn">
