@@ -526,6 +526,7 @@
 
                 <form action="{{ route('booking.create') }}" method="POST" id="bookingForm" enctype="multipart/form-data">
                     @csrf
+                    <input type="hidden" name="submission_key" id="submissionKey" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                     <input type="hidden" name="room_id" value="{{ $room->id }}">
                     
                     <!-- Guest Information -->
@@ -655,7 +656,7 @@
                                             'id' => (int) $selectedRoom->id,
                                             'room_number' => $selectedRoom->room_number,
                                             'room_type' => $selectedRoom->roomType->name ?? 'Room',
-                                            'price' => (float) ($selectedRoom->roomType->base_price ?? 0),
+                                            'price' => (float) ($selectedRoom->effective_price ?? 0),
                                             'capacity' => (int) ($selectedRoom->roomType->max_guests ?? 0),
                                         ];
                                     })->values()
@@ -739,7 +740,7 @@
                                     <span>Down Payment (30%)</span>
                                 </div>
                                 <p class="payment-card-desc">Pay 30% now, settle remaining 70% upon check-in.</p>
-                                <div class="payment-amount" id="downPaymentAmount">₱{{ number_format($room->effective_price * 1.12 * 0.30, 2) }}</div>
+                                <div class="payment-amount" id="downPaymentAmount">₱{{ number_format($room->effective_price * 0.30, 2) }}</div>
                             </div>
                         </label>
                         
@@ -751,7 +752,7 @@
                                     <span>Full Payment (100%)</span>
                                 </div>
                                 <p class="payment-card-desc">Pay the full amount now for hassle-free check-in.</p>
-                                <div class="payment-amount" id="fullPaymentAmount">₱{{ number_format($room->effective_price * 1.12, 2) }}</div>
+                                <div class="payment-amount" id="fullPaymentAmount">₱{{ number_format($room->effective_price, 2) }}</div>
                             </div>
                         </label>
                     </div>
@@ -763,7 +764,7 @@
                                   placeholder="Any special requests or preferences..."></textarea>
                     </div>
                     
-                    <button type="submit" class="submit-booking-btn">
+                    <button type="submit" class="submit-booking-btn" id="bookingSubmitBtn">
                         <i class="fas fa-check-circle"></i> Submit Reservation
                     </button>
                 </form>
@@ -790,7 +791,7 @@
                             'id' => (int) $selectedRoom->id,
                             'room_number' => $selectedRoom->room_number,
                             'name' => $selectedRoom->roomType->name ?? 'Room',
-                            'price' => (float) ($selectedRoom->roomType->base_price ?? 0),
+                            'price' => (float) ($selectedRoom->effective_price ?? 0),
                             'images' => $imageUrls,
                         ];
                     })->values();
@@ -821,7 +822,7 @@
                     <div class="room-summary-content">
                         <div class="room-type-name" id="roomViewerRoomName">{{ $sidebarRoomMedia->first()['name'] ?? ($room->roomType->name ?? 'Room') }}</div>
                         <div class="room-price">
-                            ₱<span id="roomViewerRoomPrice" style="font-size:1.1rem;color:#d4af37;font-weight:600;">{{ number_format((float) ($sidebarRoomMedia->first()['price'] ?? $room->roomType->base_price), 2) }}</span>
+                            ₱<span id="roomViewerRoomPrice" style="font-size:1.1rem;color:#d4af37;font-weight:600;">{{ number_format((float) ($sidebarRoomMedia->first()['price'] ?? $room->effective_price), 2) }}</span>
                             <span>/ night</span>
                         </div>
                     </div>
@@ -836,7 +837,12 @@
                     
                     <div class="price-row">
                         <span class="price-label">Room Rate × <span id="nightsCount">1</span> night</span>
-                        <span class="price-value" id="subtotalDisplay">₱{{ number_format($room->roomType->base_price, 2) }}</span>
+                        <span class="price-value" id="subtotalDisplay">₱{{ number_format($room->effective_price, 2) }}</span>
+                    </div>
+
+                    <div class="price-row">
+                        <span class="price-label">VAT (12%) Included in Room Rate</span>
+                        <span class="price-value" id="vatDisplay">₱{{ number_format($room->effective_price * (12 / 112), 2) }}</span>
                     </div>
 
                     <div class="price-row">
@@ -846,7 +852,7 @@
                     
                     <div class="price-row">
                         <span class="price-label">Total</span>
-                        <span class="price-value" id="totalDisplay">₱{{ number_format($room->roomType->base_price, 2) }}</span>
+                        <span class="price-value" id="totalDisplay">₱{{ number_format($room->effective_price, 2) }}</span>
                     </div>
                 </div>
             </div>
@@ -940,7 +946,7 @@
         }
         renderRoomViewer();
 
-        const basePrice = {{ $room->roomType->base_price }};
+        const basePrice = {{ (float) $room->effective_price }};
         const preferredRoomId = {{ $room->id }};
         const lockedSelectedRooms = @json($lockedRoomMeta->values()->all());
         const lockedSelectedRoomIds = lockedSelectedRooms.map((roomData) => Number(roomData.id));
@@ -1243,9 +1249,11 @@
             });
             
             const total = subtotal + extrasTotal;
+            const vatIncluded = subtotal * (12 / 112);
             
             // Update displays
             document.getElementById('subtotalDisplay').textContent = '₱' + subtotal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            document.getElementById('vatDisplay').textContent = '₱' + vatIncluded.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             document.getElementById('extrasDisplay').textContent = '₱' + extrasTotal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             document.getElementById('totalDisplay').textContent = '₱' + total.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             
@@ -1311,6 +1319,20 @@
             if (selected.length !== requestedRooms) {
                 event.preventDefault();
                 alert(`Only ${selected.length} room(s) can be assigned. Please adjust your room count or date range.`);
+                return;
+            }
+
+            const submitBtn = document.getElementById('bookingSubmitBtn');
+            if (submitBtn && submitBtn.disabled) {
+                event.preventDefault();
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.7';
+                submitBtn.style.cursor = 'not-allowed';
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             }
         });
     </script>
