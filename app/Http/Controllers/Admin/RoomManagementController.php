@@ -70,6 +70,7 @@ class RoomManagementController extends Controller
             'room_type_id' => 'required|exists:room_types,id',
             'floor' => 'required|integer|min:2|max:5',
             'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
+            'discount_percentage' => 'nullable|numeric|min:0|max:100|multiple_of:5',
             'description' => 'nullable|string',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
@@ -80,7 +81,7 @@ class RoomManagementController extends Controller
             'room_number' => $validated['room_number'],
             'room_type_id' => $validated['room_type_id'],
             'floor' => $validated['floor'],
-            'discount_percentage' => 0,
+            'discount_percentage' => (float) ($validated['discount_percentage'] ?? 0),
             'status' => $validated['status'],
             'description' => $validated['description'] ?? null,
         ]);
@@ -128,6 +129,7 @@ class RoomManagementController extends Controller
             'room_type_id' => 'required|exists:room_types,id',
             'floor' => 'required|integer|min:2|max:5',
             'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
+            'discount_percentage' => 'nullable|numeric|min:0|max:100|multiple_of:5',
             'description' => 'nullable|string',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
@@ -138,7 +140,7 @@ class RoomManagementController extends Controller
             'room_number' => $validated['room_number'],
             'room_type_id' => $validated['room_type_id'],
             'floor' => $validated['floor'],
-            'discount_percentage' => 0,
+            'discount_percentage' => (float) ($validated['discount_percentage'] ?? 0),
             'status' => $validated['status'],
             'description' => $validated['description'] ?? null,
         ]);
