@@ -36,12 +36,13 @@ class RoomTypeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
+            'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'max_guests' => 'required|integer|min:1',
             'bed_type' => 'nullable|string',
             'size_sqm' => 'nullable|numeric|min:0'
         ]);
 
-        $validated['discount_percentage'] = 0;
+        $validated['discount_percentage'] = (float) ($validated['discount_percentage'] ?? 0);
 
         $roomType = RoomType::create($validated);
 
@@ -57,12 +58,13 @@ class RoomTypeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
+            'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'max_guests' => 'required|integer|min:1',
             'bed_type' => 'nullable|string',
             'size_sqm' => 'nullable|numeric|min:0'
         ]);
 
-        $validated['discount_percentage'] = 0;
+        $validated['discount_percentage'] = (float) ($validated['discount_percentage'] ?? 0);
 
         $roomType->update($validated);
 
