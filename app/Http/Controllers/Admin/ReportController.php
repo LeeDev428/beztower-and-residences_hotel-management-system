@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
@@ -23,56 +24,68 @@ class ReportController extends Controller
 
     public function generatePdf(Request $request)
     {
-        [$startDate, $endDate] = $this->resolveMonthlyPeriod($request);
-        $generatedBy = Auth::user()->name ?? 'System';
+        try {
+            [$startDate, $endDate] = $this->resolveMonthlyPeriod($request);
+            $generatedBy = Auth::user()->name ?? 'System';
 
-        // Stats
-        $totalBookings  = Booking::whereBetween('created_at', [$startDate, $endDate])->count();
-        $totalGuests    = Guest::whereBetween('created_at', [$startDate, $endDate])->count();
-        $totalRooms     = Room::count();
-        $totalRevenue   = Payment::whereIn('payment_status', ['verified', 'completed'])
-                            ->whereBetween('created_at', [$startDate, $endDate])
-                            ->sum('amount');
+            // Stats
+            $totalBookings  = Booking::whereBetween('created_at', [$startDate, $endDate])->count();
+            $totalGuests    = Guest::whereBetween('created_at', [$startDate, $endDate])->count();
+            $totalRooms     = Room::count();
+            $totalRevenue   = Payment::whereIn('payment_status', ['verified', 'completed'])
+                                ->whereBetween('created_at', [$startDate, $endDate])
+                                ->sum('amount');
 
-        // Bookings breakdown by status
-        $bookingsByStatus = Booking::whereBetween('created_at', [$startDate, $endDate])
-            ->select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
-            ->get()
-            ->keyBy('status');
+            // Bookings breakdown by status
+            $bookingsByStatus = Booking::whereBetween('created_at', [$startDate, $endDate])
+                ->select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->get()
+                ->keyBy('status');
 
-        // Payments in range
-        $recentBookings = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->latest()
-            ->take(50)
-            ->get();
+            // Payments in range
+            $recentBookings = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->latest()
+                ->take(50)
+                ->get();
 
-        // Revenue by room type
-        $revenueByType = Payment::whereIn('payment_status', ['verified', 'completed'])
-            ->whereBetween('payments.created_at', [$startDate, $endDate])
-            ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
-            ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
-            ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
-            ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
-            ->groupBy('room_types.name')
-            ->get();
+            // Revenue by room type
+            $revenueByType = Payment::whereIn('payment_status', ['verified', 'completed'])
+                ->whereBetween('payments.created_at', [$startDate, $endDate])
+                ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
+                ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
+                ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
+                ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
+                ->groupBy('room_types.name')
+                ->get();
 
-        // Log activity
-        ActivityLog::log(
-            'report_generate',
-            'Generated PDF report for ' . Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y')
-        );
+            // Log activity
+            ActivityLog::log(
+                'report_generate',
+                'Generated PDF report for ' . Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y')
+            );
 
-        $pdf = Pdf::loadView('admin.reports.pdf', compact(
-            'startDate', 'endDate',
-            'totalBookings', 'totalGuests', 'totalRooms', 'totalRevenue',
-            'bookingsByStatus', 'recentBookings', 'revenueByType', 'generatedBy'
-        ))->setPaper('a4', 'portrait');
+            $pdf = Pdf::loadView('admin.reports.pdf', compact(
+                'startDate', 'endDate',
+                'totalBookings', 'totalGuests', 'totalRooms', 'totalRevenue',
+                'bookingsByStatus', 'recentBookings', 'revenueByType', 'generatedBy'
+            ))->setPaper('a4', 'portrait');
 
-        $filename = 'hotel_report_' . Carbon::parse($startDate)->format('Y_m_d') . '_to_' . Carbon::parse($endDate)->format('Y_m_d') . '.pdf';
+            $filename = 'hotel_report_' . Carbon::parse($startDate)->format('Y_m_d') . '_to_' . Carbon::parse($endDate)->format('Y_m_d') . '.pdf';
 
-        return $pdf->download($filename);
+            return $pdf->download($filename);
+        } catch (\Throwable $e) {
+            Log::error('Failed generating report PDF', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+                'user_id' => Auth::id(),
+            ]);
+
+            return back()->with('error', 'Unable to generate PDF report right now. Please try again.');
+        }
     }
 
     public function revenue(Request $request)
