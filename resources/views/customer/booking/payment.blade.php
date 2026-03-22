@@ -502,6 +502,21 @@
 
                     <!-- Right Column: Payment Instructions & Upload Form -->
                     <div>
+                        @if(!empty($existingSubmittedPayment))
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <div>
+                                    <strong>Payment Proof Already Submitted</strong>
+                                    <p style="margin-top:0.35rem;">
+                                        Reference: {{ $existingSubmittedPayment->payment_reference }}<br>
+                                        Status: {{ ucfirst($existingSubmittedPayment->payment_status) }}<br>
+                                        Submitted: {{ optional($existingSubmittedPayment->created_at)->format('F d, Y h:i A') }}
+                                    </p>
+                                    <p style="margin-top:0.35rem;">You no longer need to submit another payment proof for this booking.</p>
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="payment-instructions">
                             <div class="section-title">
                                 <i class="fas fa-list-ol"></i> How to Pay
@@ -518,8 +533,9 @@
                         </div>
 
                         <!-- Payment Upload Form -->
-                        <form action="{{ route('booking.processPayment', $booking->booking_reference) }}" 
-                              method="POST" enctype="multipart/form-data" class="payment-form" id="paymentForm">
+                        @if(empty($existingSubmittedPayment))
+                        <form action="{{ route('booking.processPayment', $booking->booking_reference) }}"
+                            method="POST" enctype="multipart/form-data" class="payment-form" id="paymentForm">
                             @csrf
                             
                             <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">
@@ -575,6 +591,7 @@
                                 <i class="fas fa-shield-alt"></i> Your payment will be verified within 24-48 hours
                             </p>
                         </form>
+                        @endif
                     </div>
                 </div>
 
