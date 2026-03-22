@@ -56,18 +56,13 @@
             margin: 20px 0;
             text-align: center;
         }
-        .qr-box {
+        .payment-box {
             background: #e8f5e9;
             border: 2px solid #4caf50;
             padding: 20px;
             border-radius: 8px;
             margin: 20px 0;
             text-align: center;
-        }
-        .qr-box img {
-            max-width: 250px;
-            height: auto;
-            margin: 15px auto;
         }
         .info-row {
             display: flex;
@@ -174,6 +169,10 @@
                     <span class="label">Room Charges ({{ $reservedRooms->count() }} room(s), {{ $booking->total_nights }} night(s)):</span>
                     <span class="value">₱{{ number_format($booking->subtotal, 2) }}</span>
                 </div>
+                <div class="info-row">
+                    <span class="label">VAT (12%) Included in Room Charges:</span>
+                    <span class="value">₱{{ number_format((float) ($booking->tax_amount ?? 0), 2) }}</span>
+                </div>
                 
                 @if($booking->extras && $booking->extras->count() > 0)
                     <div class="info-row" style="background:#f0f0f0; margin-top:10px; padding:10px; border-radius:5px;">
@@ -197,16 +196,12 @@
                 </div>
             </div>
 
-            <div class="qr-box">
-                <h3 style="margin:0 0 15px 0; color:#2c2c2c;">💳 Scan to Pay with GCash</h3>
-                <img src="{{ asset('images/gcash/gcash_v2.jpg') }}" alt="GCash QR Code" style="pointer-events: none; user-select: none; -webkit-user-drag: none;">
-                <p style="margin:15px 0 0 0; font-size:14px; color:#666;">Scan this QR code to make your payment via GCash</p>
-                <div style="background:#fff3cd; padding:12px; border-radius:5px; margin-top:15px;">
-                    <p style="margin:0; font-size:13px;"><strong>📱 After payment, please send your proof of payment to:</strong></p>
-                    <p style="margin:5px 0 0 0;">📧 Email: <strong>beztowerresidences@gmail.com</strong></p>
-                    <p style="margin:3px 0 0 0;">💬 WhatsApp: <strong>09171221429</strong></p>
-                    <p style="margin:10px 0 0 0; font-size:12px; color:#666;"><em>Include your booking reference: {{ $booking->booking_reference }}</em></p>
-                </div>
+            <div class="payment-box">
+                <h3 style="margin:0 0 10px 0; color:#2c2c2c;">Submit Proof of Payment Required</h3>
+                <p style="margin:0 0 12px 0; color:#444;">To confirm your reservation and allow check-in, payment must be verified in the Payment Module.</p>
+                <a href="{{ route('booking.payment', ['reference' => $booking->booking_reference]) }}" class="button">Submit Proof of Payment</a>
+                <p style="margin:8px 0 0 0; font-size:12px; color:#666;">If the button does not work, open this link:</p>
+                <p style="margin:3px 0 0 0; font-size:12px; word-break: break-all; color:#444;">{{ route('booking.payment', ['reference' => $booking->booking_reference]) }}</p>
             </div>
 
             {{-- <div class="highlight">
