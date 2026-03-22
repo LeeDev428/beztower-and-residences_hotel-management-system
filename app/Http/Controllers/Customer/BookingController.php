@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -129,8 +130,26 @@ class BookingController extends Controller
             'extras' => 'nullable|array',
             'extras.*' => 'exists:extras,id',
             'extra_quantities' => 'nullable|array',
-            'extra_quantities.*' => 'integer|min:1|max:50'
+            'extra_quantities.*' => 'integer|min:1|max:50',
+            'submission_key' => 'nullable|string|max:120',
         ]);
+
+        $submissionKey = trim((string) ($validated['submission_key'] ?? ''));
+        $dedupeRoomIds = array_map('intval', $validated['room_ids'] ?? []);
+        if (empty($dedupeRoomIds) && !empty($validated['room_id'])) {
+            $dedupeRoomIds = [(int) $validated['room_id']];
+        }
+        $dedupePayload = [
+            'session' => $request->session()->getId(),
+            'email' => strtolower((string) ($validated['email'] ?? '')),
+            'check_in' => (string) ($validated['check_in_date'] ?? ''),
+            'check_out' => (string) ($validated['check_out_date'] ?? ''),
+            'rooms' => $dedupeRoomIds,
+            'guests' => (int) ($validated['number_of_guests'] ?? 0),
+            'submission_key' => $submissionKey,
+        ];
+        sort($dedupePayload['rooms']);
+        $dedupeKey = 'booking:submit:' . hash('sha256', json_encode($dedupePayload));
 
         $selectedRoomIds = collect($validated['room_ids'] ?? [])
             ->map(fn ($id) => (int) $id)
@@ -163,6 +182,12 @@ class BookingController extends Controller
                     'error' => 'You already have 3 active bookings under this email address. You cannot make more than 3 bookings at a time. Please contact us if you need further assistance.'
                 ])->withInput();
             }
+        }
+
+        if (!Cache::add($dedupeKey, true, now()->addMinutes(2))) {
+            return back()->withErrors([
+                'error' => 'Your reservation is already being processed. Please wait a moment and avoid submitting multiple times.',
+            ])->withInput();
         }
 
         try {
@@ -233,9 +258,9 @@ class BookingController extends Controller
                 ])->withInput();
             }
 
-            $nightlyTotal = (float) $selectedRooms->sum(fn ($room) => (float) ($room->roomType?->base_price ?? 0));
+            $nightlyTotal = (float) $selectedRooms->sum(fn ($room) => (float) ($room->effective_price ?? 0));
 
-            // Calculate costs using base room rate (discounts removed globally)
+            // Room price is VAT-inclusive; compute VAT portion for reporting.
             $subtotal = $nightlyTotal * $validated['total_nights'];
             $extrasTotal = 0;
 
@@ -255,8 +280,7 @@ class BookingController extends Controller
                 }
             }
 
-            // VAT removed globally
-            $taxAmount = 0;
+            $taxAmount = round($subtotal * (12 / 112), 2);
             $totalAmount = $subtotal + $extrasTotal;
 
             // Generate unique booking reference
@@ -283,7 +307,7 @@ class BookingController extends Controller
 
             foreach ($selectedRooms as $selectedRoom) {
                 $booking->rooms()->attach($selectedRoom->id, [
-                    'nightly_rate' => (float) ($selectedRoom->roomType?->base_price ?? 0),
+                    'nightly_rate' => (float) ($selectedRoom->effective_price ?? 0),
                 ]);
             }
 
@@ -317,6 +341,7 @@ class BookingController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Cache::forget($dedupeKey);
             
             return back()->withErrors([
                 'error' => 'An error occurred while processing your booking. Please try again.'
@@ -388,7 +413,7 @@ class BookingController extends Controller
                     'room_type_id' => (int) $room->room_type_id,
                     'room_type' => $room->roomType?->name,
                     'capacity' => (int) ($room->roomType?->max_guests ?? 0),
-                    'price' => (float) ($room->roomType?->base_price ?? 0),
+                    'price' => (float) ($room->effective_price ?? 0),
                 ];
             })
             ->values();
