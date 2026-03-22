@@ -234,6 +234,15 @@
 
         <!-- Actions -->
         <x-admin.card title="Actions" style="margin-top: 1.5rem;">
+            @php
+                $baseRescheduleDate = \Carbon\Carbon::parse($booking->original_check_in_date ?? $booking->check_in_date);
+                $rescheduleMinDate = $baseRescheduleDate->copy()->addDay()->toDateString();
+                $rescheduleMaxDate = $baseRescheduleDate->copy()->addDays(14)->toDateString();
+                $rescheduleLocked = in_array($booking->status, ['checked_in', 'checked_out'], true);
+                $hasVerifiedPayment = $booking->payments->whereIn('payment_status', ['verified', 'completed'])->isNotEmpty();
+                $canOpenReschedule = !$rescheduleLocked && $hasVerifiedPayment;
+            @endphp
+
             <!-- Billing Adjustment Button -->
             <div style="margin-bottom: 1rem;">
                 @if($billingLocked)
@@ -246,6 +255,28 @@
                     </a>
                 @endif
             </div>
+
+            <div style="margin-bottom: 1rem;">
+                @if($canOpenReschedule)
+                    <button type="button" onclick="showRescheduleModal()" style="display: block; width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #ffc107, #ffca2c); color: #2c2c2c; border: none; border-radius: 8px; font-weight: 600; text-align: center; cursor: pointer;">
+                        <i class="fas fa-calendar-alt"></i> Change Booking Date
+                    </button>
+                @else
+                    <button type="button" disabled style="display: block; width: 100%; padding: 0.75rem; background: #d9d9d9; color: #6b6b6b; border: none; border-radius: 8px; font-weight: 600; text-align: center; cursor: not-allowed;">
+                        <i class="fas fa-calendar-alt"></i> Change Booking Date
+                    </button>
+                    @if($rescheduleLocked)
+                        <small style="display:block; margin-top:0.5rem; color:#777;">Rescheduling is not allowed after check-in/check-out.</small>
+                    @elseif(!$hasVerifiedPayment)
+                        <small style="display:block; margin-top:0.5rem; color:#777;">Rescheduling requires verified payment in the Payment Module.</small>
+                    @endif
+                @endif
+            </div>
+
+            <form method="POST" action="{{ route('admin.bookings.rescheduleRequest', $booking) }}" style="margin-bottom: 1rem;">
+                @csrf
+                <x-admin.button type="outline">Send Admin Reschedule Request Email</x-admin.button>
+            </form>
 
             <!-- Update Status Form -->
             <form method="POST" action="{{ route('admin.bookings.updateStatus', $booking) }}" style="margin-bottom: 1rem;">
@@ -286,14 +317,14 @@
             </div>
             <div style="margin-bottom: 1rem;">
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New Check-in Date</label>
-                <input type="date" name="new_check_in_date" required class="form-control" min="{{ date('Y-m-d', strtotime('+1 day')) }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;">
+                <input type="date" name="new_check_in_date" required class="form-control" min="{{ $rescheduleMinDate }}" max="{{ $rescheduleMaxDate }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;">
             </div>
             <div style="margin-bottom: 1.5rem;">
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New Check-out Date</label>
-                <input type="date" name="new_check_out_date" required class="form-control" min="{{ date('Y-m-d', strtotime('+2 days')) }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;">
+                <input type="date" name="new_check_out_date" required class="form-control" min="{{ $rescheduleMinDate }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;">
             </div>
             <div class="alert alert-warning small mb-3">
-                <i class="fas fa-exclamation-triangle"></i> New check-in date must be within 1 month of original date
+                <i class="fas fa-exclamation-triangle"></i> Allowed range: {{ \Carbon\Carbon::parse($rescheduleMinDate)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($rescheduleMaxDate)->format('M d, Y') }} only. Same room type and availability rules will be applied.
             </div>
             <div style="display: flex; gap: 1rem;">
                 <button type="button" onclick="hideRescheduleModal()" class="btn-secondary" style="flex: 1; padding: 0.75rem; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
