@@ -76,10 +76,16 @@
                     <span class="price-label">From</span>
                     <span class="price-amount">₱{{ number_format($room->effective_price, 2) }}</span>
                     <span class="price-period">/night</span>
-                    @if((float) ($room->roomType->discount_percentage ?? 0) > 0)
+                    @php
+                        $displayDiscount = (float) ($room->discount_percentage ?? 0);
+                        if ($displayDiscount <= 0) {
+                            $displayDiscount = (float) ($room->roomType->discount_percentage ?? 0);
+                        }
+                    @endphp
+                    @if($displayDiscount > 0)
                         <div style="margin-top: 0.2rem; font-size: 0.8rem; color: #666;">
                             <span style="text-decoration: line-through;">₱{{ number_format((float) $room->roomType->base_price, 2) }}</span>
-                            <span class="discount-badge">{{ number_format((float) $room->roomType->discount_percentage, 0) }}% OFF</span>
+                            <span class="discount-badge">{{ number_format($displayDiscount, 0) }}% OFF</span>
                         </div>
                     @endif
                 </div>
