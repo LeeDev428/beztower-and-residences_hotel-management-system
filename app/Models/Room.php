@@ -130,7 +130,7 @@ class Room extends Model
         return $this->hasMany(BlockDate::class);
     }
 
-    // Effective price is base price (room discounts are disabled globally)
+    // Effective price uses room-level discount first, then room-type discount fallback.
     public function getEffectivePriceAttribute()
     {
         $roomType = $this->roomType;
@@ -139,7 +139,9 @@ class Room extends Model
         }
 
         $basePrice = (float) ($roomType->base_price ?? 0);
-        $discountPercentage = max(0.0, (float) ($roomType->discount_percentage ?? 0));
+        $roomDiscount = max(0.0, (float) ($this->discount_percentage ?? 0));
+        $typeDiscount = max(0.0, (float) ($roomType->discount_percentage ?? 0));
+        $discountPercentage = $roomDiscount > 0 ? $roomDiscount : $typeDiscount;
         $discountedPrice = $basePrice * (1 - ($discountPercentage / 100));
 
         return round(max($discountedPrice, 0), 2);
