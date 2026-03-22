@@ -238,6 +238,7 @@
                 $baseRescheduleDate = \Carbon\Carbon::parse($booking->original_check_in_date ?? $booking->check_in_date);
                 $rescheduleMinDate = $baseRescheduleDate->copy()->addDay()->toDateString();
                 $rescheduleMaxDate = $baseRescheduleDate->copy()->addDays(14)->toDateString();
+                $rescheduleNights = max(1, (int) ($booking->total_nights ?? optional($booking->check_in_date)->diffInDays($booking->check_out_date) ?? 1));
                 $rescheduleLocked = in_array($booking->status, ['checked_in', 'checked_out'], true);
                 $hasVerifiedPayment = $booking->payments->whereIn('payment_status', ['verified', 'completed'])->isNotEmpty();
                 $canOpenReschedule = !$rescheduleLocked && $hasVerifiedPayment;
@@ -273,9 +274,9 @@
                 @endif
             </div>
 
-            <form method="POST" action="{{ route('admin.bookings.rescheduleRequest', $booking) }}" style="margin-bottom: 1rem;">
+            <form method="POST" action="{{ route('admin.bookings.rescheduleRequest', $booking) }}" style="margin-bottom: 1rem;" onsubmit="return confirm('Are you sure you want to proceed?');">
                 @csrf
-                <x-admin.button type="outline">Send Admin Reschedule Request Email</x-admin.button>
+                <x-admin.button type="outline">Send Reschedule Request Email</x-admin.button>
             </form>
 
             <!-- Update Status Form -->
@@ -319,12 +320,12 @@
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New Check-in Date</label>
                 <input type="date" name="new_check_in_date" required class="form-control" min="{{ $rescheduleMinDate }}" max="{{ $rescheduleMaxDate }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;">
             </div>
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New Check-out Date</label>
-                <input type="date" name="new_check_out_date" required class="form-control" min="{{ $rescheduleMinDate }}" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px;">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">New Check-out Date (Auto Computed)</label>
+                <input type="text" id="rescheduleCheckoutPreview" class="form-control" value="Select a new check-in date" readonly style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa; color: #555;">
             </div>
             <div class="alert alert-warning small mb-3">
-                <i class="fas fa-exclamation-triangle"></i> Allowed range: {{ \Carbon\Carbon::parse($rescheduleMinDate)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($rescheduleMaxDate)->format('M d, Y') }} only. Same room type and availability rules will be applied.
+                <i class="fas fa-exclamation-triangle"></i> Allowed range: {{ \Carbon\Carbon::parse($rescheduleMinDate)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($rescheduleMaxDate)->format('M d, Y') }} only. Duration is fixed to {{ $rescheduleNights }} night(s), and the system will auto-compute check-out date.
             </div>
             <div style="display: flex; gap: 1rem;">
                 <button type="button" onclick="hideRescheduleModal()" class="btn-secondary" style="flex: 1; padding: 0.75rem; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
@@ -364,6 +365,38 @@ document.addEventListener('keydown', function(event) {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
+    const rescheduleCheckInInput = document.querySelector('input[name="new_check_in_date"]');
+    const rescheduleCheckoutPreview = document.getElementById('rescheduleCheckoutPreview');
+    const rescheduleNights = {{ $rescheduleNights }};
+
+    function refreshRescheduleCheckoutPreview() {
+        if (!rescheduleCheckInInput || !rescheduleCheckoutPreview) {
+            return;
+        }
+
+        if (!rescheduleCheckInInput.value) {
+            rescheduleCheckoutPreview.value = 'Select a new check-in date';
+            return;
+        }
+
+        const checkInDate = new Date(rescheduleCheckInInput.value + 'T00:00:00');
+        if (isNaN(checkInDate.getTime())) {
+            rescheduleCheckoutPreview.value = 'Invalid check-in date';
+            return;
+        }
+
+        checkInDate.setDate(checkInDate.getDate() + rescheduleNights);
+        const yyyy = checkInDate.getFullYear();
+        const mm = String(checkInDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(checkInDate.getDate()).padStart(2, '0');
+        rescheduleCheckoutPreview.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    if (rescheduleCheckInInput) {
+        rescheduleCheckInInput.addEventListener('change', refreshRescheduleCheckoutPreview);
+        refreshRescheduleCheckoutPreview();
+    }
+
     const currentRoomSelect = document.getElementById('currentRoomSelect');
     const transferRoomSelect = document.getElementById('transferRoomSelect');
 
