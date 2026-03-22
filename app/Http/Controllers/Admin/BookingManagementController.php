@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class BookingManagementController extends Controller
@@ -569,11 +570,14 @@ class BookingManagementController extends Controller
     {
         $validated = $request->validate([
             'new_check_in_date' => 'required|date',
-            'new_check_out_date' => 'required|date|after:new_check_in_date',
         ]);
 
         $requestedCheckInDate = Carbon::parse($validated['new_check_in_date'])->startOfDay();
-        $requestedCheckOutDate = Carbon::parse($validated['new_check_out_date'])->startOfDay();
+
+        $originalNights = (int) ($booking->total_nights
+            ?: Carbon::parse($booking->check_in_date)->diffInDays(Carbon::parse($booking->check_out_date)));
+        $originalNights = max(1, $originalNights);
+        $requestedCheckOutDate = $requestedCheckInDate->copy()->addDays($originalNights);
 
         if (in_array($booking->status, ['checked_in', 'checked_out'], true)) {
             return back()->with('error', 'Booking cannot be rescheduled after check-in or check-out.');
@@ -594,7 +598,7 @@ class BookingManagementController extends Controller
             return back()->with('error', 'New check-in date must be within 14 days from the original check-in date.');
         }
 
-        [$isAvailable, $availabilityMessage] = $this->validateRescheduleAvailability($booking, $requestedCheckInDate, $requestedCheckOutDate);
+        [$isAvailable, $availabilityMessage, $roomAssignments] = $this->validateRescheduleAvailability($booking, $requestedCheckInDate, $requestedCheckOutDate);
         if (!$isAvailable) {
             $this->sendRescheduleRejectionEmail($booking, $requestedCheckInDate);
 
@@ -607,17 +611,56 @@ class BookingManagementController extends Controller
             $booking->save();
         }
 
-        // Update booking dates
-        $booking->update([
-            'check_in_date' => $requestedCheckInDate->toDateString(),
-            'check_out_date' => $requestedCheckOutDate->toDateString(),
-            'rescheduled_at' => now(),
-            'status' => 'rescheduled',
-        ]);
+        DB::transaction(function () use ($booking, $requestedCheckInDate, $requestedCheckOutDate, $roomAssignments, $originalNights) {
+            // Update booking dates and keep original night count.
+            $booking->update([
+                'check_in_date' => $requestedCheckInDate->toDateString(),
+                'check_out_date' => $requestedCheckOutDate->toDateString(),
+                'rescheduled_at' => now(),
+                'status' => 'rescheduled',
+                'total_nights' => $originalNights,
+            ]);
 
-        // Recalculate nights
-        $nights = $requestedCheckInDate->diffInDays($requestedCheckOutDate);
-        $booking->update(['total_nights' => max(1, $nights)]);
+            if (!empty($roomAssignments)) {
+                $booking->loadMissing(['rooms.roomType', 'room.roomType']);
+
+                if ($booking->rooms->isNotEmpty()) {
+                    $existingByType = $booking->rooms
+                        ->groupBy(fn ($room) => (int) $room->room_type_id)
+                        ->map(fn ($rooms) => $rooms->values());
+
+                    $syncPayload = [];
+                    foreach ($roomAssignments as $roomTypeId => $assignedRoomIds) {
+                        foreach ($assignedRoomIds as $newRoomId) {
+                            $oldRoom = optional($existingByType->get((int) $roomTypeId))->shift();
+                            $nightlyRate = (float) ($oldRoom?->pivot?->nightly_rate
+                                ?? $oldRoom?->effective_price
+                                ?? optional($oldRoom?->roomType)->base_price
+                                ?? 0);
+
+                            $syncPayload[$newRoomId] = $this->filterBookingRoomPivotPayload([
+                                'nightly_rate' => $nightlyRate,
+                                'manual_adjustment' => (float) ($oldRoom?->pivot?->manual_adjustment ?? 0),
+                                'additional_charge' => (float) ($oldRoom?->pivot?->additional_charge ?? 0),
+                                'additional_charge_reason' => $oldRoom?->pivot?->additional_charge_reason ?? null,
+                                'discount_amount' => (float) ($oldRoom?->pivot?->discount_amount ?? 0),
+                                'discount_type' => $oldRoom?->pivot?->discount_type ?? null,
+                            ]);
+                        }
+                    }
+
+                    $booking->rooms()->sync($syncPayload);
+                    if (!empty($syncPayload)) {
+                        $booking->update(['room_id' => (int) array_key_first($syncPayload)]);
+                    }
+                } elseif (!empty($booking->room_id)) {
+                    $firstAssignedRoomId = (int) collect($roomAssignments)->flatten()->first();
+                    if ($firstAssignedRoomId > 0) {
+                        $booking->update(['room_id' => $firstAssignedRoomId]);
+                    }
+                }
+            }
+        });
 
         // Log the activity
         ActivityLog::log(
@@ -689,15 +732,15 @@ class BookingManagementController extends Controller
         }
 
         if (empty($requiredRoomTypeCounts)) {
-            return [false, 'Unable to validate room availability because booked room type is missing.'];
+            return [false, 'Unable to validate room availability because booked room type is missing.', []];
         }
 
-        $activeBookingStatuses = ['pending', 'confirmed', 'checked_in', 'rescheduled'];
         $checkInDate = $newCheckInDate->toDateString();
         $checkOutDate = $newCheckOutDate->toDateString();
+        $resolvedAssignments = [];
 
         foreach ($requiredRoomTypeCounts as $roomTypeId => $requiredCount) {
-            $availableCount = Room::query()
+            $availableRooms = Room::query()
                 ->where('room_type_id', $roomTypeId)
                 ->whereNull('archived_at')
                 ->whereIn('status', ['available', 'occupied'])
@@ -705,26 +748,46 @@ class BookingManagementController extends Controller
                     $q->where('start_date', '<', $checkOutDate)
                         ->where('end_date', '>', $checkInDate);
                 })
-                ->whereDoesntHave('bookings', function ($q) use ($booking, $checkInDate, $checkOutDate, $activeBookingStatuses) {
+                ->whereDoesntHave('bookings', function ($q) use ($booking, $checkInDate, $checkOutDate) {
                     $q->where('bookings.id', '!=', $booking->id)
-                        ->whereIn('bookings.status', $activeBookingStatuses)
+                        ->where(function ($reservationQuery) {
+                            $reservationQuery
+                                ->whereIn('bookings.status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                                ->orWhereHas('payments', function ($paymentQuery) {
+                                    $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                                });
+                        })
                         ->where('bookings.check_in_date', '<', $checkOutDate)
                         ->where('bookings.check_out_date', '>', $checkInDate);
                 })
-                ->whereDoesntHave('reservationBookings', function ($q) use ($booking, $checkInDate, $checkOutDate, $activeBookingStatuses) {
+                ->whereDoesntHave('reservationBookings', function ($q) use ($booking, $checkInDate, $checkOutDate) {
                     $q->where('bookings.id', '!=', $booking->id)
-                        ->whereIn('bookings.status', $activeBookingStatuses)
+                        ->where(function ($reservationQuery) {
+                            $reservationQuery
+                                ->whereIn('bookings.status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                                ->orWhereHas('payments', function ($paymentQuery) {
+                                    $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                                });
+                        })
                         ->where('bookings.check_in_date', '<', $checkOutDate)
                         ->where('bookings.check_out_date', '>', $checkInDate);
                 })
-                ->count();
+                ->orderBy('room_number')
+                ->get(['id']);
 
-            if ($availableCount < $requiredCount) {
-                return [false, 'Your requested date is not available. Please provide another preferred date within the allowed period.'];
+            if ($availableRooms->count() < $requiredCount) {
+                return [false, 'Your requested date is not available. Please provide another preferred date within the allowed period.', []];
             }
+
+            $resolvedAssignments[(int) $roomTypeId] = $availableRooms
+                ->take($requiredCount)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all();
         }
 
-        return [true, null];
+        return [true, null, $resolvedAssignments];
     }
 
     private function sendRescheduleConfirmationEmail(Booking $booking): void
