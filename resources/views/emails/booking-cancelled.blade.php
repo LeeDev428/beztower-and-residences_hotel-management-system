@@ -152,8 +152,8 @@
             <p><strong>Important Information:</strong></p>
             <ul>
                 <li>Please note that all payments made (down payment or full payment) are <strong>non-refundable</strong>.</li>
-                <li>However, you may <strong>reschedule your booking within one week</strong> of this cancellation.</li>
-                <li>The new rescheduled date must be <strong>within one month</strong> from your original booking date.</li>
+                <li>However, you may request to <strong>reschedule your booking within two (2) weeks</strong> from your original check-in date.</li>
+                <li>The requested new check-in date must be <strong>within 14 days</strong> from the original check-in date and is subject to availability.</li>
             </ul>
 
             <p>If you require further clarification or would like to double-check whether your refund has already been processed, or if you wish to reschedule your booking, kindly contact Bez Tower using the details below:</p>
