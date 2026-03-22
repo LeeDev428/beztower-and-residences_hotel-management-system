@@ -68,6 +68,18 @@ class BookingManagementController extends Controller
         $booking->load(['guest', 'room.roomType', 'roomType', 'rooms.roomType']);
 
         $allowedStatuses = $this->getAllowedStatusTransitions($booking->status);
+        $today = now()->toDateString();
+        $checkInDate = optional($booking->check_in_date)->toDateString();
+        $checkOutDate = optional($booking->check_out_date)->toDateString();
+
+        if ($today !== $checkInDate) {
+            $allowedStatuses = array_values(array_filter($allowedStatuses, fn ($status) => $status !== 'checked_in'));
+        }
+
+        if ($today !== $checkOutDate) {
+            $allowedStatuses = array_values(array_filter($allowedStatuses, fn ($status) => $status !== 'checked_out'));
+        }
+
         $statusLocked = in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true);
         $billingLocked = in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true);
 
@@ -131,6 +143,20 @@ class BookingManagementController extends Controller
             $hasVerifiedPayment = $booking->payments()->whereIn('payment_status', ['verified', 'completed'])->exists();
             if (!$hasVerifiedPayment) {
                 return back()->with('error', 'Check-in is not allowed until payment is verified in the Payment Module.');
+            }
+
+            $today = now()->toDateString();
+            $allowedCheckInDate = optional($booking->check_in_date)->toDateString();
+            if ($today !== $allowedCheckInDate) {
+                return back()->with('error', 'Check-in is only allowed on the booking check-in date.');
+            }
+        }
+
+        if ($targetStatus === 'checked_out') {
+            $today = now()->toDateString();
+            $allowedCheckOutDate = optional($booking->check_out_date)->toDateString();
+            if ($today !== $allowedCheckOutDate) {
+                return back()->with('error', 'Check-out is only allowed on the booking check-out date.');
             }
         }
 
@@ -384,6 +410,7 @@ class BookingManagementController extends Controller
             'pwd_senior_count' => 'nullable|integer|min:0',
             'pwd_senior_discount' => 'nullable|numeric|min:0',
             'manual_adjustment' => 'nullable|numeric',
+            'overall_manual_adjustment' => 'nullable|numeric',
             'room_additional_charges' => 'nullable|array',
             'room_additional_charges.*' => 'nullable|numeric|min:0',
             'room_additional_reasons' => 'nullable|array',
@@ -403,6 +430,7 @@ class BookingManagementController extends Controller
         $booking->loadMissing('rooms');
 
         $manualAdjustment = (float) ($validated['manual_adjustment'] ?? 0);
+        $overallManualAdjustment = (float) ($validated['overall_manual_adjustment'] ?? 0);
         $isMultiRoom = $booking->rooms->isNotEmpty() && $booking->rooms->count() > 1;
         $totalPwdSeniorDiscount = 0.0;
         $hasAnyPwdSeniorDiscount = false;
@@ -466,6 +494,8 @@ class BookingManagementController extends Controller
                 ]));
             }
         }
+
+        $manualAdjustment += $overallManualAdjustment;
 
         $earlyCheckinHours = $validated['early_checkin_hours'] ?? 0;
         $earlyCheckinCharge = $validated['early_checkin_charge'] ?? 0;
