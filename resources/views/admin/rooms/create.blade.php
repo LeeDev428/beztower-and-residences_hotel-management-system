@@ -134,6 +134,8 @@
                         <tr>
                             <th>Name</th>
                             <th>Base Price</th>
+                            <th>Discount</th>
+                            <th>Effective Price</th>
                             <th>Max Guests</th>
                             <th>Actions</th>
                         </tr>
@@ -203,6 +205,10 @@
                 <div class="form-group">
                     <label>Base Price *</label>
                     <input type="number" id="roomTypeBasePrice" name="base_price" step="0.01" min="0" required class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Discount Percentage (%)</label>
+                    <input type="number" id="roomTypeDiscountPercentage" name="discount_percentage" step="0.01" min="0" max="100" class="form-control" placeholder="0">
                 </div>
                 <div class="form-group">
                     <label>Max Guests *</label>
@@ -572,6 +578,8 @@
                     <tr>
                         <td>${type.name}</td>
                         <td>₱${parseFloat(type.base_price).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+                        <td>${parseFloat(type.discount_percentage || 0).toLocaleString('en-PH', {minimumFractionDigits: 0, maximumFractionDigits: 2})}%</td>
+                        <td>₱${(parseFloat(type.base_price || 0) * (1 - (parseFloat(type.discount_percentage || 0) / 100))).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
                         <td>${type.max_guests}</td>
                         <td>
                             <button class="btn-edit" onclick="editRoomType(${type.id})">Edit</button>
@@ -715,6 +723,7 @@
                 document.getElementById('roomTypeName').value = roomType.name;
                 document.getElementById('roomTypeDescription').value = roomType.description || '';
                 document.getElementById('roomTypeBasePrice').value = roomType.base_price;
+                document.getElementById('roomTypeDiscountPercentage').value = roomType.discount_percentage || 0;
                 document.getElementById('roomTypeMaxGuests').value = roomType.max_guests;
                 document.getElementById('roomTypeBedType').value = roomType.bed_type || '';
                 document.getElementById('roomTypeSize').value = roomType.size_sqm || '';
