@@ -127,6 +127,7 @@ class BookingController extends Controller
             'total_nights' => 'required|integer|min:1',
             'payment_option' => 'required|in:full_payment,down_payment',
             'special_requests' => 'nullable|string',
+            'terms_accepted' => 'accepted',
             'extras' => 'nullable|array',
             'extras.*' => 'exists:extras,id',
             'extra_quantities' => 'nullable|array',
