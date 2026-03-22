@@ -385,6 +385,10 @@ class RoomController extends Controller
     
     public function show(Room $room)
     {
+        if (!is_null($room->archived_at)) {
+            abort(404);
+        }
+
         $room->load(['roomType', 'amenities', 'photos', 'housekeeping']);
         
         return view('customer.rooms.show', compact('room'));
