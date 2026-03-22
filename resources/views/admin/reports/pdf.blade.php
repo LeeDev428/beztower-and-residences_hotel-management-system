@@ -182,7 +182,7 @@
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td style="font-weight: 600; color: #d4af37;">{{ $booking->booking_reference }}</td>
-                    <td>{{ $booking->guest->name ?? 'N/A' }}</td>
+                    <td>{{ optional($booking->guest)->name ?? 'N/A' }}</td>
                     <td>
                         @if($booking->rooms->isNotEmpty())
                             Room {{ optional($booking->rooms->first())->room_number ?? 'N/A' }}@if($booking->rooms->count() > 1) +{{ $booking->rooms->count() - 1 }} more@endif
