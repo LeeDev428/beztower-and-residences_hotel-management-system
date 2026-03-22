@@ -23,7 +23,7 @@ class ReportController extends Controller
 
     public function generatePdf(Request $request)
     {
-        [$startDate, $endDate, $selectedMonth] = $this->resolveMonthlyPeriod($request);
+        [$startDate, $endDate] = $this->resolveMonthlyPeriod($request);
         $generatedBy = Auth::user()->name ?? 'System';
 
         // Stats
@@ -65,7 +65,7 @@ class ReportController extends Controller
         );
 
         $pdf = Pdf::loadView('admin.reports.pdf', compact(
-            'startDate', 'endDate', 'selectedMonth',
+            'startDate', 'endDate',
             'totalBookings', 'totalGuests', 'totalRooms', 'totalRevenue',
             'bookingsByStatus', 'recentBookings', 'revenueByType', 'generatedBy'
         ))->setPaper('a4', 'portrait');
@@ -367,32 +367,28 @@ class ReportController extends Controller
         $endDateInput = $request->input('end_date');
 
         if (!empty($startDateInput) && !empty($endDateInput)) {
-            $start = Carbon::parse($startDateInput)->startOfDay();
-            $end = Carbon::parse($endDateInput)->endOfDay();
+            try {
+                $start = Carbon::parse($startDateInput)->startOfDay();
+                $end = Carbon::parse($endDateInput)->endOfDay();
 
-            if ($start->gt($end)) {
-                [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+                if ($start->gt($end)) {
+                    [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+                }
+
+                return [
+                    $start->format('Y-m-d H:i:s'),
+                    $end->format('Y-m-d H:i:s'),
+                ];
+            } catch (\Throwable $e) {
+                // Fall back to current month when date input is malformed.
             }
-
-            return [
-                $start->format('Y-m-d H:i:s'),
-                $end->format('Y-m-d H:i:s'),
-                null,
-            ];
         }
 
-        $month = $request->input('month');
-
-        if ($month && preg_match('/^\d{4}-\d{2}$/', $month)) {
-            $anchor = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
-        } else {
-            $anchor = Carbon::now()->startOfMonth();
-        }
+        $anchor = Carbon::now()->startOfMonth();
 
         return [
             $anchor->copy()->startOfMonth()->format('Y-m-d H:i:s'),
             $anchor->copy()->endOfMonth()->format('Y-m-d H:i:s'),
-            $anchor->format('Y-m'),
         ];
     }
 }
