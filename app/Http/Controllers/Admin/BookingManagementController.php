@@ -25,6 +25,10 @@ class BookingManagementController extends Controller
     public function index(Request $request)
     {
         $query = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType', 'payments']);
+        $hasGuestNameColumn = Schema::hasColumn('guests', 'name');
+        $hasGuestFirstNameColumn = Schema::hasColumn('guests', 'first_name');
+        $hasGuestLastNameColumn = Schema::hasColumn('guests', 'last_name');
+        $hasGuestEmailColumn = Schema::hasColumn('guests', 'email');
 
         // Filter by status
         if ($request->filled('status')) {
@@ -34,11 +38,30 @@ class BookingManagementController extends Controller
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function($q) use ($search, $hasGuestNameColumn, $hasGuestFirstNameColumn, $hasGuestLastNameColumn, $hasGuestEmailColumn) {
                 $q->where('booking_reference', 'LIKE', "%{$search}%")
-                  ->orWhereHas('guest', function($gq) use ($search) {
-                      $gq->where('name', 'LIKE', "%{$search}%")
-                         ->orWhere('email', 'LIKE', "%{$search}%");
+                  ->orWhereHas('guest', function($gq) use ($search, $hasGuestNameColumn, $hasGuestFirstNameColumn, $hasGuestLastNameColumn, $hasGuestEmailColumn) {
+                      $gq->where(function ($guestSearch) use ($search, $hasGuestNameColumn, $hasGuestFirstNameColumn, $hasGuestLastNameColumn, $hasGuestEmailColumn) {
+                          if ($hasGuestNameColumn) {
+                              $guestSearch->orWhere('name', 'LIKE', "%{$search}%");
+                          }
+
+                          if ($hasGuestFirstNameColumn) {
+                              $guestSearch->orWhere('first_name', 'LIKE', "%{$search}%");
+                          }
+
+                          if ($hasGuestLastNameColumn) {
+                              $guestSearch->orWhere('last_name', 'LIKE', "%{$search}%");
+                          }
+
+                          if ($hasGuestFirstNameColumn && $hasGuestLastNameColumn) {
+                              $guestSearch->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                          }
+
+                          if ($hasGuestEmailColumn) {
+                              $guestSearch->orWhere('email', 'LIKE', "%{$search}%");
+                          }
+                      });
                   });
             });
         }
@@ -344,8 +367,8 @@ class BookingManagementController extends Controller
             return back()->with('error', 'Room assignment must stay within the originally booked room type.');
         }
 
-        // Free old room if booking is pending/confirmed (not already checked in)
-        if ($booking->room_id && !in_array($booking->status, ['checked_in', 'checked_out'])) {
+        // Always free the old room when transferring, except when the room does not exist.
+        if ($booking->room_id && $booking->room && (int) $booking->room_id !== (int) $newRoom->id) {
             $booking->room->update(['status' => 'available']);
         }
 
