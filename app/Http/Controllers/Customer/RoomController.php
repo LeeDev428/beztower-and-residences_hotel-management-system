@@ -16,7 +16,10 @@ class RoomController extends Controller
     {
         $query = Room::with(['roomType', 'amenities', 'photos'])
             ->where('status', 'available')
-            ->whereNull('archived_at'); // Only show active, available rooms
+            ->whereNull('archived_at')
+            ->whereHas('roomType', function ($q) {
+                $q->whereNull('archived_at');
+            }); // Only show active, available rooms with active room type
 
         $requestedRooms = max(1, min(12, (int) $request->input('rooms', 1)));
         $requestedGuests = $this->resolveRequestedGuests($request);
@@ -209,7 +212,7 @@ class RoomController extends Controller
         }
         
         $rooms = $query->paginate(6)->withQueryString();
-        $roomTypes = RoomType::all();
+        $roomTypes = RoomType::active()->get();
         $amenities = Amenity::all();
         
         // If AJAX request, return JSON
@@ -254,19 +257,18 @@ class RoomController extends Controller
 
     private function resolveRequestedGuests(Request $request): int
     {
-        $guests = 0;
+        $fallbackGuests = is_numeric($request->input('guests')) ? (int) $request->input('guests') : 0;
+        $adults = is_numeric($request->input('adults')) ? (int) $request->input('adults') : 0;
+        $children = is_numeric($request->input('children')) ? (int) $request->input('children') : 0;
 
-        if (is_numeric($request->input('guests'))) {
-            $guests = (int) $request->input('guests');
+        if ($adults <= 0 && $children <= 0) {
+            return max(0, $fallbackGuests);
         }
 
-        if ($guests <= 0) {
-            $adults = is_numeric($request->input('adults')) ? (int) $request->input('adults') : 0;
-            $children = is_numeric($request->input('children')) ? (int) $request->input('children') : 0;
-            $guests = $adults + $children;
-        }
+        // Capacity logic: every 2 children count as 1 adult, remaining 1 child is free.
+        $effectiveAdults = max(0, $adults) + intdiv(max(0, $children), 2);
 
-        return max(0, $guests);
+        return max(1, $effectiveAdults);
     }
 
     /**
