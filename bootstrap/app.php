@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'admin.timeout' => \App\Http\Middleware\AdminInactivityTimeout::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
