@@ -15,6 +15,8 @@
         <div style="padding: 30px;">
             @php
                 $reservedRooms = $payment->booking->rooms->isNotEmpty() ? $payment->booking->rooms : collect([$payment->booking->room])->filter();
+                $configuredCheckInTime = \App\Models\AppSetting::getValue('check_in_time', '14:00');
+                $configuredCheckOutTime = \App\Models\AppSetting::getValue('check_out_time', '12:00');
             @endphp
             <p>Dear {{ $payment->booking->guest->name }},</p>
             
@@ -63,11 +65,11 @@
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Check-in:</td>
-                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->check_in_date->format('F d, Y') }}</td>
+                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->check_in_date->format('F d, Y') }} {{ \Carbon\Carbon::createFromFormat('H:i', $configuredCheckInTime)->format('g:i A') }}</td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Check-out:</td>
-                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->check_out_date->format('F d, Y') }}</td>
+                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->check_out_date->format('F d, Y') }} {{ \Carbon\Carbon::createFromFormat('H:i', $configuredCheckOutTime)->format('g:i A') }}</td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Nights:</td>
