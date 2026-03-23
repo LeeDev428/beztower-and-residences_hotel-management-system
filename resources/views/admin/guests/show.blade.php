@@ -46,6 +46,30 @@
             </form>
         </x-admin.card>
 
+        <x-admin.card title="Guest ID Photo" style="margin-top: 1.5rem;">
+            @if(!empty($guest->id_photo))
+                @php
+                    $idPhotoPath = asset('storage/' . $guest->id_photo);
+                    $isPdfId = str_ends_with(strtolower((string) $guest->id_photo), '.pdf');
+                @endphp
+
+                @if($isPdfId)
+                    <div style="padding: 0.9rem; background: #f8f9fa; border: 1px solid var(--border-gray); border-radius: 8px; color: var(--text-muted); margin-bottom: 0.75rem;">
+                        Uploaded ID is a PDF document.
+                    </div>
+                @else
+                    <img src="{{ $idPhotoPath }}" alt="Guest ID Photo" style="width: 100%; max-height: 260px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border-gray); background: #f8f9fa;">
+                @endif
+
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.85rem;">
+                    <a href="{{ $idPhotoPath }}" target="_blank" style="display:inline-flex; align-items:center; justify-content:center; padding: 0.5rem 0.9rem; border-radius: 8px; text-decoration: none; background: linear-gradient(135deg, #d4af37, #f4e4c1); color: #2c2c2c; font-weight: 600;">View</a>
+                    <a href="{{ $idPhotoPath }}" download style="display:inline-flex; align-items:center; justify-content:center; padding: 0.5rem 0.9rem; border-radius: 8px; text-decoration: none; background: #6c757d; color: #fff; font-weight: 600;">Download</a>
+                </div>
+            @else
+                <p style="color: var(--text-muted);">No ID photo uploaded for this guest.</p>
+            @endif
+        </x-admin.card>
+
         <x-admin.card title="Statistics" style="margin-top: 1.5rem;">
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 <div style="display: flex; justify-content: space-between;">
