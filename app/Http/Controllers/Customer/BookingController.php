@@ -67,6 +67,9 @@ class BookingController extends Controller
         $preselectedRooms = Room::with(['roomType', 'photos'])
             ->whereIn('id', $preselectedRoomIds)
             ->whereNull('archived_at')
+            ->whereHas('roomType', function ($roomTypeQuery) {
+                $roomTypeQuery->whereNull('archived_at');
+            })
             ->get();
 
         $preselectedRooms = $preselectedRooms
@@ -396,6 +399,9 @@ class BookingController extends Controller
         $availableRooms = Room::with('roomType')
             ->where('status', 'available')
             ->whereNull('archived_at')
+            ->whereHas('roomType', function ($roomTypeQuery) {
+                $roomTypeQuery->whereNull('archived_at');
+            })
             ->whereDoesntHave('bookings', function ($query) use ($validated) {
                 $query->where(function ($statusQuery) {
                     $statusQuery
