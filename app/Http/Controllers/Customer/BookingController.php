@@ -213,6 +213,20 @@ class BookingController extends Controller
                 ]
             );
 
+            $duplicateBooking = $this->findRecentDuplicateBooking(
+                (int) $guest->id,
+                $selectedRoomIds,
+                (string) $validated['check_in_date'],
+                (string) $validated['check_out_date']
+            );
+
+            if ($duplicateBooking) {
+                DB::rollBack();
+
+                return redirect()->route('booking.payment', ['reference' => $duplicateBooking->booking_reference])
+                    ->with('warning', 'Reservation already submitted. Redirected to your existing booking payment page.');
+            }
+
             $selectedRooms = Room::with('roomType')
                 ->whereIn('id', $selectedRoomIds)
                 ->where('status', 'available')
@@ -710,5 +724,49 @@ class BookingController extends Controller
         $pdf = Pdf::loadView('customer.booking.pdf', compact('booking'));
         
         return $pdf->download('booking-'.$reference.'.pdf');
+    }
+
+    private function findRecentDuplicateBooking(int $guestId, Collection $selectedRoomIds, string $checkInDate, string $checkOutDate): ?Booking
+    {
+        $normalizedSelectedRoomIds = $selectedRoomIds
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        if (empty($normalizedSelectedRoomIds)) {
+            return null;
+        }
+
+        $recentBookings = Booking::with('rooms:id')
+            ->where('guest_id', $guestId)
+            ->whereDate('check_in_date', $checkInDate)
+            ->whereDate('check_out_date', $checkOutDate)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('created_at', '>=', now()->subMinutes(10))
+            ->latest('id')
+            ->get();
+
+        foreach ($recentBookings as $recentBooking) {
+            $existingRoomIds = $recentBooking->rooms->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->filter(fn ($id) => $id > 0)
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+
+            if (empty($existingRoomIds) && !empty($recentBooking->room_id)) {
+                $existingRoomIds = [(int) $recentBooking->room_id];
+            }
+
+            if ($existingRoomIds === $normalizedSelectedRoomIds) {
+                return $recentBooking;
+            }
+        }
+
+        return null;
     }
 }
