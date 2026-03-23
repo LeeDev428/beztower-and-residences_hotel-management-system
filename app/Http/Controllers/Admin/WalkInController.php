@@ -50,6 +50,7 @@ class WalkInController extends Controller
                     'id' => $room->id,
                     'room_number' => $room->room_number,
                     'room_type' => $roomTypeName,
+                    'capacity' => (int) ($room->roomType?->max_guests ?? 0),
                     'price' => (float) ($room->effective_price ?? $basePrice),
                     'label' => $roomTypeName . ' - Room ' . $room->room_number . ' (PHP ' . number_format((float) ($room->effective_price ?? $basePrice), 2) . '/night)',
                 ];
@@ -73,7 +74,9 @@ class WalkInController extends Controller
             'number_of_rooms' => 'required|integer|min:1|max:5',
             'room_ids'        => 'required|array|min:1',
             'room_ids.*'      => 'required|distinct|exists:rooms,id',
-            'number_of_guests'=> 'required|integer|min:1|max:10',
+            'number_of_guests'=> 'nullable|integer|min:1|max:30',
+            'adults'          => 'nullable|integer|min:1|max:30',
+            'children'        => 'nullable|integer|min:0|max:30',
             'payment_method'  => 'required|in:cash,gcash',
             'payment_type'    => 'required|in:full_payment',
             'extras'          => 'nullable|array',
@@ -81,6 +84,8 @@ class WalkInController extends Controller
             'extra_quantities' => 'nullable|array',
             'special_requests'=> 'nullable|string|max:1000',
         ]);
+
+        $effectiveAdults = $this->resolveEffectiveAdults($validated);
 
         $checkIn  = Carbon::parse($validated['check_in_date']);
         $checkOut = Carbon::parse($validated['check_out_date']);
@@ -97,6 +102,15 @@ class WalkInController extends Controller
 
         if ($availableRoomIds->count() !== $selectedRoomIds->count()) {
             return back()->withErrors(['room_ids' => 'One or more selected rooms are no longer available for the selected dates.'])->withInput();
+        }
+
+        $selectedRooms = Room::with('roomType')->whereIn('id', $selectedRoomIds)->get();
+        $totalCapacity = (int) $selectedRooms->sum(fn ($room) => (int) ($room->roomType?->max_guests ?? 0));
+
+        if ($totalCapacity < $effectiveAdults) {
+            return back()->withErrors([
+                'number_of_guests' => 'Selected room(s) can only accommodate up to ' . $totalCapacity . ' effective adult(s).',
+            ])->withInput();
         }
 
         $selectedExtras = [];
@@ -139,7 +153,6 @@ class WalkInController extends Controller
         try {
             $overallTotal = 0;
             $verifiedBy = Auth::id();
-            $selectedRooms = Room::with('roomType')->whereIn('id', $selectedRoomIds)->get();
             $nightlySubtotal = (float) $selectedRooms->sum(fn ($room) => (float) ($room->effective_price ?? 0));
             $overallSubtotal = $nightlySubtotal * $nights;
             $overallTotal = round($overallSubtotal + $extrasTotal, 2);
@@ -153,7 +166,7 @@ class WalkInController extends Controller
                 'room_id' => (int) $selectedRoomIds->first(),
                 'check_in_date' => $validated['check_in_date'],
                 'check_out_date' => $validated['check_out_date'],
-                'number_of_guests' => $validated['number_of_guests'],
+                'number_of_guests' => $effectiveAdults,
                 'total_nights' => $nights,
                 'subtotal' => $overallSubtotal,
                 'extras_total' => $extrasTotal,
@@ -258,5 +271,18 @@ class WalkInController extends Controller
                             ->where('check_out_date', '>', $checkInDate);
                     });
             });
+    }
+
+    private function resolveEffectiveAdults(array $validated): int
+    {
+        $adults = (int) ($validated['adults'] ?? 0);
+        $children = (int) ($validated['children'] ?? 0);
+
+        if ($adults <= 0 && $children <= 0) {
+            return max(1, (int) ($validated['number_of_guests'] ?? 1));
+        }
+
+        // Capacity logic: every 2 children count as 1 adult, remaining 1 child is free.
+        return max(1, $adults + intdiv(max(0, $children), 2));
     }
 }
