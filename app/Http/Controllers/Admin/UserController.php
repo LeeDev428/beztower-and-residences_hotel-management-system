@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -60,6 +61,15 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
+        if ($user->id === auth()->id() && $validated['role'] !== 'admin') {
+            return back()->withErrors([
+                'role' => 'You cannot change your own role from Admin.',
+            ])->withInput();
+        }
+
+        $originalRole = $user->role;
+        $originalStatus = is_null($user->deactivated_at) ? 'active' : 'deactivated';
+
         $data = [
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -72,6 +82,19 @@ class UserController extends Controller
 
         $user->update($data);
 
+        ActivityLog::log(
+            'user_update',
+            'Updated user account: ' . $user->name,
+            User::class,
+            $user->id,
+            [
+                'role_before' => $originalRole,
+                'role_after' => $user->role,
+                'status_before' => $originalStatus,
+                'status_after' => is_null($user->deactivated_at) ? 'active' : 'deactivated',
+            ]
+        );
+
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully!');
     }
 
@@ -83,12 +106,26 @@ class UserController extends Controller
 
         $user->update(['deactivated_at' => now()]);
 
+        ActivityLog::log(
+            'user_deactivate',
+            'Deactivated user account: ' . $user->name,
+            User::class,
+            $user->id
+        );
+
         return redirect()->route('admin.users.index')->with('success', 'User account deactivated successfully!');
     }
 
     public function activate(User $user)
     {
         $user->update(['deactivated_at' => null]);
+
+        ActivityLog::log(
+            'user_activate',
+            'Activated user account: ' . $user->name,
+            User::class,
+            $user->id
+        );
 
         return redirect()->route('admin.users.index')->with('success', 'User account activated successfully!');
     }
