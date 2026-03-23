@@ -35,6 +35,7 @@ class RoomTypeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'features_text' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'max_guests' => 'required|integer|min:1',
@@ -57,6 +58,7 @@ class RoomTypeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'features_text' => 'nullable|string',
             'base_price' => 'required|numeric|min:0',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'max_guests' => 'required|integer|min:1',
