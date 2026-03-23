@@ -1218,46 +1218,34 @@
 
             <!-- Features Tab -->
             <div id="features" class="tab-content">
+                @php
+                    $configuredFeatures = collect(preg_split('/\r\n|\r|\n/', (string) ($room->roomType->features_text ?? '')))
+                        ->map(fn ($line) => trim((string) $line))
+                        ->filter()
+                        ->values();
+
+                    $defaultFeatures = collect([
+                        'High-Speed WiFi',
+                        'Smart Entertainment',
+                        'Climate Control',
+                        '24/7 Room Service',
+                    ]);
+
+                    $featureLines = $configuredFeatures->isNotEmpty() ? $configuredFeatures : $defaultFeatures;
+                @endphp
+
                 <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-wifi"></i>
+                    @foreach($featureLines as $featureLine)
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="feature-content">
+                                <h4>{{ $featureLine }}</h4>
+                                <p>Included in this room type offering.</p>
+                            </div>
                         </div>
-                        <div class="feature-content">
-                            <h4>High-Speed WiFi</h4>
-                            <p>Stay connected with complimentary high-speed internet access throughout your stay.</p>
-                        </div>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-tv"></i>
-                        </div>
-                        <div class="feature-content">
-                            <h4>Smart Entertainment</h4>
-                            <p>Large flat-screen TV with premium channels and streaming services for your entertainment.</p>
-                        </div>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-snowflake"></i>
-                        </div>
-                        <div class="feature-content">
-                            <h4>Climate Control</h4>
-                            <p>Individual temperature control to ensure your comfort at all times.</p>
-                        </div>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-concierge-bell"></i>
-                        </div>
-                        <div class="feature-content">
-                            <h4>24/7 Room Service</h4>
-                            <p>Around-the-clock room service to cater to your every need at any time.</p>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
