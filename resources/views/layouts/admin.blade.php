@@ -264,8 +264,8 @@
             padding: 2rem;
         }
 
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
+        /* Responsive Sidebar */
+        @media (max-width: 1200px) {
             .sidebar {
                 transform: translateX(-100%);
             }
@@ -280,6 +280,10 @@
 
             .menu-toggle {
                 display: block;
+            }
+
+            .topbar {
+                padding: 1rem 1.25rem;
             }
 
             .page-title {
@@ -601,12 +605,64 @@
             const sidebar = document.getElementById('sidebar');
             const menuToggle = document.getElementById('menuToggle');
             
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 1200) {
                 if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
                     sidebar.classList.remove('active');
                 }
             }
         });
+    </script>
+
+    <script>
+        (function () {
+            const snapshotUrl = '{{ route('admin.bookings.notifications.snapshot') }}';
+            const storageKey = 'admin_last_seen_booking_id';
+            let initialized = false;
+
+            async function pollBookingNotifications() {
+                try {
+                    const response = await fetch(snapshotUrl, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const data = await response.json();
+                    const latestBookingId = Number(data.latest_booking_id || 0);
+                    if (!latestBookingId) {
+                        return;
+                    }
+
+                    const lastSeenId = Number(sessionStorage.getItem(storageKey) || 0);
+
+                    if (!initialized) {
+                        sessionStorage.setItem(storageKey, String(Math.max(lastSeenId, latestBookingId)));
+                        initialized = true;
+                        return;
+                    }
+
+                    if (latestBookingId > lastSeenId) {
+                        const reference = data.latest_booking_reference || 'New Booking';
+                        const guestName = data.latest_guest_name ? ` from ${data.latest_guest_name}` : '';
+                        showToast(`New booking received: ${reference}${guestName}`, 'info');
+                        sessionStorage.setItem(storageKey, String(latestBookingId));
+                    }
+                } catch (error) {
+                    // Keep polling silent; avoid breaking admin UI on transient fetch errors.
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                pollBookingNotifications();
+                setInterval(pollBookingNotifications, 20000);
+            });
+        })();
     </script>
     @stack('scripts')
 </body>
