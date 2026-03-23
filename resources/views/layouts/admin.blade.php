@@ -510,7 +510,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('admin.logout') }}" method="POST" style="display: inline;">
+                <form id="adminLogoutForm" action="{{ route('admin.logout') }}" method="POST" style="display: inline;">
                     @csrf
                     <button type="submit" style="background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0.5rem;">
                         <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -662,6 +662,32 @@
                 pollBookingNotifications();
                 setInterval(pollBookingNotifications, 20000);
             });
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const timeoutMs = 15 * 60 * 1000;
+            let inactivityTimer = null;
+
+            function scheduleLogout() {
+                if (inactivityTimer) {
+                    clearTimeout(inactivityTimer);
+                }
+
+                inactivityTimer = setTimeout(function () {
+                    const logoutForm = document.getElementById('adminLogoutForm');
+                    if (logoutForm) {
+                        logoutForm.submit();
+                    }
+                }, timeoutMs);
+            }
+
+            ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'].forEach((eventName) => {
+                document.addEventListener(eventName, scheduleLogout, { passive: true });
+            });
+
+            document.addEventListener('DOMContentLoaded', scheduleLogout);
         })();
     </script>
     @stack('scripts')
