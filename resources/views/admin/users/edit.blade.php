@@ -43,9 +43,12 @@
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Role</label>
                 <select name="role" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                     <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="manager" {{ old('role', $user->role) === 'manager' ? 'selected' : '' }}>Manager</option>
-                    <option value="receptionist" {{ old('role', $user->role) === 'receptionist' ? 'selected' : '' }}>Receptionist</option>
+                    <option value="manager" {{ old('role', $user->role) === 'manager' ? 'selected' : '' }} {{ auth()->id() === $user->id ? 'disabled' : '' }}>Manager</option>
+                    <option value="receptionist" {{ old('role', $user->role) === 'receptionist' ? 'selected' : '' }} {{ auth()->id() === $user->id ? 'disabled' : '' }}>Receptionist</option>
                 </select>
+                @if(auth()->id() === $user->id)
+                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.35rem;">For security, you cannot downgrade your own role.</div>
+                @endif
                 @error('role')
                 <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                 @enderror
