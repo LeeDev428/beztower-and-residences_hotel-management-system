@@ -867,7 +867,7 @@
                                     <div class="extra-price">₱{{ number_format((float)$extra->price, 2) }}</div>
                                     <div style="display: flex; align-items: center; gap: 0.8rem;">
                                         <input type="checkbox" name="extras[]" value="{{ $extra->id }}" 
-                                               class="extra-checkbox" data-price="{{ $extra->price }}" 
+                                                 class="extra-checkbox" data-price="{{ $extra->price }}" data-name="{{ $extra->name }}"
                                                id="extra_checkbox_{{ $extra->id }}"
                                                onchange="toggleExtraQuantity({{ $extra->id }}); updateTotal()">
                                         <div id="extra_quantity_controls_{{ $extra->id }}" class="qty-controls">
@@ -1052,6 +1052,8 @@
                         <span class="price-label">Additional Services</span>
                         <span class="price-value" id="extrasDisplay">₱0.00</span>
                     </div>
+
+                    <div id="extrasBreakdownList" style="font-size: 0.85rem; color: #666; margin-top: 0.2rem; margin-bottom: 0.3rem;"></div>
                     
                     <div class="price-row">
                         <span class="price-label">Total</span>
@@ -1073,20 +1075,7 @@
     </div>
 
     <script>
-        const legalTermsText = `Full payment is expected upon check-in
-Check-in Time: 2:00 PM
-Check-out Time: 12:00 PM
-Early check-in or late check-out is subject to room availability on the day and must be reconfirmed with the front desk. Fee: PHP 150.00 per hour (maximum of 5 hours only)
-Non-smoking is strictly prohibited inside the building premises
-Rooms are not soundproof; please be considerate of other guests. No loud music or noise after 10:00 PM
-Lost/damaged card/key will be charged PHP 200.00 each
-Bedding, pillow/case, towels, toiletries, and bottled water are issued once only. Additional requests will be charged accordingly and must be coordinated with the front desk
-Upon check-out, stains or dirt that cannot be easily cleaned will incur extra cleaning charges
-All appliances, equipment, utensils, and other items must be complete upon check-out; otherwise, corresponding charges will apply
-Any damage to hotel property will be charged
-Extension of hours or days must be reported to the front desk on or before 10:00 AM, and corresponding fees must be settled
-Failure to pay for two days will automatically result in suspension of access and utilities until full payment is received
-Surrender the envelope to the front desk for room inspection/inventory before leaving the building`;
+        const legalTermsText = @json($termsAndConditionsText ?? '');
 
         const legalPrivacyText = `At Bez Tower Residences, your privacy is important to us. When you use our online reservation system, we collect only the information necessary to make your booking smooth and secure.
 
@@ -1094,26 +1083,7 @@ We ensure that your personal details such as your name, address, contact informa
 
 We are committed to protecting your personal data in accordance with the Data Privacy Act of 2012 (Republic Act No. 10173) of the Philippines. Your information will not be shared with unauthorized parties and will only be used for purposes directly related to your stay or as required by law.`;
 
-    const billingPoliciesText = `Check-In: 2:00 PM
-Check-Out: 12:00 PM
-
-Note:
-If you or one of your companions is a Senior Citizen or Person with Disability (PWD), we recommend paying only the down payment instead of the full amount. Discounts will be applied upon check-in after the valid ID is presented for verification.
-
-Guarantee & Cancellation Policy
-This reservation is non-cancellable and non-refundable but may be rebooked.
-Rebooking must be requested at least 1 day before arrival, and the new date must be within 2 weeks from the original booking date.
-Full payment will be forfeited in case of a no-show. Add-ons will be automatically cancelled.
-
-Parking Policy
-Parking spaces are limited and subject to availability. Guests are advised to contact the receptionist in advance.
-
-Early Check-In / Late Check-Out
-Subject to availability. Must coordinate with receptionist.
-Charge: PHP 150/hour
-
-Housekeeping Policy
-Provided once only. Additional requests may incur a fee.`;
+    const billingPoliciesText = @json($bookingPoliciesText ?? '');
 
         const legalModal = document.getElementById('legalModal');
         const legalModalTitle = document.getElementById('legalModalTitle');
@@ -1560,11 +1530,14 @@ Provided once only. Additional requests may incur a fee.`;
             
             // Calculate extras
             let extrasTotal = 0;
+            const selectedExtrasLines = [];
             document.querySelectorAll('.extra-checkbox:checked').forEach(checkbox => {
                 const extraId = checkbox.value;
                 const price = parseFloat(checkbox.dataset.price);
+                const extraName = checkbox.dataset.name || 'Extra Service';
                 const quantity = parseInt(document.getElementById(`extra_quantity_${extraId}`).value) || 1;
                 extrasTotal += price * quantity;
+                selectedExtrasLines.push(`${extraName} (${quantity} x ₱${price.toFixed(2)}) : ₱${(price * quantity).toFixed(2)}`);
             });
             
             const total = subtotal + extrasTotal;
@@ -1575,6 +1548,17 @@ Provided once only. Additional requests may incur a fee.`;
             document.getElementById('vatDisplay').textContent = '₱' + vatIncluded.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             document.getElementById('extrasDisplay').textContent = '₱' + extrasTotal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
             document.getElementById('totalDisplay').textContent = '₱' + total.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+
+            const extrasBreakdownList = document.getElementById('extrasBreakdownList');
+            if (extrasBreakdownList) {
+                if (selectedExtrasLines.length === 0) {
+                    extrasBreakdownList.innerHTML = '';
+                } else {
+                    extrasBreakdownList.innerHTML = selectedExtrasLines
+                        .map((line) => `<div style="padding-left:0.25rem; margin-bottom:0.15rem;">${line}</div>`)
+                        .join('');
+                }
+            }
             
             updatePaymentSummary();
         }
