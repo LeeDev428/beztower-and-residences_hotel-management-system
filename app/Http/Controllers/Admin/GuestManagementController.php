@@ -95,7 +95,7 @@ class GuestManagementController extends Controller
 
     public function show($guestIdentifier)
     {
-        try {
+          try {
             $guest = $this->resolveGuestByIdentifier($guestIdentifier);
             $bookings = collect();
 
