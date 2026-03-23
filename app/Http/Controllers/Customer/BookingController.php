@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Booking;
 use App\Models\Guest;
 use App\Models\Room;
@@ -104,7 +105,22 @@ class BookingController extends Controller
             $maxGuestCapacity = (int) ($room->roomType?->max_guests ?? 1);
         }
 
-        return view('customer.booking.checkout', compact('room', 'preselectedRooms', 'requestedRooms', 'maxGuestCapacity'));
+        $policySettings = AppSetting::getMany([
+            'terms_and_conditions',
+            'booking_policies',
+        ]);
+
+        $termsAndConditionsText = (string) ($policySettings['terms_and_conditions'] ?? '');
+        $bookingPoliciesText = (string) ($policySettings['booking_policies'] ?? '');
+
+        return view('customer.booking.checkout', compact(
+            'room',
+            'preselectedRooms',
+            'requestedRooms',
+            'maxGuestCapacity',
+            'termsAndConditionsText',
+            'bookingPoliciesText'
+        ));
     }
 
     public function create(Request $request)
@@ -229,6 +245,7 @@ class BookingController extends Controller
 
             $selectedRooms = Room::with('roomType')
                 ->whereIn('id', $selectedRoomIds)
+                ->lockForUpdate()
                 ->where('status', 'available')
                 ->whereNull('archived_at')
                 ->get();
