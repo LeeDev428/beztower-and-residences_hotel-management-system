@@ -76,8 +76,21 @@
                         <input type="number" name="number_of_rooms" id="numberOfRooms" value="{{ old('number_of_rooms', 1) }}" min="1" max="5" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Number of Guests <span style="color: var(--danger);">*</span></label>
-                        <input type="number" name="number_of_guests" value="{{ old('number_of_guests', 1) }}" required min="1" max="10" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Adults <span style="color: var(--danger);">*</span></label>
+                        <input type="number" name="adults" id="walkInAdults" value="{{ old('adults', 1) }}" required min="1" max="30" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Children</label>
+                        <input type="number" name="children" id="walkInChildren" value="{{ old('children', 0) }}" min="0" max="30" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Effective Adults (Auto)</label>
+                        <input type="text" id="effectiveAdultsDisplay" readonly value="1" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box; background: #f5f5f5; color: #2c2c2c; font-weight: 700;">
+                        <input type="hidden" name="number_of_guests" id="effectiveAdultsInput" value="1">
+                        <small style="display:block; margin-top:0.35rem; color:#777; font-size:0.78rem;">Rule: every 2 children count as 1 adult; remaining 1 child is free.</small>
                     </div>
                 </div>
 
@@ -207,6 +220,7 @@
             'id' => $room->id,
             'room_number' => $room->room_number,
             'room_type' => $roomTypeName,
+            'capacity' => (int) ($roomType->max_guests ?? 0),
             'price' => $basePrice,
             'label' => $roomTypeName . ' - Room ' . $room->room_number . ' (PHP ' . number_format($basePrice, 2) . '/night)',
         ];
@@ -232,27 +246,49 @@ function getSelectedRoomIds() {
     return Array.from(document.querySelectorAll('.walkin-room-checkbox:checked')).map((el) => el.value);
 }
 
+function getEffectiveAdults() {
+    const adults = Math.max(1, parseInt(document.getElementById('walkInAdults')?.value || '1', 10));
+    const children = Math.max(0, parseInt(document.getElementById('walkInChildren')?.value || '0', 10));
+    return adults + Math.floor(children / 2);
+}
+
+function syncEffectiveAdultsDisplay() {
+    const effective = getEffectiveAdults();
+    const display = document.getElementById('effectiveAdultsDisplay');
+    const hidden = document.getElementById('effectiveAdultsInput');
+    if (display) {
+        display.value = String(effective);
+    }
+    if (hidden) {
+        hidden.value = String(effective);
+    }
+}
+
 function renderRoomSelectors() {
     const container = document.getElementById('roomOptions');
     const availabilityInfo = document.getElementById('availabilityInfo');
     const requestedRooms = Math.max(1, parseInt(document.getElementById('numberOfRooms').value || '1', 10));
+    const effectiveAdults = getEffectiveAdults();
     const selectedIds = new Set(getSelectedRoomIds());
+    const roomCandidates = requestedRooms === 1
+        ? availableRooms.filter((room) => Number(room.capacity || 0) >= effectiveAdults)
+        : availableRooms;
 
     container.innerHTML = '';
 
-    if (!availableRooms.length) {
+    if (!roomCandidates.length) {
         availabilityInfo.innerHTML = '<span style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> No available rooms for selected dates.</span>';
         calculateTotal();
         return;
     }
 
-    availabilityInfo.innerHTML = 'Available rooms for selected dates: <strong>' + availableRooms.length + '</strong>';
+    availabilityInfo.innerHTML = 'Available rooms for selected dates: <strong>' + roomCandidates.length + '</strong> | Required effective adults: <strong>' + effectiveAdults + '</strong>';
 
-    if (requestedRooms > availableRooms.length) {
-        availabilityInfo.innerHTML += ' <span style="color: var(--danger);">(Requested ' + requestedRooms + ', only ' + availableRooms.length + ' available)</span>';
+    if (requestedRooms > roomCandidates.length) {
+        availabilityInfo.innerHTML += ' <span style="color: var(--danger);">(Requested ' + requestedRooms + ', only ' + roomCandidates.length + ' available)</span>';
     }
 
-    availableRooms.forEach((room) => {
+    roomCandidates.forEach((room) => {
         const isChecked = selectedIds.has(String(room.id));
 
         const label = document.createElement('label');
@@ -369,6 +405,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const checkOutEl = document.getElementById('checkOutDate');
     const roomsCountEl = document.getElementById('numberOfRooms');
     const formEl = document.getElementById('walkInForm');
+    const adultsEl = document.getElementById('walkInAdults');
+    const childrenEl = document.getElementById('walkInChildren');
 
     checkInEl.addEventListener('change', function() {
         const ci = new Date(this.value + 'T00:00:00');
@@ -386,6 +424,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     checkOutEl.addEventListener('change', refreshAvailableRooms);
     roomsCountEl.addEventListener('input', renderRoomSelectors);
+    adultsEl.addEventListener('input', function () {
+        syncEffectiveAdultsDisplay();
+        renderRoomSelectors();
+    });
+    childrenEl.addEventListener('input', function () {
+        syncEffectiveAdultsDisplay();
+        renderRoomSelectors();
+    });
 
     document.querySelectorAll('input[name^="extra_quantities"], .extra-checkbox').forEach((input) => {
         input.addEventListener('input', calculateTotal);
@@ -394,14 +440,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     formEl.addEventListener('submit', function (event) {
         const requestedRooms = Math.max(1, parseInt(roomsCountEl.value || '1', 10));
-        const selectedRooms = getSelectedRoomIds().length;
-        if (selectedRooms !== requestedRooms) {
+        const selectedRoomIds = getSelectedRoomIds();
+        if (selectedRoomIds.length !== requestedRooms) {
             event.preventDefault();
             alert('Please select exactly ' + requestedRooms + ' room(s).');
+            return;
+        }
+
+        const effectiveAdults = getEffectiveAdults();
+        const totalCapacity = selectedRoomIds.reduce((sum, roomId) => {
+            const room = availableRooms.find((candidate) => String(candidate.id) === String(roomId));
+            return sum + Number(room?.capacity || 0);
+        }, 0);
+
+        if (totalCapacity < effectiveAdults) {
+            event.preventDefault();
+            alert('Selected room(s) can only accommodate ' + totalCapacity + ' effective adult(s). Please pick room(s) with higher total capacity.');
         }
     });
 
     toggleGcash();
+    syncEffectiveAdultsDisplay();
     renderRoomSelectors();
     calculateTotal();
     refreshAvailableRooms();
