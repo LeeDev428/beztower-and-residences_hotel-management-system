@@ -255,6 +255,10 @@
                     <textarea id="roomTypeDescription" name="description" rows="3" class="form-control"></textarea>
                 </div>
                 <div class="form-group">
+                    <label>Room Features (one per line)</label>
+                    <textarea id="roomTypeFeaturesText" name="features_text" rows="4" class="form-control" placeholder="High-speed WiFi&#10;Smart TV with cable channels&#10;Air-conditioning&#10;24/7 room assistance"></textarea>
+                </div>
+                <div class="form-group">
                     <label>Base Price *</label>
                     <input type="number" id="roomTypeBasePrice" name="base_price" step="0.01" min="0" required class="form-control">
                 </div>
@@ -791,6 +795,7 @@
                 document.getElementById('roomTypeId').value = roomType.id;
                 document.getElementById('roomTypeName').value = roomType.name;
                 document.getElementById('roomTypeDescription').value = roomType.description || '';
+                document.getElementById('roomTypeFeaturesText').value = roomType.features_text || '';
                 document.getElementById('roomTypeBasePrice').value = roomType.base_price;
                 document.getElementById('roomTypeMaxGuests').value = roomType.max_guests;
                 document.getElementById('roomTypeBedType').value = roomType.bed_type || '';
