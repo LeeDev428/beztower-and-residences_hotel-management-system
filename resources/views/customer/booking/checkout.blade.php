@@ -433,6 +433,49 @@
             margin-top: 1rem;
         }
 
+        .policies-box {
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 1px solid #e2e2e2;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .policies-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .policy-chip {
+            background: #f0f0f0;
+            border-radius: 8px;
+            padding: 0.65rem 0.8rem;
+        }
+
+        .policy-chip .label {
+            display: block;
+            font-size: 0.78rem;
+            color: #666;
+            margin-bottom: 0.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .policy-chip .value {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #2c2c2c;
+        }
+
+        .policy-preview {
+            font-size: 0.88rem;
+            color: #555;
+            line-height: 1.55;
+            margin-bottom: 0.75rem;
+        }
+
         /* Submit Button */
         .submit-booking-btn {
             width: 100%;
