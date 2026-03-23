@@ -742,21 +742,30 @@
                     </div>
                     
                     <!-- Booking Details -->
+                    @php
+                        $isBookingDetailsLocked = request()->filled('check_in') && request()->filled('check_out') && (request()->filled('guests') || request()->filled('adults') || request()->filled('children'));
+                    @endphp
                     <div class="section-title-modal">
                         <i class="fas fa-calendar-alt"></i> Booking Details
                     </div>
+
+                    @if($isBookingDetailsLocked)
+                        <div style="margin-bottom: 1rem; padding: 0.8rem 0.9rem; border: 1px solid #f1dfab; border-radius: 8px; background: #fff9e6; color: #5f4b1b; font-size: 0.88rem;">
+                            Booking dates and guest count are locked based on your selected room search.
+                        </div>
+                    @endif
                     
                     <div class="booking-form-grid">
                         <div>
                             <label class="form-label">Check-In Date <span class="required">*</span></label>
                             <input type="date" name="check_in_date" class="form-input" id="checkInDate" 
-                                   min="{{ date('Y-m-d') }}" value="{{ request('check_in') }}" required onchange="calculateCheckout()">
+                                   min="{{ date('Y-m-d') }}" value="{{ request('check_in') }}" required onchange="calculateCheckout()" {{ $isBookingDetailsLocked ? 'readonly' : '' }} style="{{ $isBookingDetailsLocked ? 'background:#f0f0f0;cursor:not-allowed;' : '' }}">
                         </div>
 
                         <div>
                             <label class="form-label">Check-Out Date <span class="required">*</span></label>
                             <input type="date" name="check_out_date" class="form-input" id="checkOutDate" 
-                                   required onchange="calculateCheckout()">
+                                   required onchange="calculateCheckout()" {{ $isBookingDetailsLocked ? 'readonly' : '' }} style="{{ $isBookingDetailsLocked ? 'background:#f0f0f0;cursor:not-allowed;' : '' }}">
                         </div>
                         
                         <div>
@@ -779,6 +788,9 @@
                                     </option>
                                 @endfor
                             </select>
+                            @if($isBookingDetailsLocked)
+                                <input type="hidden" name="number_of_guests" id="lockedGuestCountHidden" value="{{ $requestedGuests }}">
+                            @endif
                             <div id="guestRecommendation" class="guest-recommendation">
                                 <div style="display: flex; align-items: start; gap: 0.8rem;">
                                     <i class="fas fa-info-circle" style="font-size: 1.2rem; margin-top: 0.2rem;"></i>
@@ -904,6 +916,27 @@
                                 <div class="payment-amount" id="fullPaymentAmount">₱{{ number_format($room->effective_price, 2) }}</div>
                             </div>
                         </label>
+                    </div>
+
+                    <div class="section-title-modal" style="margin-top: 1.2rem;">
+                        <i class="fas fa-file-contract"></i> Policies
+                    </div>
+
+                    <div class="policies-box">
+                        <div class="policies-grid">
+                            <div class="policy-chip">
+                                <span class="label">Check-In</span>
+                                <span class="value">2:00 PM</span>
+                            </div>
+                            <div class="policy-chip">
+                                <span class="label">Check-Out</span>
+                                <span class="value">12:00 PM</span>
+                            </div>
+                        </div>
+                        <div class="policy-preview">
+                            This reservation is non-cancellable and non-refundable but may be rebooked. Rebooking must be requested at least 1 day before arrival and the new date must be within 2 weeks from the original booking date.
+                        </div>
+                        <button type="button" class="legal-link" data-legal-open="policies">View Full Policy</button>
                     </div>
                     
                     <!-- Special Requests -->
@@ -1056,6 +1089,27 @@ We ensure that your personal details such as your name, address, contact informa
 
 We are committed to protecting your personal data in accordance with the Data Privacy Act of 2012 (Republic Act No. 10173) of the Philippines. Your information will not be shared with unauthorized parties and will only be used for purposes directly related to your stay or as required by law.`;
 
+    const billingPoliciesText = `Check-In: 2:00 PM
+Check-Out: 12:00 PM
+
+Note:
+If you or one of your companions is a Senior Citizen or Person with Disability (PWD), we recommend paying only the down payment instead of the full amount. Discounts will be applied upon check-in after the valid ID is presented for verification.
+
+Guarantee & Cancellation Policy
+This reservation is non-cancellable and non-refundable but may be rebooked.
+Rebooking must be requested at least 1 day before arrival, and the new date must be within 2 weeks from the original booking date.
+Full payment will be forfeited in case of a no-show. Add-ons will be automatically cancelled.
+
+Parking Policy
+Parking spaces are limited and subject to availability. Guests are advised to contact the receptionist in advance.
+
+Early Check-In / Late Check-Out
+Subject to availability. Must coordinate with receptionist.
+Charge: PHP 150/hour
+
+Housekeeping Policy
+Provided once only. Additional requests may incur a fee.`;
+
         const legalModal = document.getElementById('legalModal');
         const legalModalTitle = document.getElementById('legalModalTitle');
         const legalModalContent = document.getElementById('legalModalContent');
@@ -1068,6 +1122,9 @@ We are committed to protecting your personal data in accordance with the Data Pr
             if (type === 'privacy') {
                 legalModalTitle.textContent = 'Privacy Policy';
                 legalModalContent.textContent = legalPrivacyText;
+            } else if (type === 'policies') {
+                legalModalTitle.textContent = 'Resort Policies';
+                legalModalContent.textContent = billingPoliciesText;
             } else {
                 legalModalTitle.textContent = 'Terms & Conditions';
                 legalModalContent.textContent = legalTermsText;
@@ -1561,6 +1618,15 @@ We are committed to protecting your personal data in accordance with the Data Pr
             @endif
             calculateCheckout();
             showGuestRecommendation();
+
+            const guestSelect = document.getElementById('guestCountSelect');
+            const lockedGuestHidden = document.getElementById('lockedGuestCountHidden');
+            if (guestSelect && lockedGuestHidden) {
+                guestSelect.disabled = true;
+                guestSelect.style.background = '#f0f0f0';
+                guestSelect.style.cursor = 'not-allowed';
+                lockedGuestHidden.value = guestSelect.value;
+            }
         })();
 
         document.getElementById('bookingForm').addEventListener('submit', function (event) {
@@ -1578,6 +1644,12 @@ We are committed to protecting your personal data in accordance with the Data Pr
                 event.preventDefault();
                 alert(`Only ${selected.length} room(s) can be assigned. Please adjust your room count or date range.`);
                 return;
+            }
+
+            const guestSelect = document.getElementById('guestCountSelect');
+            const lockedGuestHidden = document.getElementById('lockedGuestCountHidden');
+            if (guestSelect && lockedGuestHidden) {
+                lockedGuestHidden.value = guestSelect.value;
             }
 
             const submitBtn = document.getElementById('bookingSubmitBtn');
