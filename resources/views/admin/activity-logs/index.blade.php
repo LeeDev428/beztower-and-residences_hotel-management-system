@@ -13,6 +13,9 @@
             <option value="room_archive" {{ request('action') == 'room_archive' ? 'selected' : '' }}>Room Archive</option>
             <option value="image_update" {{ request('action') == 'image_update' ? 'selected' : '' }}>Image Updates</option>
             <option value="report_generate" {{ request('action') == 'report_generate' ? 'selected' : '' }}>Reports Generated</option>
+            <option value="user_activate" {{ request('action') == 'user_activate' ? 'selected' : '' }}>User Activated</option>
+            <option value="user_deactivate" {{ request('action') == 'user_deactivate' ? 'selected' : '' }}>User Deactivated</option>
+            <option value="user_update" {{ request('action') == 'user_update' ? 'selected' : '' }}>User Updated</option>
         </select>
         <select name="user_id" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
             <option value="">All Users</option>
