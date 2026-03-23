@@ -22,6 +22,30 @@ use Carbon\Carbon;
 
 class BookingManagementController extends Controller
 {
+    public function notificationsSnapshot(Request $request)
+    {
+        $pendingBookings = Booking::with('guest:id,first_name,last_name,name')
+            ->where('status', 'pending')
+            ->latest('id')
+            ->take(5)
+            ->get();
+
+        $latest = $pendingBookings->first();
+        $latestGuestName = null;
+
+        if ($latest && $latest->guest) {
+            $latestGuestName = trim((string) ($latest->guest->name ?? (($latest->guest->first_name ?? '') . ' ' . ($latest->guest->last_name ?? ''))));
+        }
+
+        return response()->json([
+            'pending_count' => $pendingBookings->count(),
+            'latest_booking_id' => $latest?->id,
+            'latest_booking_reference' => $latest?->booking_reference,
+            'latest_booking_created_at' => $latest?->created_at?->toIso8601String(),
+            'latest_guest_name' => $latestGuestName,
+        ]);
+    }
+
     public function index(Request $request)
     {
         $query = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType', 'payments']);
