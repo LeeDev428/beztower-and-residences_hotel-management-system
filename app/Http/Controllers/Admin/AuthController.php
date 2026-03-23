@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -108,7 +109,18 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        $throttleKey = Str::lower((string) $request->input('email')) . '|' . $request->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            return back()->withErrors([
+                'email' => 'Too many login attempts. Please try again in ' . ceil($seconds / 60) . ' minute(s).',
+            ])->onlyInput('email');
+        }
+
         if (Auth::attempt($credentials)) {
+            RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
             
             // Log the login activity
@@ -121,6 +133,8 @@ class AuthController extends Controller
             
             return redirect()->intended(route('admin.dashboard'));
         }
+
+        RateLimiter::hit($throttleKey, 900);
 
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
