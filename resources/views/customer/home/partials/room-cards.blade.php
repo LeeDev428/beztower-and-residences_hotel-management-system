@@ -1,4 +1,15 @@
 @foreach($rooms as $room)
+    @php
+        $roomName = (string) ($room->roomType->name ?? 'Room');
+        $roomDescription = (string) ($room->roomType->description ?? '');
+        $roomImage = $room->photos->count() > 0
+            ? asset('storage/' . $room->photos->first()->photo_path)
+            : 'https://via.placeholder.com/400x300/d4af37/2c2c2c?text=' . urlencode($roomName);
+        $roomInclusions = $room->amenities->pluck('name')->filter()->values()->all();
+        $roomInclusionsText = !empty($roomInclusions)
+            ? implode(' | ', $roomInclusions)
+            : 'WiFi | Shower Heater | Smart TV';
+    @endphp
     <div class="room-card">
         <div class="room-image">
             @if($room->photos->count() > 0)
@@ -47,7 +58,20 @@
                         </div>
                     @endif
                 </div>
-                <a href="{{ route('rooms.show', $room) }}" class="book-btn">Learn More</a>
+                <button
+                    type="button"
+                    class="book-btn"
+                    data-open-room-modal
+                    data-room-name="{{ e($roomName) }}"
+                    data-room-price="{{ number_format((float) $room->effective_price, 2) }}"
+                    data-room-capacity="{{ (int) ($room->roomType->max_guests ?? 0) }}"
+                    data-room-image="{{ e($roomImage) }}"
+                    data-room-description="{{ e($roomDescription) }}"
+                    data-room-inclusions="{{ e($roomInclusionsText) }}"
+                    data-room-url="{{ route('rooms.index', ['room_type' => $room->room_type_id]) }}"
+                >
+                    Explore Rooms
+                </button>
             </div>
         </div>
     </div>
