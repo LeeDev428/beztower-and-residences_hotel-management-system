@@ -85,6 +85,7 @@ Route::prefix('admin')->group(function () {
         // Booking Management
         Route::prefix('bookings')->group(function () {
             Route::get('/', [BookingManagementController::class, 'index'])->name('admin.bookings.index');
+            Route::get('/notifications/snapshot', [BookingManagementController::class, 'notificationsSnapshot'])->name('admin.bookings.notifications.snapshot');
             Route::get('/walk-in', [WalkInController::class, 'create'])->name('admin.bookings.walkIn');
             Route::get('/walk-in/available-rooms', [WalkInController::class, 'getAvailableRooms'])->name('admin.bookings.walkIn.availableRooms');
             Route::post('/walk-in', [WalkInController::class, 'store'])->name('admin.bookings.walkIn.store');
