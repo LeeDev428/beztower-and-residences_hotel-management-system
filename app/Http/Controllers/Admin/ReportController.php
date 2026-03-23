@@ -39,28 +39,66 @@ class ReportController extends Controller
                                 ->sum('amount');
 
             // Bookings breakdown by status
-            $bookingsByStatus = Booking::whereBetween('created_at', [$startDate, $endDate])
-                ->select('status', DB::raw('count(*) as count'))
-                ->groupBy('status')
-                ->get()
-                ->keyBy('status');
+            $bookingsByStatus = collect();
+            try {
+                $bookingsByStatus = Booking::whereBetween('created_at', [$startDate, $endDate])
+                    ->select('status', DB::raw('count(*) as count'))
+                    ->groupBy('status')
+                    ->get()
+                    ->keyBy('status');
+            } catch (\Throwable $queryException) {
+                Log::warning('Report PDF: failed to build bookingsByStatus', [
+                    'message' => $queryException->getMessage(),
+                    'user_id' => Auth::id(),
+                ]);
+            }
 
             // Payments in range
-            $recentBookings = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->latest()
-                ->take(50)
-                ->get();
+            $recentBookings = collect();
+            try {
+                $recentBookings = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->latest()
+                    ->take(50)
+                    ->get();
+            } catch (\Throwable $queryException) {
+                Log::warning('Report PDF: failed to load recentBookings', [
+                    'message' => $queryException->getMessage(),
+                    'user_id' => Auth::id(),
+                ]);
+            }
 
             // Revenue by room type
-            $revenueByType = Payment::whereIn('payment_status', ['verified', 'completed'])
-                ->whereBetween('payments.created_at', [$startDate, $endDate])
-                ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
-                ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
-                ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
-                ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
-                ->groupBy('room_types.name')
-                ->get();
+            $revenueByType = collect();
+            try {
+                $revenueByType = Payment::whereIn('payment_status', ['verified', 'completed'])
+                    ->whereBetween('payments.created_at', [$startDate, $endDate])
+                    ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
+                    ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
+                    ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
+                    ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
+                    ->groupBy('room_types.name')
+                    ->get();
+            } catch (\Throwable $primaryQueryException) {
+                try {
+                    // Fallback for environments where bookings.room_id is unavailable.
+                    $revenueByType = Payment::whereIn('payments.payment_status', ['verified', 'completed'])
+                        ->whereBetween('payments.created_at', [$startDate, $endDate])
+                        ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
+                        ->join('booking_rooms', 'bookings.id', '=', 'booking_rooms.booking_id')
+                        ->join('rooms', 'booking_rooms.room_id', '=', 'rooms.id')
+                        ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
+                        ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
+                        ->groupBy('room_types.name')
+                        ->get();
+                } catch (\Throwable $fallbackQueryException) {
+                    Log::warning('Report PDF: failed to build revenueByType', [
+                        'primary_message' => $primaryQueryException->getMessage(),
+                        'fallback_message' => $fallbackQueryException->getMessage(),
+                        'user_id' => Auth::id(),
+                    ]);
+                }
+            }
 
             // Keep PDF generation working even if activity log write fails.
             try {
@@ -75,11 +113,38 @@ class ReportController extends Controller
                 ]);
             }
 
-            $pdf = Pdf::loadView('admin.reports.pdf', compact(
-                'startDate', 'endDate',
-                'totalBookings', 'totalGuests', 'totalRooms', 'totalRevenue',
-                'bookingsByStatus', 'recentBookings', 'revenueByType', 'generatedBy'
-            ))->setPaper('a4', 'portrait');
+            try {
+                $pdf = Pdf::loadView('admin.reports.pdf', compact(
+                    'startDate', 'endDate',
+                    'totalBookings', 'totalGuests', 'totalRooms', 'totalRevenue',
+                    'bookingsByStatus', 'recentBookings', 'revenueByType', 'generatedBy'
+                ))->setPaper('a4', 'portrait');
+            } catch (\Throwable $pdfViewException) {
+                Log::warning('Report PDF: failed rendering detailed view, using fallback PDF', [
+                    'message' => $pdfViewException->getMessage(),
+                    'user_id' => Auth::id(),
+                ]);
+
+                $safeGeneratedBy = htmlspecialchars((string) $generatedBy, ENT_QUOTES, 'UTF-8');
+                $safePeriod = htmlspecialchars(
+                    Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y'),
+                    ENT_QUOTES,
+                    'UTF-8'
+                );
+
+                $fallbackHtml = '<html><body style="font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #2c2c2c;">'
+                    . '<h2 style="margin-bottom: 8px;">Beztower &amp; Residences Report</h2>'
+                    . '<p style="margin: 0 0 6px 0;"><strong>Period:</strong> ' . $safePeriod . '</p>'
+                    . '<p style="margin: 0 0 6px 0;"><strong>Generated by</strong> ' . $safeGeneratedBy . '</p>'
+                    . '<p style="margin: 0 0 6px 0;"><strong>Total Bookings:</strong> ' . number_format((float) $totalBookings, 0) . '</p>'
+                    . '<p style="margin: 0 0 6px 0;"><strong>Total Guests:</strong> ' . number_format((float) $totalGuests, 0) . '</p>'
+                    . '<p style="margin: 0 0 6px 0;"><strong>Total Rooms:</strong> ' . number_format((float) $totalRooms, 0) . '</p>'
+                    . '<p style="margin: 0 0 6px 0;"><strong>Total Revenue:</strong> ' . number_format((float) $totalRevenue, 2) . '</p>'
+                    . '<p style="margin-top: 14px; color: #666;">Fallback PDF generated because the detailed template failed to render.</p>'
+                    . '</body></html>';
+
+                $pdf = Pdf::loadHTML($fallbackHtml)->setPaper('a4', 'portrait');
+            }
 
             $filename = 'hotel_report_' . Carbon::parse($startDate)->format('Y_m_d') . '_to_' . Carbon::parse($endDate)->format('Y_m_d') . '.pdf';
 
