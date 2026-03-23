@@ -779,7 +779,12 @@
                             <select name="number_of_guests" class="form-select" id="guestCountSelect" required onchange="showGuestRecommendation()">
                                 @php
                                     $maxGuestsOption = max(1, (int) ($maxGuestCapacity ?? ($room->roomType->max_guests ?? 1)));
-                                    $requestedGuests = (int) request('guests', 1);
+                                    $adultsCount = (int) request('adults', 0);
+                                    $childrenCount = (int) request('children', 0);
+                                    $computedGuests = $adultsCount > 0 || $childrenCount > 0
+                                        ? ($adultsCount + intdiv(max(0, $childrenCount), 2))
+                                        : (int) request('guests', 1);
+                                    $requestedGuests = max(1, $computedGuests);
                                     $requestedGuests = max(1, min($requestedGuests, $maxGuestsOption));
                                 @endphp
                                 @for($i = 1; $i <= $maxGuestsOption; $i++)
@@ -1264,6 +1269,13 @@ Provided once only. Additional requests may incur a fee.`;
 
         function syncGuestLimit(selectedRooms) {
             const guestSelect = document.getElementById('guestCountSelect');
+            const lockedGuestHidden = document.getElementById('lockedGuestCountHidden');
+
+            if (guestSelect && lockedGuestHidden) {
+                guestSelect.value = lockedGuestHidden.value;
+                return;
+            }
+
             const currentValue = parseInt(guestSelect.value || '1', 10);
 
             let maxGuests = 0;
