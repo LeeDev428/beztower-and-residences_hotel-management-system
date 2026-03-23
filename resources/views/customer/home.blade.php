@@ -984,7 +984,7 @@
 
     <div class="room-preview-modal" id="roomPreviewModal" aria-hidden="true">
         <div class="room-preview-card" role="dialog" aria-modal="true" aria-labelledby="roomPreviewTitle">
-            <button type="button" class="room-preview-close" id="roomPreviewClose">&times;</button>
+            <button type="button" class="room-preview-close" id="roomPreviewClose" aria-label="Close room preview"><i class="fas fa-times"></i></button>
             <img src="" alt="Room preview" id="roomPreviewImage" class="room-preview-image">
             <div class="room-preview-content">
                 <h3 id="roomPreviewTitle" class="room-preview-title">Room</h3>
@@ -996,7 +996,10 @@
                 </div>
                 <div class="room-preview-footer">
                     <div class="room-preview-price" id="roomPreviewPrice">₱0.00</div>
-                    <a href="{{ route('rooms.index') }}" id="roomPreviewExploreLink" class="book-btn">Explore Rooms</a>
+                    <div style="display:flex; gap:0.6rem;">
+                        <button type="button" class="book-btn" id="roomPreviewBackBtn" style="background:#f2f2f2; color:#2c2c2c; border:none;">Back</button>
+                        <a href="{{ route('rooms.index') }}" id="roomPreviewExploreLink" class="book-btn">Explore Rooms</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1457,17 +1460,24 @@
 
         .room-preview-close {
             position: absolute;
-            top: 0.5rem;
-            right: 0.6rem;
+            top: 0.75rem;
+            right: 0.75rem;
             border: none;
-            background: rgba(255, 255, 255, 0.95);
-            width: 36px;
-            height: 36px;
+            background: rgba(20, 20, 20, 0.88);
+            color: #fff;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            font-size: 1.4rem;
-            color: #333;
+            font-size: 1rem;
             cursor: pointer;
-            z-index: 1;
+            z-index: 2;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .room-preview-close:hover {
+            background: rgba(20, 20, 20, 1);
         }
 
         .room-preview-image {
@@ -1808,6 +1818,7 @@
         const roomPreviewInclusions = document.getElementById('roomPreviewInclusions');
         const roomPreviewPrice = document.getElementById('roomPreviewPrice');
         const roomPreviewExploreLink = document.getElementById('roomPreviewExploreLink');
+        const roomPreviewBackBtn = document.getElementById('roomPreviewBackBtn');
 
         function openRoomPreviewModal(trigger) {
             if (!roomPreviewModal || !trigger) {
@@ -1826,7 +1837,7 @@
             const roomUrl = trigger.getAttribute('data-room-url') || '{{ route('rooms.index') }}';
 
             roomPreviewTitle.textContent = roomName;
-            roomPreviewMeta.textContent = `${roomCapacity} pax`;
+            roomPreviewMeta.textContent = `Can accommodate ${roomCapacity} adult${Number(roomCapacity) > 1 ? 's' : ''} + 1 child`;
             roomPreviewDescription.textContent = roomDescription || 'Comfortable and modern accommodation.';
             roomPreviewPrice.textContent = `₱${roomPrice}`;
             roomPreviewExploreLink.setAttribute('href', roomUrl);
@@ -1867,6 +1878,10 @@
 
         if (roomPreviewClose) {
             roomPreviewClose.addEventListener('click', closeRoomPreviewModal);
+        }
+
+        if (roomPreviewBackBtn) {
+            roomPreviewBackBtn.addEventListener('click', closeRoomPreviewModal);
         }
     </script>
 
