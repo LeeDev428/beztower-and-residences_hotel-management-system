@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ReportController extends Controller
 {
@@ -26,7 +27,8 @@ class ReportController extends Controller
     {
         try {
             [$startDate, $endDate] = $this->resolveMonthlyPeriod($request);
-            $generatedBy = Auth::user()->name ?? 'System';
+            $user = Auth::user();
+            $generatedBy = $this->resolveGeneratedByLabel($user?->role, $user?->name);
 
             // Stats
             $totalBookings  = Booking::whereBetween('created_at', [$startDate, $endDate])->count();
@@ -60,11 +62,18 @@ class ReportController extends Controller
                 ->groupBy('room_types.name')
                 ->get();
 
-            // Log activity
-            ActivityLog::log(
-                'report_generate',
-                'Generated PDF report for ' . Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y')
-            );
+            // Keep PDF generation working even if activity log write fails.
+            try {
+                ActivityLog::log(
+                    'report_generate',
+                    'Generated PDF report for ' . Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y')
+                );
+            } catch (\Throwable $logException) {
+                Log::warning('Unable to write activity log during report PDF generation', [
+                    'message' => $logException->getMessage(),
+                    'user_id' => Auth::id(),
+                ]);
+            }
 
             $pdf = Pdf::loadView('admin.reports.pdf', compact(
                 'startDate', 'endDate',
@@ -78,6 +87,8 @@ class ReportController extends Controller
         } catch (\Throwable $e) {
             Log::error('Failed generating report PDF', [
                 'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
@@ -403,5 +414,18 @@ class ReportController extends Controller
             $anchor->copy()->startOfMonth()->format('Y-m-d H:i:s'),
             $anchor->copy()->endOfMonth()->format('Y-m-d H:i:s'),
         ];
+    }
+
+    private function resolveGeneratedByLabel(?string $role, ?string $name): string
+    {
+        if (!empty($role)) {
+            return Str::title(str_replace('_', ' ', $role));
+        }
+
+        if (!empty($name)) {
+            return $name;
+        }
+
+        return 'System';
     }
 }
