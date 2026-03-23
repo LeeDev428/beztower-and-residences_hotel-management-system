@@ -7,14 +7,41 @@ use App\Models\Room;
 use App\Models\ContactMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        $rooms = Room::with(['roomType', 'amenities', 'photos'])
+        $allRooms = Room::with(['roomType', 'amenities', 'photos'])
             ->whereIn('status', ['available', 'occupied']) // Exclude dirty and maintenance
-            ->paginate(6);
+            ->whereNull('archived_at')
+            ->whereHas('roomType', function ($query) {
+                $query->whereNull('archived_at');
+            })
+            ->orderBy('room_type_id')
+            ->orderBy('room_number')
+            ->get();
+
+        $representativeRooms = $allRooms
+            ->unique(fn ($room) => (int) $room->room_type_id)
+            ->values();
+
+        $perPage = 6;
+        $page = max(1, (int) $request->integer('page', 1));
+        $total = $representativeRooms->count();
+        $items = $representativeRooms->slice(($page - 1) * $perPage, $perPage)->values();
+
+        $rooms = new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
         if ($request->ajax()) {
             return response()->json([
