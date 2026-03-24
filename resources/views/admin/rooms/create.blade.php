@@ -41,8 +41,8 @@
 
             <div>
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Floor *</label>
-                <input type="number" name="floor" value="{{ old('floor') }}" required min="2" max="5" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
-                <small style="color: #666; font-size: 0.875rem;">Floors 2–5 only</small>
+                <input type="number" name="floor" value="{{ old('floor') }}" required min="1" max="99" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                <small style="color: #666; font-size: 0.875rem;">Floors 1-99</small>
                 @error('floor')
                 <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                 @enderror
