@@ -300,6 +300,18 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
 
             <x-admin.card title="Manual Adjustment">
+                <div style="margin-bottom: 1rem; padding: 0.8rem 0.9rem; border: 1px solid var(--border-gray); border-radius: 8px; background: #fafafa;">
+                    <div style="font-weight: 700; font-size: 0.86rem; color: #333; margin-bottom: 0.45rem;">Additional Amenities & Services (Reference)</div>
+                    <ul style="margin: 0; padding-left: 1rem; color: #555; font-size: 0.82rem; line-height: 1.5;">
+                        <li>Extra Bed - ₱800 per night</li>
+                        <li>Extra Bedding - ₱300 (includes 2 pillows, 1 bedding, 1 cover)</li>
+                        <li>Soap, Shampoo, Conditioner - ₱50 per set</li>
+                        <li>Towel - ₱200</li>
+                        <li>Motorcycle Parking - ₱100 per night</li>
+                        <li>Car Parking - ₱200 per night</li>
+                    </ul>
+                </div>
+
                 @if($reservedRooms->count() > 1)
                     <div style="margin-bottom: 1.25rem;">
                         <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.75rem;">Per-Room Billing</label>
