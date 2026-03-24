@@ -1455,8 +1455,21 @@ We are committed to protecting your personal data in accordance with the Data Pr
 
         // Calculate number of nights from check-in and check-out dates
         function calculateCheckout() {
-            const checkIn = document.getElementById('checkInDate').value;
-            const checkOut = document.getElementById('checkOutDate').value;
+            const checkInInput = document.getElementById('checkInDate');
+            const checkOutInput = document.getElementById('checkOutDate');
+            const checkIn = checkInInput.value;
+            const checkOut = checkOutInput.value;
+
+            if (checkIn) {
+                const minCheckOutDate = new Date(checkIn + 'T00:00:00');
+                minCheckOutDate.setDate(minCheckOutDate.getDate() + 1);
+                const minCheckOut = minCheckOutDate.toISOString().split('T')[0];
+                checkOutInput.min = minCheckOut;
+
+                if (checkOut && checkOut <= checkIn) {
+                    checkOutInput.value = '';
+                }
+            }
 
             if (checkIn && checkOut) {
                 const d1 = new Date(checkIn + 'T00:00:00');
@@ -1472,6 +1485,35 @@ We are committed to protecting your personal data in accordance with the Data Pr
             }
 
             loadAvailableRooms();
+        }
+
+        function normalizeBookingDates() {
+            const checkInInput = document.getElementById('checkInDate');
+            const checkOutInput = document.getElementById('checkOutDate');
+
+            if (!checkInInput || !checkOutInput) {
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayString = today.toISOString().split('T')[0];
+            checkInInput.min = todayString;
+
+            if (checkInInput.value && checkInInput.value < todayString) {
+                checkInInput.value = todayString;
+            }
+
+            if (checkInInput.value) {
+                const minCheckOutDate = new Date(checkInInput.value + 'T00:00:00');
+                minCheckOutDate.setDate(minCheckOutDate.getDate() + 1);
+                const minCheckOut = minCheckOutDate.toISOString().split('T')[0];
+                checkOutInput.min = minCheckOut;
+
+                if (checkOutInput.value && checkOutInput.value < minCheckOut) {
+                    checkOutInput.value = minCheckOut;
+                }
+            }
         }
 
         // Toggle extra quantity controls
@@ -1612,6 +1654,7 @@ We are committed to protecting your personal data in accordance with the Data Pr
                 document.getElementById('checkInDate').value = '{{ request('check_in') }}';
                 document.getElementById('checkOutDate').value = '{{ request('check_out') }}';
             @endif
+            normalizeBookingDates();
             calculateCheckout();
             showGuestRecommendation();
 
@@ -1639,6 +1682,25 @@ We are committed to protecting your personal data in accordance with the Data Pr
             if (selected.length !== requestedRooms) {
                 event.preventDefault();
                 alert(`Only ${selected.length} room(s) can be assigned. Please adjust your room count or date range.`);
+                return;
+            }
+
+            const checkInInput = document.getElementById('checkInDate');
+            const checkOutInput = document.getElementById('checkOutDate');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const checkInDate = checkInInput && checkInInput.value ? new Date(checkInInput.value + 'T00:00:00') : null;
+            const checkOutDate = checkOutInput && checkOutInput.value ? new Date(checkOutInput.value + 'T00:00:00') : null;
+
+            if (!checkInDate || checkInDate < today) {
+                event.preventDefault();
+                alert('Check-in date cannot be in the past.');
+                return;
+            }
+
+            if (!checkOutDate || checkOutDate <= checkInDate) {
+                event.preventDefault();
+                alert('Check-out date must be at least 1 day after check-in.');
                 return;
             }
 
