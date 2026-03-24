@@ -252,10 +252,10 @@ class BookingManagementController extends Controller
                 Log::error('Failed to send cancellation email from status update: ' . $e->getMessage());
             }
         } elseif ($targetStatus === 'checked_out') {
-            // Rooms become dirty after checkout (need cleaning)
+            // Release rooms immediately after checkout for same-day turnover.
             $roomsToUpdate = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
             foreach ($roomsToUpdate as $room) {
-                $room->update(['status' => 'dirty']);
+                $room->update(['status' => 'available']);
             }
 
             // Auto-record remaining balance as revenue
@@ -552,6 +552,34 @@ class BookingManagementController extends Controller
         $pwdSeniorCount = $validated['pwd_senior_count'] ?? 0;
         $pwdSeniorDiscount = $validated['pwd_senior_discount'] ?? 0;
 
+        if ((int) $lateCheckoutHours > 0) {
+            $booking->loadMissing(['rooms', 'room']);
+
+            $bookingRoomIds = $booking->rooms->isNotEmpty()
+                ? $booking->rooms->pluck('id')->map(fn ($id) => (int) $id)->all()
+                : array_filter([(int) ($booking->room_id ?? 0)]);
+
+            if (!empty($bookingRoomIds)) {
+                $hasSameDayArrivalConflict = Booking::query()
+                    ->where('bookings.id', '!=', $booking->id)
+                    ->whereDate('check_in_date', optional($booking->check_out_date)->toDateString())
+                    ->tap(fn ($query) => Booking::applyActiveReservationFilter($query))
+                    ->where(function ($roomQuery) use ($bookingRoomIds) {
+                        $roomQuery->whereIn('room_id', $bookingRoomIds)
+                            ->orWhereHas('rooms', function ($roomsRelationQuery) use ($bookingRoomIds) {
+                                $roomsRelationQuery->whereIn('rooms.id', $bookingRoomIds);
+                            });
+                    })
+                    ->exists();
+
+                if ($hasSameDayArrivalConflict) {
+                    return redirect()->back()->withErrors([
+                        'late_checkout_hours' => 'Late checkout cannot be approved because there is already a same-day incoming booking for this room. Please adjust room assignment or booking dates first.',
+                    ])->withInput();
+                }
+            }
+        }
+
         if ($isMultiRoom) {
             $earlyCheckinHours = 0;
             $earlyCheckinCharge = 0;
@@ -827,27 +855,13 @@ class BookingManagementController extends Controller
                 })
                 ->whereDoesntHave('bookings', function ($q) use ($booking, $checkInDate, $checkOutDate) {
                     $q->where('bookings.id', '!=', $booking->id)
-                        ->where(function ($reservationQuery) {
-                            $reservationQuery
-                                ->whereIn('bookings.status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                                ->orWhereHas('payments', function ($paymentQuery) {
-                                    $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                                });
-                        })
-                        ->where('bookings.check_in_date', '<', $checkOutDate)
-                        ->where('bookings.check_out_date', '>', $checkInDate);
+                        ->tap(fn ($query) => Booking::applyActiveReservationFilter($query))
+                        ->tap(fn ($query) => Booking::applyDateConflictWindow($query, (string) $checkInDate, (string) $checkOutDate));
                 })
                 ->whereDoesntHave('reservationBookings', function ($q) use ($booking, $checkInDate, $checkOutDate) {
                     $q->where('bookings.id', '!=', $booking->id)
-                        ->where(function ($reservationQuery) {
-                            $reservationQuery
-                                ->whereIn('bookings.status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                                ->orWhereHas('payments', function ($paymentQuery) {
-                                    $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                                });
-                        })
-                        ->where('bookings.check_in_date', '<', $checkOutDate)
-                        ->where('bookings.check_out_date', '>', $checkInDate);
+                        ->tap(fn ($query) => Booking::applyActiveReservationFilter($query))
+                        ->tap(fn ($query) => Booking::applyDateConflictWindow($query, (string) $checkInDate, (string) $checkOutDate));
                 })
                 ->orderBy('room_number')
                 ->get(['id']);
