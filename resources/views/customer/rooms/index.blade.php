@@ -87,6 +87,7 @@
                     <option value="">Default</option>
                     <option value="price_low">Price: Low to High</option>
                     <option value="price_high">Price: High to Low</option>
+                    <option value="name">Name: A-Z</option>
                 </select>
             </div>
 
@@ -1019,8 +1020,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const guests = guestsSelect ? guestsSelect.value : '';
             if (guests) params.append('guests', guests);
             
-            const sortBy = sortBySelect.value;
-            if (sortBy) params.append('sort', sortBy);
+            const sortBy = (sortBySelect.value || '').trim();
+            if (['price_low', 'price_high', 'name'].includes(sortBy)) {
+                params.append('sort', sortBy);
+            }
             
             // Pass booking context (check_in/check_out/guests) so Learn More links stay populated
             const ctxCheckIn  = document.getElementById('ctxCheckIn').value;
