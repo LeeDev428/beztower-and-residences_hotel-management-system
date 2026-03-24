@@ -370,14 +370,31 @@
     </style>
 </head>
 <body>
+    @php
+        $latestPayment = $booking->payments->last();
+        $isBookingConfirmed = in_array($booking->status, ['confirmed', 'checked_in', 'checked_out'], true)
+            || ($latestPayment && in_array($latestPayment->payment_status, ['verified', 'completed'], true));
+    @endphp
     <div class="container">
         <div class="confirmation-card">
             <div class="confirmation-header">
                 <div class="success-icon">
-                    <i class="fas fa-check"></i>
+                    <i class="fas fa-{{ $isBookingConfirmed ? 'check' : 'clock' }}"></i>
                 </div>
-                <h1>Booking <span class="gold-text">Confirmed!</span></h1>
-                <p>Thank you for choosing Bez Tower & Residences</p>
+                <h1>
+                    @if($isBookingConfirmed)
+                        Booking <span class="gold-text">Confirmed!</span>
+                    @else
+                        Booking <span class="gold-text">Received</span>
+                    @endif
+                </h1>
+                <p>
+                    @if($isBookingConfirmed)
+                        Thank you for choosing Bez Tower & Residences
+                    @else
+                        Your payment is being reviewed by our team
+                    @endif
+                </p>
                 <div class="booking-ref">
                     <i class="fas fa-barcode"></i> {{ $booking->booking_reference }}
                 </div>
@@ -393,9 +410,6 @@
 
                 <!-- Payment Status Card -->
                 @if($booking->payments->count() > 0)
-                    @php
-                        $latestPayment = $booking->payments->last();
-                    @endphp
                     <div class="payment-status-card">
                         <h3><i class="fas fa-credit-card"></i> Payment Status</h3>
                         
@@ -642,7 +656,7 @@
                         <li><i class="fas fa-check" style="color: #d4af37; margin-right: 0.5rem;"></i> Check-out time: 12:00 PM</li>
                         <li><i class="fas fa-check" style="color: #d4af37; margin-right: 0.5rem;"></i> A confirmation email has been sent to {{ $booking->guest->email }}</li>
                         <li><i class="fas fa-check" style="color: #d4af37; margin-right: 0.5rem;"></i> Please present a valid ID upon check-in</li>
-                        <li><i class="fas fa-check" style="color: #d4af37; margin-right: 0.5rem;"></i> Free cancellation up to 24 hours before check-in</li>
+                        <li><i class="fas fa-check" style="color: #d4af37; margin-right: 0.5rem;"></i> Bookings are non-refundable. Rebooking requests are subject to policy and availability.</li>
                     </ul>
                 </div>
             </div>
