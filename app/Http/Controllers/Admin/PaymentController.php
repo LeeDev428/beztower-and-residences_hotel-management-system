@@ -16,7 +16,10 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Payment::with(['booking.guest', 'booking.room', 'booking.rooms.roomType'])->whereNotNull('proof_of_payment');
+        $query = Payment::with(['booking.guest', 'booking.room', 'booking.rooms.roomType'])
+            ->whereNotNull('proof_of_payment')
+            ->whereHas('booking')
+            ->whereHas('booking.guest');
 
         // Filter by payment status
         if ($request->filled('status')) {
@@ -53,6 +56,10 @@ class PaymentController extends Controller
             'verified_at' => now(),
             'verified_by' => Auth::id(),
         ]);
+
+        if ($payment->booking && $payment->booking->status === 'pending') {
+            $payment->booking->update(['status' => 'confirmed']);
+        }
 
         // Send confirmation email
         Log::info('About to send payment emails to: ' . $payment->booking->guest->email);
