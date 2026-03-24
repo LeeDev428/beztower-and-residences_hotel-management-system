@@ -138,7 +138,7 @@ class RoomController extends Controller
         if ($request->filled('sort')) {
             $sort = strtolower(trim((string) $request->sort));
 
-            if (in_array($sort, ['undefined', 'null', 'none'], true)) {
+            if (!in_array($sort, ['price_low', 'price_high', 'name'], true)) {
                 $sort = '';
             }
 
@@ -157,6 +157,9 @@ class RoomController extends Controller
                     $query->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
                           ->orderBy('room_types.name', 'asc')
                           ->select('rooms.*');
+                    break;
+                default:
+                    $query->orderBy('room_number', 'asc');
                     break;
             }
         }
