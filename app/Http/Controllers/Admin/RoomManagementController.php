@@ -11,6 +11,7 @@ use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class RoomManagementController extends Controller
 {
@@ -50,15 +51,15 @@ class RoomManagementController extends Controller
         }
 
         $rooms = $query->paginate(15);
-        $roomTypes = RoomType::all();
+        $roomTypes = RoomType::active()->get();
 
         return view('admin.rooms.index', compact('rooms', 'roomTypes'));
     }
 
     public function create()
     {
-        $roomTypes = RoomType::all();
-        $amenities = Amenity::all();
+        $roomTypes = RoomType::active()->get();
+        $amenities = Amenity::active()->get();
         
         return view('admin.rooms.create', compact('roomTypes', 'amenities'));
     }
@@ -67,8 +68,8 @@ class RoomManagementController extends Controller
     {
         $validated = $request->validate([
             'room_number' => 'required|string|max:3|unique:rooms',
-            'room_type_id' => 'required|exists:room_types,id',
-            'floor' => 'required|integer|min:2|max:5',
+            'room_type_id' => ['required', Rule::exists('room_types', 'id')->whereNull('archived_at')],
+            'floor' => 'required|integer|min:1|max:99',
             'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
             'discount_percentage' => 'nullable|numeric|min:0|max:100|multiple_of:5',
             'description' => 'nullable|string',
@@ -108,8 +109,14 @@ class RoomManagementController extends Controller
     public function edit(Room $room)
     {
         $room->load(['roomType', 'amenities', 'photos']);
-        $roomTypes = RoomType::all();
-        $amenities = Amenity::all();
+        $roomTypes = RoomType::query()
+            ->whereNull('archived_at')
+            ->orWhere('id', $room->room_type_id)
+            ->get();
+        $amenities = Amenity::query()
+            ->whereNull('archived_at')
+            ->orWhereIn('id', $room->amenities->pluck('id')->all())
+            ->get();
         
         return view('admin.rooms.edit', compact('room', 'roomTypes', 'amenities'));
     }
@@ -126,8 +133,14 @@ class RoomManagementController extends Controller
 
         $validated = $request->validate([
             'room_number' => 'required|string|max:3|unique:rooms,room_number,' . $room->id,
-            'room_type_id' => 'required|exists:room_types,id',
-            'floor' => 'required|integer|min:2|max:5',
+            'room_type_id' => [
+                'required',
+                Rule::exists('room_types', 'id')->where(function ($query) use ($room) {
+                    $query->whereNull('archived_at')
+                        ->orWhere('id', $room->room_type_id);
+                }),
+            ],
+            'floor' => 'required|integer|min:1|max:99',
             'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
             'discount_percentage' => 'nullable|numeric|min:0|max:100|multiple_of:5',
             'description' => 'nullable|string',
@@ -232,6 +245,10 @@ class RoomManagementController extends Controller
 
     public function deletePhoto(Room $room, RoomPhoto $photo)
     {
+        if ((int) $photo->room_id !== (int) $room->id) {
+            return back()->with('error', 'Photo does not belong to this room.');
+        }
+
         Storage::disk('public')->delete($photo->photo_path);
         $photo->delete();
 
