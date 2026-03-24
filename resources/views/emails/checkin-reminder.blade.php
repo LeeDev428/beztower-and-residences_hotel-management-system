@@ -36,7 +36,7 @@
                         <td style="padding: 8px 0; color: #666;">Room(s):</td>
                         <td style="padding: 8px 0; font-weight: bold;">
                             @foreach($reservedRooms as $reservedRoom)
-                                Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
+                                {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
                             @endforeach
                         </td>
                     </tr>
