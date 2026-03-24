@@ -289,7 +289,7 @@
         }
 
         /* Responsive Sidebar */
-        @media (max-width: 1366px) {
+        @media (max-width: 1536px) {
             .sidebar {
                 transform: translateX(-100%);
             }
@@ -634,7 +634,7 @@
             sidebar.classList.toggle('active', open);
 
             if (sidebarOverlay) {
-                sidebarOverlay.classList.toggle('active', open && window.innerWidth <= 1366);
+                sidebarOverlay.classList.toggle('active', open && window.innerWidth <= 1536);
             }
         }
 
@@ -652,7 +652,7 @@
 
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(event) {
-            if (window.innerWidth <= 1366 && sidebar && menuToggle) {
+            if (window.innerWidth <= 1536 && sidebar && menuToggle) {
                 if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
                     setSidebarState(false);
                 }
@@ -661,14 +661,14 @@
 
         document.querySelectorAll('.sidebar .nav-link').forEach((link) => {
             link.addEventListener('click', function () {
-                if (window.innerWidth <= 1366) {
+                if (window.innerWidth <= 1536) {
                     setSidebarState(false);
                 }
             });
         });
 
         window.addEventListener('resize', function () {
-            if (window.innerWidth > 1366) {
+            if (window.innerWidth > 1536) {
                 setSidebarState(false);
             }
         });
@@ -678,16 +678,19 @@
         (function () {
             const snapshotUrl = '{{ route('admin.bookings.notifications.snapshot') }}';
             const storageKey = 'admin_last_seen_booking_id';
+            const pendingCountKey = 'admin_last_seen_pending_count';
             let initialized = false;
 
             async function pollBookingNotifications() {
                 try {
-                    const response = await fetch(snapshotUrl, {
+                    const requestUrl = `${snapshotUrl}?_t=${Date.now()}`;
+                    const response = await fetch(requestUrl, {
                         method: 'GET',
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json',
                         },
+                        cache: 'no-store',
                     });
 
                     if (!response.ok) {
@@ -696,23 +699,27 @@
 
                     const data = await response.json();
                     const latestBookingId = Number(data.latest_booking_id || 0);
+                    const pendingCount = Number(data.pending_count || 0);
                     if (!latestBookingId) {
                         return;
                     }
 
                     const lastSeenId = Number(sessionStorage.getItem(storageKey) || 0);
+                    const lastPendingCount = Number(sessionStorage.getItem(pendingCountKey) || 0);
 
                     if (!initialized) {
                         sessionStorage.setItem(storageKey, String(Math.max(lastSeenId, latestBookingId)));
+                        sessionStorage.setItem(pendingCountKey, String(Math.max(lastPendingCount, pendingCount)));
                         initialized = true;
                         return;
                     }
 
-                    if (latestBookingId > lastSeenId) {
+                    if (latestBookingId > lastSeenId || pendingCount > lastPendingCount) {
                         const reference = data.latest_booking_reference || 'New Booking';
                         const guestName = data.latest_guest_name ? ` from ${data.latest_guest_name}` : '';
                         showToast(`New booking received: ${reference}${guestName}`, 'info');
                         sessionStorage.setItem(storageKey, String(latestBookingId));
+                        sessionStorage.setItem(pendingCountKey, String(pendingCount));
                     }
                 } catch (error) {
                     // Keep polling silent; avoid breaking admin UI on transient fetch errors.
@@ -721,7 +728,7 @@
 
             document.addEventListener('DOMContentLoaded', function () {
                 pollBookingNotifications();
-                setInterval(pollBookingNotifications, 20000);
+                setInterval(pollBookingNotifications, 10000);
             });
         })();
     </script>
