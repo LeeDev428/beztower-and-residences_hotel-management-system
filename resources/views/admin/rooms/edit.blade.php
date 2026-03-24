@@ -63,8 +63,8 @@
 
             <div>
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Floor *</label>
-                <input type="number" name="floor" value="{{ old('floor', $room->floor) }}" required min="1" max="99" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
-                <small style="color: #666; font-size: 0.875rem;">Floors 1-99</small>
+                <input type="number" name="floor" value="{{ old('floor', $room->floor) }}" required min="1" max="8" step="1" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                <small style="color: #666; font-size: 0.875rem;">Floors 1-8 (Floor 5 unavailable)</small>
                 @error('floor')
                 <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                 @enderror
@@ -131,7 +131,7 @@
                 <div style="position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     <img src="{{ asset('storage/' . $photo->photo_path) }}" alt="Room Photo" 
                          style="width: 100%; height: 150px; object-fit: cover;">
-                    <button type="button" onclick="deletePhoto({{ $photo->id }})" 
+                    <button type="button" onclick="deletePhoto({{ $photo->id }}, this)" 
                             style="position: absolute; top: 8px; right: 8px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
                         ×
                     </button>
@@ -569,14 +569,27 @@
     }
 
     // Delete Photo Function
-    async function deletePhoto(photoId) {
+    async function deletePhoto(photoId, buttonEl) {
+        if (buttonEl?.dataset.deleting === '1') {
+            return;
+        }
+
         if (!confirm('Are you sure you want to delete this photo?')) return;
+
+        if (buttonEl) {
+            buttonEl.dataset.deleting = '1';
+            buttonEl.disabled = true;
+            buttonEl.style.opacity = '0.65';
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
         
         try {
             const response = await fetch(`/admin/rooms/{{ $room->id }}/photos/${photoId}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content || '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             });
             
@@ -588,6 +601,12 @@
         } catch (error) {
             console.error('Error deleting photo:', error);
             alert('Failed to delete photo');
+        } finally {
+            if (buttonEl) {
+                buttonEl.dataset.deleting = '0';
+                buttonEl.disabled = false;
+                buttonEl.style.opacity = '1';
+            }
         }
     }
 
