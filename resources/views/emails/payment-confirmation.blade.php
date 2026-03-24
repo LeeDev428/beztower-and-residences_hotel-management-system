@@ -98,7 +98,7 @@
         <div class="header">
             <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences" style="pointer-events: none; user-select: none; -webkit-user-drag: none;">
             <h1>✅ Booking Confirmed</h1>
-            <p>Your reservation is now confirmed!</p>
+            <p>Your booking is now confirmed.</p>
         </div>
         
         <div class="content">
@@ -108,10 +108,11 @@
             <p>Dear {{ $booking->guest->first_name }} {{ $booking->guest->last_name }},</p>
             
             <div class="success-badge">
-                <strong>🎉 Your payment has been verified and confirmed!</strong>
+                <strong>🎉 Your booking has been confirmed.</strong>
             </div>
 
-            <p>We are delighted to confirm your reservation at Bez Tower and Residences. Your room is now secured for your stay.</p>
+            <p>Thank you for choosing Bez Tower and Residences.</p>
+            <p>Your booking has now been confirmed.</p>
             
             <div class="info-box">
                 <div class="info-row">
