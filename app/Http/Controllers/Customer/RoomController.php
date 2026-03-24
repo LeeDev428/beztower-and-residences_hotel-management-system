@@ -64,7 +64,12 @@ class RoomController extends Controller
         
         // Filter by room type
         if ($request->filled('room_type')) {
-            $query->where('room_type_id', $request->room_type);
+            $roomTypeId = (int) $request->room_type;
+            $activeRoomTypeExists = RoomType::active()->whereKey($roomTypeId)->exists();
+
+            if ($activeRoomTypeExists) {
+                $query->where('room_type_id', $roomTypeId);
+            }
         }
         
         // Filter by number of guests.
