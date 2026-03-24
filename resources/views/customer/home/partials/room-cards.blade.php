@@ -5,6 +5,17 @@
         $roomImage = $room->photos->count() > 0
             ? asset('storage/' . $room->photos->first()->photo_path)
             : 'https://via.placeholder.com/400x300/d4af37/2c2c2c?text=' . urlencode($roomName);
+        $roomImages = $room->photos
+            ->pluck('photo_path')
+            ->filter()
+            ->take(4)
+            ->map(fn ($photoPath) => asset('storage/' . $photoPath))
+            ->values()
+            ->all();
+        if (empty($roomImages)) {
+            $roomImages = [$roomImage];
+        }
+        $roomImagesText = implode('|', $roomImages);
         $roomInclusions = $room->amenities->pluck('name')->filter()->values()->all();
         $roomInclusionsText = !empty($roomInclusions)
             ? implode(' | ', $roomInclusions)
@@ -53,6 +64,7 @@
                     data-room-price="{{ number_format((float) $room->effective_price, 2) }}"
                     data-room-capacity="{{ (int) ($room->roomType->max_guests ?? 0) }}"
                     data-room-image="{{ e($roomImage) }}"
+                    data-room-images="{{ e($roomImagesText) }}"
                     data-room-description="{{ e($roomDescription) }}"
                     data-room-inclusions="{{ e($roomInclusionsText) }}"
                     data-room-url="{{ route('rooms.index', ['room_type' => $room->room_type_id]) }}"
