@@ -163,6 +163,11 @@
                             <p style="font-size: 0.8rem; color: #555;">Number: <strong>09778325550</strong></p>
                             <p style="font-size: 0.8rem; color: #555;">Name: <strong>MICHAEL ANG</strong></p>
                         </div>
+
+                        <div id="gcashReferenceWrap" style="display: none; margin-top: 0.75rem;">
+                            <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">GCash Reference Number <span style="color: var(--danger);">*</span></label>
+                            <input type="text" name="payment_reference" id="walkinPaymentReference" value="{{ old('payment_reference') }}" placeholder="Enter customer GCash reference" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                        </div>
                     </div>
                 </div>
 
@@ -375,6 +380,7 @@ function calculateTotal() {
 function toggleGcash() {
     const isGcash = document.querySelector('input[name="payment_method"]:checked')?.value === 'gcash';
     document.getElementById('gcashInfo').style.display = isGcash ? 'block' : 'none';
+    document.getElementById('gcashReferenceWrap').style.display = isGcash ? 'block' : 'none';
 }
 
 async function refreshAvailableRooms() {
