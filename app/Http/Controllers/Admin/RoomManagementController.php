@@ -69,13 +69,15 @@ class RoomManagementController extends Controller
         $validated = $request->validate([
             'room_number' => 'required|string|max:3|unique:rooms',
             'room_type_id' => ['required', Rule::exists('room_types', 'id')->whereNull('archived_at')],
-            'floor' => 'required|integer|min:1|max:99',
+            'floor' => 'required|integer|min:1|max:8|not_in:5',
             'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
             'discount_percentage' => 'nullable|numeric|min:0|max:100|multiple_of:5',
             'description' => 'nullable|string',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
             'photos.*' => 'nullable|image|max:5120', // 5MB max
+        ], [
+            'floor.not_in' => 'Floor 5 is unavailable. Please select another floor.',
         ]);
 
         $room = Room::create([
@@ -131,13 +133,15 @@ class RoomManagementController extends Controller
                 'required',
                 Rule::exists('room_types', 'id')->whereNull('archived_at'),
             ],
-            'floor' => 'required|integer|min:1|max:99',
+            'floor' => 'required|integer|min:1|max:8|not_in:5',
             'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
             'discount_percentage' => 'nullable|numeric|min:0|max:100|multiple_of:5',
             'description' => 'nullable|string',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
             'photos.*' => 'nullable|image|max:5120', // 5MB max
+        ], [
+            'floor.not_in' => 'Floor 5 is unavailable. Please select another floor.',
         ]);
 
         $room->update([
@@ -242,6 +246,10 @@ class RoomManagementController extends Controller
     public function deletePhoto(Room $room, RoomPhoto $photo)
     {
         if ((int) $photo->room_id !== (int) $room->id) {
+            if (request()->expectsJson()) {
+                return response()->json(['error' => 'Photo does not belong to this room.'], 422);
+            }
+
             return back()->with('error', 'Photo does not belong to this room.');
         }
 
@@ -255,6 +263,10 @@ class RoomManagementController extends Controller
             'App\Models\Room',
             $room->id
         );
+
+        if (request()->expectsJson()) {
+            return response()->json(['message' => 'Photo deleted successfully!']);
+        }
 
         return back()->with('success', 'Photo deleted successfully!');
     }
