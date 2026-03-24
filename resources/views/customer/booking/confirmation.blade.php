@@ -372,8 +372,7 @@
 <body>
     @php
         $latestPayment = $booking->payments->last();
-        $isBookingConfirmed = in_array($booking->status, ['confirmed', 'checked_in', 'checked_out'], true)
-            || ($latestPayment && in_array($latestPayment->payment_status, ['verified', 'completed'], true));
+        $isBookingConfirmed = in_array($booking->status, ['confirmed', 'checked_in', 'checked_out'], true);
     @endphp
     <div class="container">
         <div class="confirmation-card">
@@ -385,7 +384,7 @@
                     @if($isBookingConfirmed)
                         Booking <span class="gold-text">Confirmed!</span>
                     @else
-                        Booking <span class="gold-text">Received</span>
+                        Payment <span class="gold-text">Sent</span>
                     @endif
                 </h1>
                 <p>
@@ -474,7 +473,7 @@
                                         <p style="font-size: 1.5rem; font-weight: 700; color: #d4af37; margin: 0.3rem 0 0 0;">
                                             ₱{{ number_format($remainingAmount, 2) }}
                                         </p>
-                                        <small style="color: #999;">Please settle before checkout</small>
+                                        <small style="color: #999;">To be paid upon check-in</small>
                                     </div>
                                     <i class="fas fa-wallet" style="font-size: 2.5rem; color: #d4af37; opacity: 0.3;"></i>
                                 </div>
