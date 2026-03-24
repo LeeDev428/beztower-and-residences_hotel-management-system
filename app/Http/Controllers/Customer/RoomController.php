@@ -136,7 +136,13 @@ class RoomController extends Controller
         
         // Sorting
         if ($request->filled('sort')) {
-            switch ($request->sort) {
+            $sort = strtolower(trim((string) $request->sort));
+
+            if (in_array($sort, ['undefined', 'null', 'none'], true)) {
+                $sort = '';
+            }
+
+            switch ($sort) {
                 case 'price_low':
                     $query->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
                           ->orderBy('room_types.base_price', 'asc')
