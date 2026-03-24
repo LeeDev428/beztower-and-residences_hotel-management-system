@@ -18,7 +18,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #ffffff;
+            background: #f7f6f2;
             color: #2c2c2c;
         }
 
@@ -382,19 +382,20 @@
 
         /* Amenities Grid */
         .amenities-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
         }
 
         .amenity-card {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 1.2rem;
+            gap: 0.55rem;
+            padding: 0.55rem 0.8rem;
             background: #f8f8f8;
-            border-radius: 8px;
+            border-radius: 999px;
             transition: all 0.3s;
+            border: 1px solid #ececec;
         }
 
         .amenity-card:hover {
@@ -403,8 +404,8 @@
         }
 
         .amenity-icon {
-            width: 45px;
-            height: 45px;
+            width: 28px;
+            height: 28px;
             background: linear-gradient(135deg, #d4af37, #f4e4c1);
             border-radius: 50%;
             display: flex;
@@ -415,11 +416,12 @@
 
         .amenity-icon i {
             color: #2c2c2c;
-            font-size: 1.1rem;
+            font-size: 0.82rem;
         }
 
         .amenity-name {
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 0.86rem;
             color: #2c2c2c;
         }
 
