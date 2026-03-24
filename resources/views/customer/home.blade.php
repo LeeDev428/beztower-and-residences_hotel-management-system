@@ -226,6 +226,18 @@
             margin: 0;
         }
 
+        .guest-label-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .guest-age-note {
+            font-size: 0.72rem;
+            color: #7a7a7a;
+            line-height: 1.2;
+        }
+
         .counter {
             display: flex;
             align-items: center;
@@ -951,8 +963,10 @@
                                     </div>
                                 </div>
                                 <div class="guest-option">
-                                    <label>Adults</label>
-                                    <div style="font-size: 0.72rem; color: #7a7a7a; margin-top: -0.3rem;">Ages 13 and Above</div>
+                                    <div class="guest-label-wrap">
+                                        <label>Adults</label>
+                                        <div class="guest-age-note">Ages 13 and Above</div>
+                                    </div>
                                     <div class="counter">
                                         <button type="button" class="counter-btn" onclick="changeValue('adults', -1)">-</button>
                                         <input type="number" name="adults" id="adults" value="1" min="1" max="10" readonly>
@@ -960,8 +974,10 @@
                                     </div>
                                 </div>
                                 <div class="guest-option">
-                                    <label>Children</label>
-                                    <div style="font-size: 0.72rem; color: #7a7a7a; margin-top: -0.3rem;">Ages 0-12</div>
+                                    <div class="guest-label-wrap">
+                                        <label>Children</label>
+                                        <div class="guest-age-note">Ages 0-12</div>
+                                    </div>
                                     <div class="counter">
                                         <button type="button" class="counter-btn" onclick="changeValue('children', -1)">-</button>
                                         <input type="number" name="children" id="children" value="0" min="0" max="10" readonly>
@@ -1001,7 +1017,6 @@
                     <div class="room-preview-price" id="roomPreviewPrice">₱0.00</div>
                     <div style="display:flex; gap:0.6rem;">
                         <button type="button" class="book-btn" id="roomPreviewBackBtn" style="background:#f2f2f2; color:#2c2c2c; border:none;">Back</button>
-                        <a href="{{ route('rooms.index') }}" id="roomPreviewExploreLink" class="book-btn">Explore Rooms</a>
                     </div>
                 </div>
             </div>
@@ -1847,7 +1862,6 @@
         const roomPreviewDescription = document.getElementById('roomPreviewDescription');
         const roomPreviewInclusions = document.getElementById('roomPreviewInclusions');
         const roomPreviewPrice = document.getElementById('roomPreviewPrice');
-        const roomPreviewExploreLink = document.getElementById('roomPreviewExploreLink');
         const roomPreviewBackBtn = document.getElementById('roomPreviewBackBtn');
         const roomPreviewThumbnails = document.getElementById('roomPreviewThumbnails');
         let roomPreviewImages = [];
@@ -1901,7 +1915,6 @@
                 .split('|')
                 .map((item) => item.trim())
                 .filter((item) => item.length > 0);
-            const roomUrl = trigger.getAttribute('data-room-url') || '{{ route('rooms.index') }}';
             roomPreviewImages = roomImagesRaw
                 .split('|')
                 .map((item) => item.trim())
@@ -1922,7 +1935,6 @@
             roomPreviewMeta.textContent = `Can accommodate ${roomCapacity} adult${Number(roomCapacity) > 1 ? 's' : ''} + 1 child`;
             roomPreviewDescription.textContent = roomDescription || 'Comfortable and modern accommodation.';
             roomPreviewPrice.textContent = `₱${roomPrice}`;
-            roomPreviewExploreLink.setAttribute('href', roomUrl);
             renderRoomPreviewThumbnails();
             renderRoomPreviewImage(0);
 
