@@ -44,6 +44,47 @@
                 </div>
             </div>
 
+            @php
+                $perRoomAdditionalCharge = 0;
+                if ($reservedRooms->isNotEmpty()) {
+                    $perRoomAdditionalCharge = (float) $reservedRooms->sum(function ($room) {
+                        return (float) ($room->pivot->additional_charge ?? 0);
+                    });
+                }
+
+                $manualAdjustment = (float) ($booking->manual_adjustment ?? 0);
+                $billingAdjustmentTotal = $manualAdjustment;
+            @endphp
+
+            @if($booking->extras_total > 0 || abs($billingAdjustmentTotal) > 0.00001 || $perRoomAdditionalCharge > 0)
+            <div style="background:#f9f9f9; border-left:4px solid #d4af37; border-radius:6px; padding:14px; margin:18px 0;">
+                <div style="font-weight:700; margin-bottom:8px; color:#2c2c2c;">Additional Charges Breakdown</div>
+
+                @if($booking->extras_total > 0)
+                <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee;">
+                    <span style="font-weight:600; color:#666;">Amenities & Services</span>
+                    <span style="font-weight:700;">PHP {{ number_format($booking->extras_total, 2) }}</span>
+                </div>
+                @endif
+
+                @if(abs($billingAdjustmentTotal) > 0.00001)
+                <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee;">
+                    <span style="font-weight:600; color:#666;">Billing Adjustment & Charges</span>
+                    <span style="font-weight:700; color: {{ $billingAdjustmentTotal < 0 ? '#2e7d32' : '#c62828' }};">
+                        {{ $billingAdjustmentTotal < 0 ? '-PHP ' : 'PHP ' }}{{ number_format(abs($billingAdjustmentTotal), 2) }}
+                    </span>
+                </div>
+                @endif
+
+                @if($perRoomAdditionalCharge > 0)
+                <div style="display:flex; justify-content:space-between; padding:6px 0;">
+                    <span style="font-weight:600; color:#666;">Per-Room Additional Charge</span>
+                    <span style="font-weight:700;">PHP {{ number_format($perRoomAdditionalCharge, 2) }}</span>
+                </div>
+                @endif
+            </div>
+            @endif
+
             <p>We hope to welcome you again soon. Safe travels.</p>
 
             <p style="margin-top:20px;">Warm regards,<br><strong>Beztower & Residences Team</strong></p>
