@@ -205,6 +205,16 @@ class BookingManagementController extends Controller
             if ($today !== $allowedCheckOutDate) {
                 return back()->with('error', 'Check-out is only allowed on the booking check-out date.');
             }
+
+            $amountPaid = (float) $booking->payments()
+                ->whereIn('payment_status', ['verified', 'completed'])
+                ->sum('amount');
+            $finalTotal = (float) ($booking->final_total ?? $booking->total_amount ?? 0);
+            $remainingBalance = round($finalTotal - $amountPaid, 2);
+
+            if ($remainingBalance > 0) {
+                return back()->with('error', 'Cannot check out with outstanding balance. Remaining balance: ₱' . number_format($remainingBalance, 2));
+            }
         }
 
         if ($targetStatus === 'rescheduled') {
@@ -256,26 +266,6 @@ class BookingManagementController extends Controller
             $roomsToUpdate = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
             foreach ($roomsToUpdate as $room) {
                 $room->update(['status' => 'available']);
-            }
-
-            // Auto-record remaining balance as revenue
-            $amountPaid = $booking->payments()
-                ->whereIn('payment_status', ['verified', 'completed'])
-                ->sum('amount');
-            $finalTotal = $booking->final_total ?? $booking->total_amount;
-            $remainingBalance = round($finalTotal - $amountPaid, 2);
-            if ($remainingBalance > 0) {
-                Payment::create([
-                    'booking_id' => $booking->id,
-                    'payment_type' => 'remaining_payment',
-                    'payment_method' => 'cash',
-                    'amount' => $remainingBalance,
-                    'payment_status' => 'completed',
-                    'payment_date' => now(),
-                    'payment_notes' => 'Auto-recorded remaining balance on checkout.',
-                    'verified_at' => now(),
-                    'verified_by' => Auth::id(),
-                ]);
             }
             
             // Send thank-you email after checkout
@@ -563,7 +553,13 @@ class BookingManagementController extends Controller
                 $hasSameDayArrivalConflict = Booking::query()
                     ->where('bookings.id', '!=', $booking->id)
                     ->whereDate('check_in_date', optional($booking->check_out_date)->toDateString())
-                    ->tap(fn ($query) => Booking::applyActiveReservationFilter($query))
+                    ->where(function ($statusQuery) {
+                        $statusQuery
+                            ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                            ->orWhereHas('payments', function ($paymentQuery) {
+                                $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                            });
+                    })
                     ->where(function ($roomQuery) use ($bookingRoomIds) {
                         $roomQuery->whereIn('room_id', $bookingRoomIds)
                             ->orWhereHas('rooms', function ($roomsRelationQuery) use ($bookingRoomIds) {
@@ -855,13 +851,47 @@ class BookingManagementController extends Controller
                 })
                 ->whereDoesntHave('bookings', function ($q) use ($booking, $checkInDate, $checkOutDate) {
                     $q->where('bookings.id', '!=', $booking->id)
-                        ->tap(fn ($query) => Booking::applyActiveReservationFilter($query))
-                        ->tap(fn ($query) => Booking::applyDateConflictWindow($query, (string) $checkInDate, (string) $checkOutDate));
+                        ->where(function ($statusQuery) {
+                            $statusQuery
+                                ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                                ->orWhereHas('payments', function ($paymentQuery) {
+                                    $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                                });
+                        })
+                        ->where(function ($overlapQuery) use ($checkInDate, $checkOutDate) {
+                            $overlapQuery
+                                ->where(function ($rangeQuery) use ($checkInDate, $checkOutDate) {
+                                    $rangeQuery->where('check_in_date', '<', $checkOutDate)
+                                        ->where('check_out_date', '>', $checkInDate);
+                                })
+                                ->orWhere(function ($lateCheckoutQuery) use ($checkInDate) {
+                                    $lateCheckoutQuery->whereDate('check_out_date', $checkInDate)
+                                        ->where('late_checkout_hours', '>', 0)
+                                        ->whereIn('status', ['confirmed', 'checked_in', 'rescheduled']);
+                                });
+                        });
                 })
                 ->whereDoesntHave('reservationBookings', function ($q) use ($booking, $checkInDate, $checkOutDate) {
                     $q->where('bookings.id', '!=', $booking->id)
-                        ->tap(fn ($query) => Booking::applyActiveReservationFilter($query))
-                        ->tap(fn ($query) => Booking::applyDateConflictWindow($query, (string) $checkInDate, (string) $checkOutDate));
+                        ->where(function ($statusQuery) {
+                            $statusQuery
+                                ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                                ->orWhereHas('payments', function ($paymentQuery) {
+                                    $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                                });
+                        })
+                        ->where(function ($overlapQuery) use ($checkInDate, $checkOutDate) {
+                            $overlapQuery
+                                ->where(function ($rangeQuery) use ($checkInDate, $checkOutDate) {
+                                    $rangeQuery->where('check_in_date', '<', $checkOutDate)
+                                        ->where('check_out_date', '>', $checkInDate);
+                                })
+                                ->orWhere(function ($lateCheckoutQuery) use ($checkInDate) {
+                                    $lateCheckoutQuery->whereDate('check_out_date', $checkInDate)
+                                        ->where('late_checkout_hours', '>', 0)
+                                        ->whereIn('status', ['confirmed', 'checked_in', 'rescheduled']);
+                                });
+                        });
                 })
                 ->orderBy('room_number')
                 ->get(['id']);
