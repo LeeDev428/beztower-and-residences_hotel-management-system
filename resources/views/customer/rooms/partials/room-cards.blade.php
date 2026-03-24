@@ -27,7 +27,7 @@
         $baseParams['rooms'] = $requestedRooms;
 
         $detailsParams = $baseParams;
-        $detailsParams['origin'] = 'learn_more';
+        $detailsParams['origin'] = 'explore_rooms';
         $detailsParams['selection_action'] = 'view';
         $detailsParams['current_selected'] = $isSelected ? '1' : '0';
 
@@ -90,7 +90,7 @@
                     @endif
                 </div>
                 <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
-                    <a href="{{ $btnUrl }}" class="book-btn">Learn More</a>
+                    <a href="{{ $btnUrl }}" class="book-btn">Explore Rooms</a>
                 </div>
             </div>
         </div>
