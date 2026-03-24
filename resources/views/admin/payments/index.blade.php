@@ -19,6 +19,13 @@
     @if($payments->count() > 0)
     <div style="display: grid; gap: 1.5rem;">
         @foreach($payments as $payment)
+        @php
+            $booking = $payment->booking;
+            $guest = $booking?->guest;
+        @endphp
+        @if(!$booking || !$guest)
+            @continue
+        @endif
         <div style="border: 1px solid var(--border-gray); border-radius: 12px; padding: 1.5rem;">
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
                 <!-- Payment Details -->
