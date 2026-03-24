@@ -1231,7 +1231,15 @@
                         '24/7 Room Service',
                     ]);
 
-                    $featureLines = $configuredFeatures->isNotEmpty() ? $configuredFeatures : $defaultFeatures;
+                    $amenityFeatures = $room->amenities
+                        ->pluck('name')
+                        ->map(fn ($line) => trim((string) $line))
+                        ->filter()
+                        ->values();
+
+                    $featureLines = $configuredFeatures->isNotEmpty()
+                        ? $configuredFeatures
+                        : ($amenityFeatures->isNotEmpty() ? $amenityFeatures : $defaultFeatures);
                 @endphp
 
                 <div class="features-grid">
