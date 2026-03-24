@@ -219,8 +219,7 @@
                             <li>Account Number: 1234-5678-9012</li>
                         </ul>
                     </li>
-                    <li><strong>GCash:</strong> 0917-123-4567 (Beztower & Residences)</li>
-                    <li><strong>PayMaya:</strong> 0917-123-4567 (Beztower & Residences)</li>
+                    <li><strong>GCash:</strong> 09778325550 (MICHAEL ANG)</li>
                     <li><strong>Over-the-counter:</strong> Available at our front desk</li>
                 </ul>
 
@@ -263,7 +262,7 @@
         <div class="footer">
             <p><strong>Bez Tower and Residences</strong></p>
             <p>205 F. Blumentritt Street, Brgy. Pedro Cruz<br>San Juan City, Philippines</p>
-            <p>Email: <a href="mailto:info@beztower.com">info@beztower.com</a> | Phone: (02) 88075046 or 09171221429</p>
+            <p>Email: <a href="mailto:beztowerresidences@gmail.com">beztowerresidences@gmail.com</a> | Phone: 09171221429</p>
         </div>
     </div>
 </body>
