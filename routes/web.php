@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\RoomManagementController;
 use App\Http\Controllers\Admin\RoomTypeController;
 use App\Http\Controllers\Admin\AmenityController;
+use App\Http\Controllers\Admin\ExtraController;
 use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\GuestManagementController;
 use App\Http\Controllers\Admin\HousekeepingController;
@@ -80,6 +81,14 @@ Route::prefix('admin')->group(function () {
             Route::put('/{amenity}', [AmenityController::class, 'update'])->name('admin.amenities.update')->middleware('role:admin,manager');
             Route::delete('/{amenity}', [AmenityController::class, 'destroy'])->name('admin.amenities.destroy')->middleware('role:admin');
             Route::post('/{amenity}/restore', [AmenityController::class, 'restore'])->name('admin.amenities.restore')->middleware('role:admin');
+        });
+
+        // Extras Management
+        Route::prefix('extras')->group(function () {
+            Route::get('/', [ExtraController::class, 'index'])->name('admin.extras.index');
+            Route::post('/', [ExtraController::class, 'store'])->name('admin.extras.store')->middleware('role:admin,manager');
+            Route::put('/{extra}', [ExtraController::class, 'update'])->name('admin.extras.update')->middleware('role:admin,manager');
+            Route::delete('/{extra}', [ExtraController::class, 'destroy'])->name('admin.extras.destroy')->middleware('role:admin');
         });
         
         // Booking Management
