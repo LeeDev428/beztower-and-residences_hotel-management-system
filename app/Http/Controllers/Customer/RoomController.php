@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\Amenity;
@@ -117,27 +118,13 @@ class RoomController extends Controller
             
             // Exclude rooms with conflicting bookings
             $query->whereDoesntHave('bookings', function($q) use ($checkIn, $checkOut) {
-                $q->where(function ($statusQuery) {
-                    $statusQuery
-                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                        ->orWhereHas('payments', function ($paymentQuery) {
-                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                        });
-                })
-                    ->where('check_in_date', '<', $checkOut)
-                    ->where('check_out_date', '>', $checkIn);
+                Booking::applyActiveReservationFilter($q);
+                Booking::applyDateConflictWindow($q, (string) $checkIn, (string) $checkOut);
             });
 
             $query->whereDoesntHave('reservationBookings', function($q) use ($checkIn, $checkOut) {
-                $q->where(function ($statusQuery) {
-                    $statusQuery
-                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                        ->orWhereHas('payments', function ($paymentQuery) {
-                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                        });
-                })
-                    ->where('check_in_date', '<', $checkOut)
-                    ->where('check_out_date', '>', $checkIn);
+                Booking::applyActiveReservationFilter($q);
+                Booking::applyDateConflictWindow($q, (string) $checkIn, (string) $checkOut);
             });
             
             // Exclude rooms with block dates
@@ -413,7 +400,7 @@ class RoomController extends Controller
         $endDate = date('Y-m-t', strtotime($startDate));
         
         // Get all booked dates in this month
-        $bookedDates = \App\Models\Booking::where(function($q) use ($startDate, $endDate) {
+                $bookedDates = Booking::where(function($q) use ($startDate, $endDate) {
             $q->where('check_in_date', '<=', $endDate)
               ->where('check_out_date', '>=', $startDate);
         })
@@ -424,6 +411,9 @@ class RoomController extends Controller
             $dates = [];
             $current = new \DateTime($booking->check_in_date);
             $end = new \DateTime($booking->check_out_date);
+            if ((int) ($booking->late_checkout_hours ?? 0) > 0) {
+                $end->modify('+1 day');
+            }
             $roomIds = $booking->rooms->pluck('id')->all();
             if (empty($roomIds) && $booking->room_id) {
                 $roomIds = [$booking->room_id];
