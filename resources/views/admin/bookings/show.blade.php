@@ -233,6 +233,15 @@
                     <span style="font-weight: 700;">Balance Due</span>
                     <span style="font-weight: 700; color: var(--primary-gold); font-size: 1.25rem;">₱{{ number_format($balanceDue, 2) }}</span>
                 </div>
+
+                @if($balanceDue > 0)
+                    <form method="POST" action="{{ route('admin.bookings.settleBalance', $booking) }}" style="margin-top: 0.75rem;">
+                        @csrf
+                        <button type="submit" style="width: 100%; padding: 0.65rem 0.9rem; border: none; border-radius: 8px; background: linear-gradient(135deg, #4caf50, #45a049); color: white; font-weight: 700; cursor: pointer;">
+                            <i class="fas fa-hand-holding-usd"></i> Settle Balance (Auto Zero)
+                        </button>
+                    </form>
+                @endif
             </div>
         </x-admin.card>
 
@@ -294,6 +303,12 @@
                         <option value="{{ $nextStatus }}">{{ ucwords(str_replace('_', ' ', $nextStatus)) }}</option>
                     @endforeach
                 </select>
+
+                <div id="statusCancelReasonWrap" style="display:none; margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Cancellation Reason</label>
+                    <textarea name="cancellation_reason" rows="3" maxlength="500" placeholder="Enter reason for cancelling this booking" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;"></textarea>
+                </div>
+
                 <div style="width: 100%;">
                     @if($statusLocked)
                         <button type="button" disabled style="width: 100%; padding: 0.75rem; border: none; border-radius: 8px; background: #d9d9d9; color: #6b6b6b; font-weight: 600; cursor: not-allowed;">
@@ -406,6 +421,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const currentRoomSelect = document.getElementById('currentRoomSelect');
     const transferRoomSelect = document.getElementById('transferRoomSelect');
+    const statusSelect = document.querySelector('form[action="{{ route('admin.bookings.updateStatus', $booking) }}"] select[name="status"]');
+    const statusCancelReasonWrap = document.getElementById('statusCancelReasonWrap');
+
+    function toggleCancellationReasonField() {
+        if (!statusSelect || !statusCancelReasonWrap) {
+            return;
+        }
+
+        statusCancelReasonWrap.style.display = statusSelect.value === 'cancelled' ? 'block' : 'none';
+    }
+
+    if (statusSelect) {
+        statusSelect.addEventListener('change', toggleCancellationReasonField);
+        toggleCancellationReasonField();
+    }
 
     if (!currentRoomSelect || !transferRoomSelect) {
         return;
