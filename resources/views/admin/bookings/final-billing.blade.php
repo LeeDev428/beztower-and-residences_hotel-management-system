@@ -456,6 +456,12 @@
                     <p style="font-size: 0.85rem; color: #555; margin: 0.2rem 0;"><strong>GCash Number:</strong> 09778325550</p>
                     <p style="font-size: 0.85rem; color: #555; margin: 0.2rem 0;"><strong>Account Name:</strong> MICHAEL ANG</p>
                 </div>
+
+                <div id="gcashReferenceSection" style="display: none; margin-top: 0.8rem;">
+                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">GCash Reference Number</label>
+                    <input type="text" name="payment_reference" id="billingPaymentReference" value="{{ old('payment_reference') }}" placeholder="Enter customer GCash reference" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem;">
+                    <small style="display:block; margin-top:0.35rem; color:#777; font-size:0.78rem;">Saved to booking adjustment notes for record keeping.</small>
+                </div>
             </x-admin.card>
         </div>
 
@@ -726,7 +732,9 @@ function calculateTotal() {
 
 function toggleGcashQR() {
     const gcashRadio = document.getElementById('paymentGcash');
-    document.getElementById('gcashQRSection').style.display = gcashRadio.checked ? 'block' : 'none';
+    const showGcash = gcashRadio.checked;
+    document.getElementById('gcashQRSection').style.display = showGcash ? 'block' : 'none';
+    document.getElementById('gcashReferenceSection').style.display = showGcash ? 'block' : 'none';
 }
 
 document.addEventListener('DOMContentLoaded', function () {
