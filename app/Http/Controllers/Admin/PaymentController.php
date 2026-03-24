@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Mail\PaymentApproved;
 use App\Mail\PaymentRejected;
-use App\Mail\PaymentConfirmation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -57,17 +56,12 @@ class PaymentController extends Controller
             'verified_by' => Auth::id(),
         ]);
 
-        if ($payment->booking && $payment->booking->status === 'pending') {
-            $payment->booking->update(['status' => 'confirmed']);
-        }
-
-        // Send confirmation email
+        // Send payment-verified acknowledgement only.
+        // Booking confirmation email is sent when admin explicitly updates status to Confirmed.
         Log::info('About to send payment emails to: ' . $payment->booking->guest->email);
         try {
             Mail::to($payment->booking->guest->email)->send(new PaymentApproved($payment));
             Log::info('PaymentApproved email sent');
-            Mail::to($payment->booking->guest->email)->send(new PaymentConfirmation($payment->booking, $payment));
-            Log::info('PaymentConfirmation email sent');
         } catch (\Exception $e) {
             Log::error('Failed to send payment approval email: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
