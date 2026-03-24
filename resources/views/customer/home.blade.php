@@ -952,6 +952,7 @@
                                 </div>
                                 <div class="guest-option">
                                     <label>Adults</label>
+                                    <div style="font-size: 0.72rem; color: #7a7a7a; margin-top: -0.3rem;">Ages 13 and Above</div>
                                     <div class="counter">
                                         <button type="button" class="counter-btn" onclick="changeValue('adults', -1)">-</button>
                                         <input type="number" name="adults" id="adults" value="1" min="1" max="10" readonly>
@@ -960,6 +961,7 @@
                                 </div>
                                 <div class="guest-option">
                                     <label>Children</label>
+                                    <div style="font-size: 0.72rem; color: #7a7a7a; margin-top: -0.3rem;">Ages 0-12</div>
                                     <div class="counter">
                                         <button type="button" class="counter-btn" onclick="changeValue('children', -1)">-</button>
                                         <input type="number" name="children" id="children" value="0" min="0" max="10" readonly>
@@ -1081,9 +1083,9 @@
         
         <div class="services-grid">
             <div class="service-card">
-                <div class="service-icon"><i class="fas fa-concierge-bell"></i></div>
-                <h3>24/7 Concierge</h3>
-                <p>Our dedicated concierge team is available around the clock to assist with your every need.</p>
+                <div class="service-icon"><i class="fas fa-id-card"></i></div>
+                <h3>Secure Keycard Access</h3>
+                <p>Access to floors is restricted via keycard, ensuring privacy and safety for all guests.</p>
             </div>
             
      
@@ -1106,6 +1108,12 @@
                 <div class="service-icon"><i class="fas fa-broom"></i></div>
                 <h3>Housekeeping</h3>
                 <p>Daily housekeeping services to ensure your comfort.</p>
+            </div>
+
+            <div class="service-card">
+                <div class="service-icon"><i class="fas fa-building"></i></div>
+                <h3>Rooftop Event Space</h3>
+                <p>A scenic rooftop venue perfect for private events and celebrations, accommodating up to 200 guests.</p>
             </div>
         </div>
     </section>
