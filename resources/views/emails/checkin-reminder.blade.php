@@ -9,7 +9,7 @@
         <div style="background: linear-gradient(135deg, #2c2c2c, #1a1a1a); color: white; padding: 30px; text-align: center;">
             <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences" style="max-width: 150px; height: auto; margin-bottom: 15px; border-radius: 10px; pointer-events: none; user-select: none; -webkit-user-drag: none;">
             <h1 style="margin: 0;">Check-in Reminder</h1>
-            <p style="margin: 10px 0 0 0;">Your arrival is in 24 hours</p>
+            <p style="margin: 10px 0 0 0;">Your Upcoming Stay at Bez Tower and Residences</p>
         </div>
 
         <div style="padding: 30px;">
@@ -19,7 +19,7 @@
             @endphp
 
             <p>Dear {{ $booking->guest->name }},</p>
-            <p>This is a friendly reminder that your stay at Bez Tower and Residences starts tomorrow.</p>
+            <p>This is a friendly reminder of your upcoming stay at Bez Tower and Residences.</p>
 
             <div style="background: #f9f9f9; border-left: 4px solid #d4af37; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h2 style="margin-top: 0; color: #2c2c2c;">Arrival Details</h2>
@@ -56,7 +56,9 @@
                 </ul>
             </div>
 
-            <p>If you need assistance, contact us at <strong>beztowerresidences@gmail.com</strong> or <strong>0917 122 1429</strong>.</p>
+            <p>We kindly ask that you arrive at the hotel during our check-in hours ({{ \Carbon\Carbon::createFromFormat('H:i', $configuredCheckInTime)->format('g:i A') }} onward). If you anticipate arriving earlier or later than scheduled, please let us know in advance.</p>
+
+            <p>If you need assistance, contact us at <strong>beztowerresidences@gmail.com</strong> or <strong>09171221429</strong>.</p>
 
             <p style="margin-top: 30px;">
                 Best regards,<br>
