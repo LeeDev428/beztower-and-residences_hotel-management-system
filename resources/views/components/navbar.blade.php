@@ -7,7 +7,7 @@
     <ul class="nav-links">
         <li><a href="{{ route('home') }}">Home</a></li>
         <li><a href="{{ route('home') }}#about">About</a></li>
-        <li><a href="{{ route('home') }}#rooms" id="roomsNavLink">Rooms</a></li>
+        <li><a href="{{ request()->routeIs('home') ? '#rooms' : route('home') . '#rooms' }}" id="roomsNavLink">Rooms</a></li>
         <li><a href="{{ route('home') }}#services">Services</a></li>
         <li><a href="{{ route('home') }}#contact">Contact</a></li>
     </ul>
