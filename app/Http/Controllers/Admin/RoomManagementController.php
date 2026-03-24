@@ -69,15 +69,13 @@ class RoomManagementController extends Controller
         $validated = $request->validate([
             'room_number' => 'required|string|max:3|unique:rooms',
             'room_type_id' => ['required', Rule::exists('room_types', 'id')->whereNull('archived_at')],
-            'floor' => 'required|integer|min:1|max:8|not_in:5',
+            'floor' => 'required|integer|in:2,3,4,5,8',
             'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
             'discount_percentage' => 'nullable|numeric|min:0|max:100|multiple_of:5',
             'description' => 'nullable|string',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
             'photos.*' => 'nullable|image|max:5120', // 5MB max
-        ], [
-            'floor.not_in' => 'Floor 5 is unavailable. Please select another floor.',
         ]);
 
         $room = Room::create([
@@ -133,15 +131,13 @@ class RoomManagementController extends Controller
                 'required',
                 Rule::exists('room_types', 'id')->whereNull('archived_at'),
             ],
-            'floor' => 'required|integer|min:1|max:8|not_in:5',
+            'floor' => 'required|integer|in:2,3,4,5,8',
             'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
             'discount_percentage' => 'nullable|numeric|min:0|max:100|multiple_of:5',
             'description' => 'nullable|string',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
             'photos.*' => 'nullable|image|max:5120', // 5MB max
-        ], [
-            'floor.not_in' => 'Floor 5 is unavailable. Please select another floor.',
         ]);
 
         $room->update([
