@@ -113,7 +113,7 @@
             @endphp
             <p>Good day, <strong>{{ $booking->guest->name }}</strong>,</p>
 
-            <p>We would like to inform you that your booking has been <strong>successfully canceled</strong>.</p>
+            <p>We regret to inform you that your booking has been <strong>cancelled</strong>.</p>
 
             <div class="booking-details">
                 <h3>Cancelled Booking Details</h3>
@@ -152,8 +152,8 @@
             <p><strong>Important Information:</strong></p>
             <ul>
                 <li>Please note that all payments made (down payment or full payment) are <strong>non-refundable</strong>.</li>
-                <li>However, you may request to <strong>reschedule your booking within two (2) weeks</strong> from your original check-in date.</li>
-                <li>The requested new check-in date must be <strong>within 14 days</strong> from the original check-in date and is subject to availability.</li>
+                <li>However, you may request to reschedule your booking <strong>within 24 hours of this cancellation</strong>.</li>
+                <li>The new rescheduled date must be <strong>within 2 weeks from your original booking date</strong> and is subject to availability.</li>
             </ul>
 
             <p>If you need assistance with your cancellation details or rescheduling options, kindly contact Bez Tower using the details below:</p>
