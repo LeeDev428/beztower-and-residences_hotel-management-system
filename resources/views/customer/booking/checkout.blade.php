@@ -673,6 +673,26 @@
                     </div>
                 @endif
 
+                @if ($errors->has('room_ids'))
+                    <div style="background:#fee2e2;border:1px solid #f87171;color:#991b1b;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:0.95rem;">
+                        <strong>Room Availability Conflict:</strong> {{ $errors->first('room_ids') }}
+                    </div>
+                @endif
+
+                @if ($errors->has('check_in_date') || $errors->has('check_out_date') || $errors->has('number_of_guests') || $errors->has('number_of_rooms'))
+                    <div style="background:#fff3cd;border:1px solid #f0cc65;color:#7c5a00;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:0.95rem;">
+                        <strong>Please review your booking details:</strong>
+                        <ul style="margin:0.5rem 0 0 1rem; padding:0;">
+                            @if ($errors->has('check_in_date'))<li>{{ $errors->first('check_in_date') }}</li>@endif
+                            @if ($errors->has('check_out_date'))<li>{{ $errors->first('check_out_date') }}</li>@endif
+                            @if ($errors->has('number_of_guests'))<li>{{ $errors->first('number_of_guests') }}</li>@endif
+                            @if ($errors->has('number_of_rooms'))<li>{{ $errors->first('number_of_rooms') }}</li>@endif
+                        </ul>
+                    </div>
+                @endif
+
+                <div id="availabilityValidationMessage" style="display:none;background:#fee2e2;border:1px solid #f87171;color:#991b1b;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:0.95rem;"></div>
+
                 <form action="{{ route('booking.create') }}" method="POST" id="bookingForm" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="submission_key" id="submissionKey" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
@@ -1701,19 +1721,105 @@ Type: Standard Time
             }
         })();
 
-        document.getElementById('bookingForm').addEventListener('submit', function (event) {
+        let bookingSubmitInProgress = false;
+
+        function showAvailabilityValidationMessage(message) {
+            const validationBox = document.getElementById('availabilityValidationMessage');
+            if (!validationBox) {
+                return;
+            }
+
+            validationBox.style.display = 'block';
+            validationBox.innerHTML = message;
+        }
+
+        function clearAvailabilityValidationMessage() {
+            const validationBox = document.getElementById('availabilityValidationMessage');
+            if (!validationBox) {
+                return;
+            }
+
+            validationBox.style.display = 'none';
+            validationBox.textContent = '';
+        }
+
+        async function validateRoomAvailabilityBeforeSubmit() {
+            const checkIn = document.getElementById('checkInDate').value;
+            const checkOut = document.getElementById('checkOutDate').value;
+            const requestedRooms = Math.max(1, parseInt(document.getElementById('numberOfRooms').value || '1', 10));
+            const requestedGuests = Math.max(1, parseInt(document.getElementById('guestCountSelect').value || '1', 10));
+            const selectedRoomIds = getSelectedRoomIds().map((id) => Number(id)).filter((id) => id > 0);
+
+            if (!checkIn || !checkOut) {
+                showAvailabilityValidationMessage('Please select a valid check-in and check-out date before submitting.');
+                return false;
+            }
+
+            if (selectedRoomIds.length !== requestedRooms) {
+                showAvailabilityValidationMessage(`Only ${selectedRoomIds.length} room(s) are currently assignable, but ${requestedRooms} room(s) were requested. Please adjust your selection first.`);
+                return false;
+            }
+
+            try {
+                const params = new URLSearchParams({
+                    check_in_date: checkIn,
+                    check_out_date: checkOut,
+                    number_of_rooms: String(requestedRooms),
+                    number_of_guests: String(requestedGuests),
+                });
+
+                const response = await fetch(`{{ route('booking.availableRooms') }}?${params.toString()}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    cache: 'no-store'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to validate room availability.');
+                }
+
+                const payload = await response.json();
+                const latestAvailableIds = new Set((payload.rooms || []).map((roomData) => Number(roomData.id)));
+                const noLongerAvailable = selectedRoomIds.filter((roomId) => !latestAvailableIds.has(Number(roomId)));
+
+                if (noLongerAvailable.length > 0) {
+                    const summary = document.getElementById('autoAssignedRoomsSummary');
+                    if (summary) {
+                        summary.innerHTML = '<span style="color:#b00020;">Some selected rooms are no longer available for the selected dates. Please reselect rooms before submitting.</span>';
+                    }
+
+                    showAvailabilityValidationMessage('One or more selected rooms are no longer available for the selected dates. Please review the room assignment and try again.');
+                    return false;
+                }
+
+                clearAvailabilityValidationMessage();
+                return true;
+            } catch (error) {
+                showAvailabilityValidationMessage('We could not confirm the latest room availability right now. Please wait a moment and try again.');
+                return false;
+            }
+        }
+
+        document.getElementById('bookingForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            if (bookingSubmitInProgress) {
+                return;
+            }
+
             const requestedRooms = Math.max(1, parseInt(document.getElementById('numberOfRooms').value || '1', 10));
             const selected = getSelectedRoomIds();
             const termsAccepted = document.getElementById('termsAccepted');
 
             if (!termsAccepted || !termsAccepted.checked) {
-                event.preventDefault();
                 alert('Please agree to the Terms & Conditions and Privacy Policy before submitting your reservation.');
                 return;
             }
 
             if (selected.length !== requestedRooms) {
-                event.preventDefault();
                 alert(`Only ${selected.length} room(s) can be assigned. Please adjust your room count or date range.`);
                 return;
             }
@@ -1726,13 +1832,11 @@ Type: Standard Time
             const checkOutDate = checkOutInput && checkOutInput.value ? new Date(checkOutInput.value + 'T00:00:00') : null;
 
             if (!checkInDate || checkInDate < today) {
-                event.preventDefault();
                 alert('Check-in date cannot be in the past.');
                 return;
             }
 
             if (!checkOutDate || checkOutDate <= checkInDate) {
-                event.preventDefault();
                 alert('Check-out date must be at least 1 day after check-in.');
                 return;
             }
@@ -1745,9 +1849,15 @@ Type: Standard Time
 
             const submitBtn = document.getElementById('bookingSubmitBtn');
             if (submitBtn && submitBtn.disabled) {
-                event.preventDefault();
                 return;
             }
+
+            const stillAvailable = await validateRoomAvailabilityBeforeSubmit();
+            if (!stillAvailable) {
+                return;
+            }
+
+            bookingSubmitInProgress = true;
 
             if (submitBtn) {
                 submitBtn.disabled = true;
@@ -1755,6 +1865,8 @@ Type: Standard Time
                 submitBtn.style.cursor = 'not-allowed';
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             }
+
+            this.submit();
         });
     </script>
 </body>
