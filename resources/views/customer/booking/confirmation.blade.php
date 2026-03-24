@@ -474,7 +474,7 @@
                                         <p style="font-size: 1.5rem; font-weight: 700; color: #d4af37; margin: 0.3rem 0 0 0;">
                                             ₱{{ number_format($remainingAmount, 2) }}
                                         </p>
-                                        <small style="color: #999;">To be paid upon check-in or before</small>
+                                        <small style="color: #999;">Please settle before checkout</small>
                                     </div>
                                     <i class="fas fa-wallet" style="font-size: 2.5rem; color: #d4af37; opacity: 0.3;"></i>
                                 </div>
@@ -529,17 +529,13 @@
                             @if($booking->rooms->count() > 0)
                                 <ul class="room-list">
                                     @foreach($booking->rooms as $reservedRoom)
-                                        <li>Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}</li>
+                                        <li>{{ $reservedRoom->roomType->name }}</li>
                                     @endforeach
                                 </ul>
                             @else
-                                <span class="info-value">{{ $booking->room->roomType->name }} (Room {{ $booking->room->room_number }})</span>
+                                <span class="info-value">{{ $booking->room->roomType->name }}</span>
                             @endif
                         </div>
-                        {{-- <div class="info-item">
-                            <span class="info-label">Room Number</span>
-                            <span class="info-value">#{{ $booking->room->room_number }}</span>
-                        </div> --}}
                         <div class="info-item">
                             <span class="info-label">Check-In Date</span>
                             <span class="info-value">{{ $booking->check_in_date->format('F d, Y') }}</span>
@@ -606,7 +602,7 @@
                         @if($booking->rooms->count() > 0)
                             @foreach($booking->rooms as $reservedRoom)
                                 <div class="price-row">
-                                    <span>Room {{ $reservedRoom->room_number }} (₱{{ number_format($reservedRoom->pivot->nightly_rate, 2) }} × {{ $booking->total_nights }} {{ $booking->total_nights == 1 ? 'night' : 'nights' }})</span>
+                                    <span>{{ $reservedRoom->roomType->name }} (₱{{ number_format($reservedRoom->pivot->nightly_rate, 2) }} × {{ $booking->total_nights }} {{ $booking->total_nights == 1 ? 'night' : 'nights' }})</span>
                                     <span>₱{{ number_format($reservedRoom->pivot->nightly_rate * $booking->total_nights, 2) }}</span>
                                 </div>
                             @endforeach
