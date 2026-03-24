@@ -109,14 +109,8 @@ class RoomManagementController extends Controller
     public function edit(Room $room)
     {
         $room->load(['roomType', 'amenities', 'photos']);
-        $roomTypes = RoomType::query()
-            ->whereNull('archived_at')
-            ->orWhere('id', $room->room_type_id)
-            ->get();
-        $amenities = Amenity::query()
-            ->whereNull('archived_at')
-            ->orWhereIn('id', $room->amenities->pluck('id')->all())
-            ->get();
+        $roomTypes = RoomType::active()->get();
+        $amenities = Amenity::active()->get();
         
         return view('admin.rooms.edit', compact('room', 'roomTypes', 'amenities'));
     }
@@ -135,10 +129,7 @@ class RoomManagementController extends Controller
             'room_number' => 'required|string|max:3|unique:rooms,room_number,' . $room->id,
             'room_type_id' => [
                 'required',
-                Rule::exists('room_types', 'id')->where(function ($query) use ($room) {
-                    $query->whereNull('archived_at')
-                        ->orWhere('id', $room->room_type_id);
-                }),
+                Rule::exists('room_types', 'id')->whereNull('archived_at'),
             ],
             'floor' => 'required|integer|min:1|max:99',
             'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
@@ -160,7 +151,12 @@ class RoomManagementController extends Controller
 
         // Sync amenities
         if (isset($validated['amenities'])) {
-            $room->amenities()->sync($validated['amenities']);
+            $activeAmenityIds = Amenity::active()
+                ->whereIn('id', $validated['amenities'])
+                ->pluck('id')
+                ->all();
+
+            $room->amenities()->sync($activeAmenityIds);
         } else {
             $room->amenities()->detach();
         }
