@@ -1081,7 +1081,44 @@ We ensure that your personal details such as your name, address, contact informa
 
 We are committed to protecting your personal data in accordance with the Data Privacy Act of 2012 (Republic Act No. 10173) of the Philippines. Your information will not be shared with unauthorized parties and will only be used for purposes directly related to your stay or as required by law.`;
 
-    const billingPoliciesText = @json($bookingPoliciesText ?? '');
+    const billingPoliciesText = `1. Standard Check-in & Check-out Times
+
+Type: Standard Time
+- Check-in: 2:00 PM
+- Check-out: 12:00 PM (Noon)
+
+2. Late Check-in - Always Allowed
+- Guests may check in at any time after 2:00 PM on the check-in date, as long as the booking is paid and confirmed.
+- System should not reject valid late arrivals.
+
+3. One-Night Stay Rule
+- For one-night bookings, check-out remains 12:00 PM the next day regardless of actual check-in time.
+
+4. Early Check-in - Subject to Room Availability
+- Early check-in before 2:00 PM is subject to room availability and admin approval.
+
+5. Room Availability Release Logic
+5.1 Default behavior (no approved late check-out)
+- Room becomes available at 12:00 PM on the check-out date.
+
+5.2 Immediate release upon checkout
+- Once guest checks out (standard or approved extended time), room should be released immediately.
+
+6. Late Check-out - Admin Approved, Subject to Availability
+6.1 Eligibility
+- Any guest may request late check-out.
+
+6.2 Approval and blocking
+- If approved (for example until 3:00 PM), room stays blocked until the approved time.
+
+6.3 Release after late checkout
+- After approved late check-out time, room must be released immediately and become bookable again.
+
+7. Developer Summary
+- Do not block a room for the whole day by default.
+- Release room at 12:00 PM by default, or at approved late check-out time.
+- Always allow late check-in for paid/confirmed bookings.
+- Flag admin conflicts when approved late check-out overlaps with another booking.`;
 
         const legalModal = document.getElementById('legalModal');
         const legalModalTitle = document.getElementById('legalModalTitle');
@@ -1096,7 +1133,7 @@ We are committed to protecting your personal data in accordance with the Data Pr
                 legalModalTitle.textContent = 'Privacy Policy';
                 legalModalContent.textContent = legalPrivacyText;
             } else if (type === 'policies') {
-                legalModalTitle.textContent = 'Resort Policies';
+                legalModalTitle.textContent = 'Hotel Policies';
                 legalModalContent.textContent = billingPoliciesText;
             } else {
                 legalModalTitle.textContent = 'Terms & Conditions';
