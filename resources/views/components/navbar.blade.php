@@ -7,11 +7,58 @@
     <ul class="nav-links">
         <li><a href="{{ route('home') }}">Home</a></li>
         <li><a href="{{ route('home') }}#about">About</a></li>
-        <li><a href="{{ route('home') }}#rooms">Rooms</a></li>
+        <li><a href="{{ route('home') }}#rooms" id="roomsNavLink">Rooms</a></li>
         <li><a href="{{ route('home') }}#services">Services</a></li>
         <li><a href="{{ route('home') }}#contact">Contact</a></li>
     </ul>
 </nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const normalizePath = (path) => path.replace(/\/+$/, '') || '/';
+
+        const scrollToHashWithOffset = (hash) => {
+            if (!hash) {
+                return false;
+            }
+
+            const target = document.querySelector(hash);
+            if (!target) {
+                return false;
+            }
+
+            const nav = document.querySelector('.navbar');
+            const navHeight = nav ? nav.offsetHeight : 0;
+            const targetTop = target.getBoundingClientRect().top + window.scrollY;
+            const scrollTop = Math.max(0, targetTop - navHeight - 10);
+
+            window.scrollTo({ top: scrollTop, behavior: 'smooth' });
+            return true;
+        };
+
+        document.querySelectorAll('.nav-links a[href*="#"]').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                const parsed = new URL(link.href, window.location.origin);
+                const isSamePage = normalizePath(parsed.pathname) === normalizePath(window.location.pathname);
+
+                if (!isSamePage || !parsed.hash) {
+                    return;
+                }
+
+                if (scrollToHashWithOffset(parsed.hash)) {
+                    event.preventDefault();
+                    window.history.replaceState(null, '', parsed.hash);
+                }
+            });
+        });
+
+        if (window.location.hash) {
+            setTimeout(() => {
+                scrollToHashWithOffset(window.location.hash);
+            }, 120);
+        }
+    });
+</script>
 
 <style>
     /* Navigation */
