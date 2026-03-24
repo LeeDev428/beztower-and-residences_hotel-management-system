@@ -13,5 +13,5 @@ Schedule::command('bookings:auto-cancel-expired')->hourly();
 // Schedule checkout reminders to be sent every day at 8:00 AM
 Schedule::command('bookings:send-checkout-reminders')->dailyAt('08:00');
 
-// Schedule check-in reminders 24 hours before arrival (daily run at 8:00 AM)
-Schedule::command('bookings:send-checkin-reminders')->dailyAt('08:00');
+// Schedule check-in reminders hourly so each booking gets a reminder near exactly 24 hours before check-in.
+Schedule::command('bookings:send-checkin-reminders')->hourly();
