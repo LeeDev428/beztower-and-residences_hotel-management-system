@@ -1048,7 +1048,7 @@
                             ->values();
 
                         $selectionAction = (string) request('selection_action', '');
-                        $isViewOnlyLearnMore = request('origin') === 'learn_more'
+                        $isViewOnlyLearnMore = in_array((string) request('origin'), ['learn_more', 'explore_rooms'], true)
                             && !in_array($selectionAction, ['select', 'deselect'], true);
                         $currentSelectedOnSource = request('current_selected') === '1';
 
