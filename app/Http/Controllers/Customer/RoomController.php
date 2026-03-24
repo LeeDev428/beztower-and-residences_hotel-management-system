@@ -480,7 +480,12 @@ class RoomController extends Controller
         })
         ->values();
         
-        $totalRooms = Room::where('status', 'available')->whereNull('archived_at')->count();
+        $totalRooms = Room::whereIn('status', ['available', 'occupied'])
+            ->whereNull('archived_at')
+            ->whereHas('roomType', function ($query) {
+                $query->whereNull('archived_at');
+            })
+            ->count();
         
         return response()->json([
             'booked_dates' => $bookedDates,
