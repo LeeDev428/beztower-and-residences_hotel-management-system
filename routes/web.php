@@ -93,6 +93,7 @@ Route::prefix('admin')->group(function () {
             Route::put('/{booking}/status', [BookingManagementController::class, 'updateStatus'])->name('admin.bookings.updateStatus');
             Route::get('/{booking}/final-billing', [BookingManagementController::class, 'finalBilling'])->name('admin.bookings.finalBilling');
             Route::post('/{booking}/final-billing', [BookingManagementController::class, 'updateFinalBilling'])->name('admin.bookings.updateFinalBilling');
+            Route::post('/{booking}/settle-balance', [BookingManagementController::class, 'settleBalance'])->name('admin.bookings.settleBalance');
             Route::post('/{booking}/cancel', [BookingManagementController::class, 'cancelBooking'])->name('admin.bookings.cancel');
             Route::post('/{booking}/reschedule', [BookingManagementController::class, 'rescheduleBooking'])->name('admin.bookings.reschedule');
             Route::post('/{booking}/reschedule-request', [BookingManagementController::class, 'sendRescheduleRequest'])->name('admin.bookings.rescheduleRequest');
