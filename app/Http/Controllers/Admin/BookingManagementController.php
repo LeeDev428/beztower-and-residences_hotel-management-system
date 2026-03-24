@@ -9,6 +9,7 @@ use App\Models\Room;
 use App\Models\ActivityLog;
 use App\Mail\BookingCancelled;
 use App\Mail\CheckoutThankYou;
+use App\Mail\PaymentConfirmation;
 use App\Mail\RescheduleConfirmation;
 use App\Mail\RescheduleRejection;
 use App\Mail\RescheduleRequest;
@@ -168,6 +169,7 @@ class BookingManagementController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,checked_in,checked_out,cancelled,rescheduled,rejected_payment',
+            'cancellation_reason' => 'nullable|string|max:500|required_if:status,cancelled',
         ]);
 
         $currentStatus = $booking->status;
@@ -230,9 +232,26 @@ class BookingManagementController extends Controller
         $updateData = ['status' => $targetStatus];
         if ($targetStatus === 'cancelled' && !$booking->cancelled_at) {
             $updateData['cancelled_at'] = now();
-            $updateData['cancellation_reason'] = $booking->cancellation_reason ?: 'Cancelled by admin via status update.';
+            $updateData['cancellation_reason'] = $validated['cancellation_reason'] ?? $booking->cancellation_reason ?: 'Cancelled by admin via status update.';
         }
         $booking->update($updateData);
+
+        if ($targetStatus === 'confirmed') {
+            $latestVerifiedPayment = $booking->payments()
+                ->whereIn('payment_status', ['verified', 'completed'])
+                ->latest('payment_date')
+                ->latest('created_at')
+                ->first();
+
+            $guestEmail = optional($booking->guest)->email;
+            if ($latestVerifiedPayment && !empty($guestEmail)) {
+                try {
+                    Mail::to($guestEmail)->send(new PaymentConfirmation($booking, $latestVerifiedPayment));
+                } catch (\Exception $e) {
+                    Log::error('Failed to send booking confirmation email from status update: ' . $e->getMessage());
+                }
+            }
+        }
 
         // Update room status based on booking status
         if ($targetStatus === 'rejected_payment') {
@@ -285,6 +304,41 @@ class BookingManagementController extends Controller
         }
 
         return back()->with('success', 'Booking status updated successfully!');
+    }
+
+    public function settleBalance(Request $request, Booking $booking)
+    {
+        $request->validate([
+            'payment_method' => 'nullable|in:cash,gcash,bank_transfer,paymaya',
+            'payment_reference' => 'nullable|string|max:255',
+            'payment_notes' => 'nullable|string|max:500',
+        ]);
+
+        $amountPaid = (float) $booking->payments()
+            ->whereIn('payment_status', ['verified', 'completed'])
+            ->sum('amount');
+        $finalTotal = (float) ($booking->final_total ?? $booking->total_amount ?? 0);
+        $remainingBalance = round($finalTotal - $amountPaid, 2);
+
+        if ($remainingBalance <= 0) {
+            return back()->with('success', 'No outstanding balance to settle.');
+        }
+
+        Payment::create([
+            'booking_id' => $booking->id,
+            'payment_type' => 'balance_due',
+            'payment_method' => $request->input('payment_method', 'cash'),
+            'payment_reference' => $request->input('payment_reference') ?: ('SETTLE-' . strtoupper(substr($booking->booking_reference ?? 'BOOKING', -6)) . '-' . now()->format('YmdHis')),
+            'amount' => $remainingBalance,
+            'percentage' => 100,
+            'payment_status' => 'completed',
+            'payment_date' => now(),
+            'payment_notes' => $request->input('payment_notes') ?: 'Settled via admin quick-settle action.',
+            'verified_at' => now(),
+            'verified_by' => Auth::id(),
+        ]);
+
+        return back()->with('success', 'Balance settled successfully.');
     }
 
     private function getAllowedStatusTransitions(string $currentStatus): array
