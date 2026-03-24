@@ -646,7 +646,7 @@ class BookingController extends Controller
             $paymentAmount = $booking->total_amount * ($paymentPercentage / 100);
 
             // Create payment record
-            $payment = Payment::create([
+            Payment::create([
                 'booking_id' => $booking->id,
                 'payment_type' => $booking->payment_option,
                 'payment_method' => $validated['payment_method'],
@@ -657,9 +657,6 @@ class BookingController extends Controller
                 'proof_of_payment' => $proofPath,
                 'payment_date' => now(),
             ]);
-
-            // Update booking status to pending (waiting for payment verification)
-            $booking->update(['status' => 'pending']);
 
             DB::commit();
 
