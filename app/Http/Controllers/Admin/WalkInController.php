@@ -18,13 +18,23 @@ use Illuminate\Support\Str;
 
 class WalkInController extends Controller
 {
+    private const EXCLUDED_WALKIN_EXTRA_NAMES = [
+        'Late Check-Out',
+        'Early Check-In',
+        'Car Parking',
+        'Motorcycle Parking',
+    ];
+
     public function create()
     {
         $checkIn = Carbon::now()->format('Y-m-d');
         $checkOut = Carbon::now()->addDay()->format('Y-m-d');
 
         $availableRooms = $this->availableRoomsQuery($checkIn, $checkOut)->get();
-        $extras = Extra::where('is_active', true)->orderBy('name')->get();
+        $extras = Extra::where('is_active', true)
+            ->whereNotIn('name', self::EXCLUDED_WALKIN_EXTRA_NAMES)
+            ->orderBy('name')
+            ->get();
 
         return view('admin.bookings.walk-in', compact('availableRooms', 'extras', 'checkIn', 'checkOut'));
     }
@@ -116,7 +126,10 @@ class WalkInController extends Controller
         $selectedExtras = [];
         $extrasTotal = 0;
         if (!empty($validated['extras'])) {
-            $extras = Extra::whereIn('id', $validated['extras'])->where('is_active', true)->get();
+            $extras = Extra::whereIn('id', $validated['extras'])
+                ->where('is_active', true)
+                ->whereNotIn('name', self::EXCLUDED_WALKIN_EXTRA_NAMES)
+                ->get();
             foreach ($extras as $extra) {
                 $quantity = max(1, (int) ($validated['extra_quantities'][$extra->id] ?? 1));
                 $lineTotal = (float) $extra->price * $quantity;
