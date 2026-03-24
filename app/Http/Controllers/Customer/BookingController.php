@@ -261,15 +261,8 @@ class BookingController extends Controller
             }
 
             $hasConflict = Booking::query()
-                ->where(function ($statusQuery) {
-                    $statusQuery
-                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                        ->orWhereHas('payments', function ($paymentQuery) {
-                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                        });
-                })
-                ->where('check_in_date', '<', $validated['check_out_date'])
-                ->where('check_out_date', '>', $validated['check_in_date'])
+                ->tap(fn ($query) => Booking::applyActiveReservationFilter($query))
+                ->tap(fn ($query) => Booking::applyDateConflictWindow($query, (string) $validated['check_in_date'], (string) $validated['check_out_date']))
                 ->where(function ($query) use ($selectedRoomIds) {
                     $query->whereIn('room_id', $selectedRoomIds)
                         ->orWhereHas('rooms', function ($q) use ($selectedRoomIds) {
@@ -403,26 +396,12 @@ class BookingController extends Controller
                 $roomTypeQuery->whereNull('archived_at');
             })
             ->whereDoesntHave('bookings', function ($query) use ($validated) {
-                $query->where(function ($statusQuery) {
-                    $statusQuery
-                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                        ->orWhereHas('payments', function ($paymentQuery) {
-                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                        });
-                })
-                    ->where('check_in_date', '<', $validated['check_out_date'])
-                    ->where('check_out_date', '>', $validated['check_in_date']);
+                Booking::applyActiveReservationFilter($query);
+                Booking::applyDateConflictWindow($query, (string) $validated['check_in_date'], (string) $validated['check_out_date']);
             })
             ->whereDoesntHave('reservationBookings', function ($query) use ($validated) {
-                $query->where(function ($statusQuery) {
-                    $statusQuery
-                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                        ->orWhereHas('payments', function ($paymentQuery) {
-                            $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                        });
-                })
-                    ->where('check_in_date', '<', $validated['check_out_date'])
-                    ->where('check_out_date', '>', $validated['check_in_date']);
+                Booking::applyActiveReservationFilter($query);
+                Booking::applyDateConflictWindow($query, (string) $validated['check_in_date'], (string) $validated['check_out_date']);
             })
             ->orderBy('room_type_id')
             ->orderBy('room_number')
@@ -721,9 +700,8 @@ class BookingController extends Controller
 
         // Check if room is already booked for these dates
         $isBooked = Booking::query()
-            ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-            ->where('check_in_date', '<', $validated['check_out_date'])
-            ->where('check_out_date', '>', $validated['check_in_date'])
+            ->tap(fn ($query) => Booking::applyActiveReservationFilter($query))
+            ->tap(fn ($query) => Booking::applyDateConflictWindow($query, (string) $validated['check_in_date'], (string) $validated['check_out_date']))
             ->where(function ($query) use ($validated) {
                 $query->where('room_id', $validated['room_id'])
                     ->orWhereHas('rooms', function ($q) use ($validated) {
