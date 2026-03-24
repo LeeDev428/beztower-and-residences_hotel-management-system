@@ -13,6 +13,9 @@
         </div>
         
         <div style="padding: 30px;">
+            @php
+                $reservedRooms = $payment->booking->rooms->isNotEmpty() ? $payment->booking->rooms : collect([$payment->booking->room])->filter();
+            @endphp
             <p>Dear {{ $payment->booking->guest->name }},</p>
             
             <p>We regret to inform you that your payment could not be verified and has been rejected.</p>
@@ -52,8 +55,12 @@
                     <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->booking_reference }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px 0; color: #666;">Room:</td>
-                    <td style="padding: 8px 0; font-weight: bold;">{{ $payment->booking->room->roomType->name }}</td>
+                    <td style="padding: 8px 0; color: #666;">Room(s):</td>
+                    <td style="padding: 8px 0; font-weight: bold;">
+                        @foreach($reservedRooms as $reservedRoom)
+                            Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
+                        @endforeach
+                    </td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;">Check-in:</td>
@@ -104,46 +111,31 @@
                 </tr>
             </table>
         </div>
-            <ol style="line-height: 1.8;">
-                <li>Please review the rejection reason above</li>
-                <li>Verify your payment details</li>
-                <li>Submit a new payment proof if needed</li>
-                <li>Contact us if you need assistance</li>
-            </ol>
-        </div>
-        
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h2 style="color: #C9A961; margin-top: 0;">Next Steps - Payment Instructions</h2>
             <ol style="line-height: 1.8;">
                 <li>Please review the rejection reason above</li>
                 <li>Verify your payment details</li>
-                <li>Submit a new payment using the methods below</li>
+                <li>Return to your booking payment page and upload a new valid proof of payment</li>
                 <li>Contact us if you need assistance</li>
             </ol>
 
             <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
                 <h3 style="margin-top: 0; color: #2c2c2c;">💳 Accepted Payment Methods:</h3>
                 <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li><strong>Bank Transfer:</strong>
-                        <ul style="margin: 5px 0;">
-                            <li>Bank Name: BDO - Banco de Oro</li>
-                            <li>Account Name: Beztower & Residences Inc.</li>
-                            <li>Account Number: 1234-5678-9012</li>
-                        </ul>
-                    </li>
-                    <li><strong>GCash:</strong> 0917-123-4567 (Beztower & Residences)</li>
-                    <li><strong>PayMaya:</strong> 0917-123-4567 (Beztower & Residences)</li>
-                    <li><strong>Over-the-counter:</strong> Available at our front desk</li>
+                    <li><strong>GCash</strong></li>
+                    <li><strong>Bank Transfer</strong></li>
+                    <li><strong>Over-the-counter</strong> (front desk)</li>
                 </ul>
 
                 <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #4caf50;">
                     <p style="margin: 0;"><strong>📧 Where to Send Proof of Payment:</strong></p>
                     <ul style="margin: 8px 0; padding-left: 20px;">
-                        <li><strong>Email:</strong> payments@beztower.com</li>
+                        <li><strong>Email:</strong> beztowerresidences@gmail.com</li>
                         <li><strong>Subject:</strong> Payment Proof - {{ $payment->booking->booking_reference }}</li>
                         <li><strong>Include:</strong> Screenshot/Photo of payment receipt with your booking reference number</li>
                     </ul>
-                    <p style="margin: 8px 0 0 0; font-size: 14px;"><em>📱 You can also send via WhatsApp: +63 917 123 4567</em></p>
+                    <p style="margin: 8px 0 0 0; font-size: 14px;"><em>📱 You may also contact us at 0917 122 1429 for assistance.</em></p>
                 </div>
             </div>
         </div>
