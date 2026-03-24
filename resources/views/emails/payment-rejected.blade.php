@@ -124,9 +124,12 @@
                 <h3 style="margin-top: 0; color: #2c2c2c;">💳 Accepted Payment Methods:</h3>
                 <ul style="margin: 10px 0; padding-left: 20px;">
                     <li><strong>GCash</strong></li>
-                    <li><strong>Bank Transfer</strong></li>
-                    <li><strong>Over-the-counter</strong> (front desk)</li>
                 </ul>
+
+                <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #2c2c2c;">
+                    <div><strong>GCash Number:</strong> 09778325550</div>
+                    <div><strong>Account Name:</strong> MICHAEL ANG</div>
+                </div>
 
                 <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #4caf50;">
                     <p style="margin: 0;"><strong>📧 Where to Send Proof of Payment:</strong></p>
@@ -135,7 +138,7 @@
                         <li><strong>Subject:</strong> Payment Proof - {{ $payment->booking->booking_reference }}</li>
                         <li><strong>Include:</strong> Screenshot/Photo of payment receipt with your booking reference number</li>
                     </ul>
-                    <p style="margin: 8px 0 0 0; font-size: 14px;"><em>📱 You may also contact us at 0917 122 1429 for assistance.</em></p>
+                    <p style="margin: 8px 0 0 0; font-size: 14px;"><em>📱 You may also contact us at 09171221429 for assistance.</em></p>
                 </div>
             </div>
         </div>
