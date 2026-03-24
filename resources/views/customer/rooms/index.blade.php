@@ -160,9 +160,6 @@
                         @foreach($selectedRoomSummary as $selectedRoom)
                             <span style="display:inline-flex; align-items:center; gap:0.25rem; background:#2c2c2c; color:#fff; border-radius:999px; padding:0.2rem 0.55rem; font-size:0.78rem; font-weight:600;">
                                 {{ $selectedRoom['room_type'] ?? 'Room' }}
-                                @if(!empty($selectedRoom['room_number']))
-                                    ({{ $selectedRoom['room_number'] }})
-                                @endif
                                 @if(isset($selectedRoom['capacity']))
                                     - {{ (int) $selectedRoom['capacity'] }} pax
                                 @endif
