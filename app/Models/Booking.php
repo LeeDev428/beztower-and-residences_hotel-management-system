@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Schema;
 
 class Booking extends Model
@@ -71,6 +72,34 @@ class Booking extends Model
              + $this->late_checkout_charge 
              - $this->pwd_senior_discount 
              + $this->manual_adjustment;
+    }
+
+    public static function applyActiveReservationFilter(Builder $query): Builder
+    {
+        return $query->where(function ($statusQuery) {
+            $statusQuery
+                ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+                ->orWhereHas('payments', function ($paymentQuery) {
+                    $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
+                });
+        });
+    }
+
+    public static function applyDateConflictWindow(Builder $query, string $checkInDate, string $checkOutDate): Builder
+    {
+        return $query->where(function ($overlapQuery) use ($checkInDate, $checkOutDate) {
+            $overlapQuery
+                ->where(function ($rangeQuery) use ($checkInDate, $checkOutDate) {
+                    $rangeQuery->where('check_in_date', '<', $checkOutDate)
+                        ->where('check_out_date', '>', $checkInDate);
+                })
+                ->orWhere(function ($lateCheckoutQuery) use ($checkInDate) {
+                    // Late checkout blocks same-day turnover until checkout extension is resolved.
+                    $lateCheckoutQuery->whereDate('check_out_date', $checkInDate)
+                        ->where('late_checkout_hours', '>', 0)
+                        ->whereIn('status', ['confirmed', 'checked_in', 'rescheduled']);
+                });
+        });
     }
 
     public function canReschedule()
