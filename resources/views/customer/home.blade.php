@@ -986,6 +986,7 @@
         <div class="room-preview-card" role="dialog" aria-modal="true" aria-labelledby="roomPreviewTitle">
             <button type="button" class="room-preview-close" id="roomPreviewClose" aria-label="Close room preview"><i class="fas fa-times"></i></button>
             <img src="" alt="Room preview" id="roomPreviewImage" class="room-preview-image">
+            <div class="room-preview-thumbnails" id="roomPreviewThumbnails"></div>
             <div class="room-preview-content">
                 <h3 id="roomPreviewTitle" class="room-preview-title">Room</h3>
                 <div class="room-preview-meta" id="roomPreviewMeta">0 pax</div>
@@ -1070,16 +1071,6 @@
         <!-- Pagination -->
         <div class="pagination-wrapper" id="paginationWrapper">
             @include('customer.home.partials.pagination', ['rooms' => $rooms])
-        </div>
-
-        <!-- Browse All Rooms Button -->
-        <div style="text-align: center; margin-top: 3rem;">
-            <a href="{{ route('rooms.index') }}" class="browse-all-btn">
-                <i class="fas fa-th-large"></i> Browse All Rooms
-            </a>
-            <p style="color: #666; margin-top: 1rem; font-size: 0.95rem;">
-                Use advanced filters, search, and check real-time availability
-            </p>
         </div>
     </section>
 
@@ -1453,7 +1444,8 @@
             max-width: 760px;
             background: #fff;
             border-radius: 12px;
-            overflow: hidden;
+            overflow-y: auto;
+            max-height: min(92vh, 860px);
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
             position: relative;
         }
@@ -1485,6 +1477,32 @@
             height: 300px;
             object-fit: cover;
             background: #f4f4f4;
+        }
+
+        .room-preview-thumbnails {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            padding: 0.75rem 1rem 0.1rem;
+        }
+
+        .room-preview-thumb {
+            width: 100%;
+            height: 74px;
+            border-radius: 8px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .room-preview-thumb:hover {
+            transform: translateY(-2px);
+            border-color: #d4af37;
+        }
+
+        .room-preview-thumb.active {
+            border-color: #a17d16;
         }
 
         .room-preview-content {
@@ -1574,6 +1592,10 @@
 
             .room-preview-image {
                 height: 230px;
+            }
+
+            .room-preview-thumbnails {
+                grid-template-columns: repeat(2, 1fr);
             }
 
             .room-preview-footer {
@@ -1819,6 +1841,42 @@
         const roomPreviewPrice = document.getElementById('roomPreviewPrice');
         const roomPreviewExploreLink = document.getElementById('roomPreviewExploreLink');
         const roomPreviewBackBtn = document.getElementById('roomPreviewBackBtn');
+        const roomPreviewThumbnails = document.getElementById('roomPreviewThumbnails');
+        let roomPreviewImages = [];
+        let currentRoomPreviewImageIndex = 0;
+
+        function renderRoomPreviewImage(index) {
+            if (!roomPreviewImage || roomPreviewImages.length === 0) {
+                return;
+            }
+
+            currentRoomPreviewImageIndex = Math.max(0, Math.min(index, roomPreviewImages.length - 1));
+            roomPreviewImage.setAttribute('src', roomPreviewImages[currentRoomPreviewImageIndex]);
+
+            if (!roomPreviewThumbnails) {
+                return;
+            }
+
+            Array.from(roomPreviewThumbnails.children).forEach((thumb, thumbIndex) => {
+                thumb.classList.toggle('active', thumbIndex === currentRoomPreviewImageIndex);
+            });
+        }
+
+        function renderRoomPreviewThumbnails() {
+            if (!roomPreviewThumbnails) {
+                return;
+            }
+
+            roomPreviewThumbnails.innerHTML = '';
+            roomPreviewImages.forEach((imageUrl, index) => {
+                const thumbnail = document.createElement('img');
+                thumbnail.className = 'room-preview-thumb' + (index === currentRoomPreviewImageIndex ? ' active' : '');
+                thumbnail.setAttribute('src', imageUrl);
+                thumbnail.setAttribute('alt', `Room preview ${index + 1}`);
+                thumbnail.addEventListener('click', () => renderRoomPreviewImage(index));
+                roomPreviewThumbnails.appendChild(thumbnail);
+            });
+        }
 
         function openRoomPreviewModal(trigger) {
             if (!roomPreviewModal || !trigger) {
@@ -1829,19 +1887,36 @@
             const roomPrice = trigger.getAttribute('data-room-price') || '0.00';
             const roomCapacity = trigger.getAttribute('data-room-capacity') || '0';
             const roomImage = trigger.getAttribute('data-room-image') || '';
+            const roomImagesRaw = (trigger.getAttribute('data-room-images') || '').trim();
             const roomDescription = trigger.getAttribute('data-room-description') || '';
             const roomInclusions = (trigger.getAttribute('data-room-inclusions') || '')
                 .split('|')
                 .map((item) => item.trim())
                 .filter((item) => item.length > 0);
             const roomUrl = trigger.getAttribute('data-room-url') || '{{ route('rooms.index') }}';
+            roomPreviewImages = roomImagesRaw
+                .split('|')
+                .map((item) => item.trim())
+                .filter((item) => item.length > 0)
+                .slice(0, 4);
+
+            if (roomPreviewImages.length === 0 && roomImage) {
+                roomPreviewImages = [roomImage];
+            }
+
+            if (roomPreviewImages.length === 0) {
+                roomPreviewImages = ['https://via.placeholder.com/760x300/d4af37/2c2c2c?text=Room'];
+            }
+
+            currentRoomPreviewImageIndex = 0;
 
             roomPreviewTitle.textContent = roomName;
             roomPreviewMeta.textContent = `Can accommodate ${roomCapacity} adult${Number(roomCapacity) > 1 ? 's' : ''} + 1 child`;
             roomPreviewDescription.textContent = roomDescription || 'Comfortable and modern accommodation.';
             roomPreviewPrice.textContent = `₱${roomPrice}`;
             roomPreviewExploreLink.setAttribute('href', roomUrl);
-            roomPreviewImage.setAttribute('src', roomImage);
+            renderRoomPreviewThumbnails();
+            renderRoomPreviewImage(0);
 
             roomPreviewInclusions.innerHTML = '';
             roomInclusions.forEach((item) => {
@@ -1852,6 +1927,7 @@
 
             roomPreviewModal.classList.add('active');
             roomPreviewModal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
         }
 
         function closeRoomPreviewModal() {
@@ -1861,6 +1937,7 @@
 
             roomPreviewModal.classList.remove('active');
             roomPreviewModal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
         }
 
         document.addEventListener('click', (event) => {
@@ -1883,6 +1960,12 @@
         if (roomPreviewBackBtn) {
             roomPreviewBackBtn.addEventListener('click', closeRoomPreviewModal);
         }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && roomPreviewModal.classList.contains('active')) {
+                closeRoomPreviewModal();
+            }
+        });
     </script>
 
     <!-- GUEST SELECTOR - Inline onclick approach -->
