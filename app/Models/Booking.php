@@ -74,7 +74,7 @@ class Booking extends Model
              + $this->manual_adjustment;
     }
 
-    public static function applyActiveReservationFilter(Builder $query): Builder
+    public static function applyActiveReservationFilter($query)
     {
         return $query->where(function ($statusQuery) {
             $statusQuery
@@ -85,7 +85,7 @@ class Booking extends Model
         });
     }
 
-    public static function applyDateConflictWindow(Builder $query, string $checkInDate, string $checkOutDate): Builder
+    public static function applyDateConflictWindow($query, string $checkInDate, string $checkOutDate)
     {
         return $query->where(function ($overlapQuery) use ($checkInDate, $checkOutDate) {
             $overlapQuery
