@@ -957,9 +957,9 @@
                                 <div class="guest-option">
                                     <label>Rooms</label>
                                     <div class="counter">
-                                        <button type="button" class="counter-btn" onclick="changeValue('rooms', -1)">-</button>
-                                        <input type="number" name="rooms" id="rooms" value="1" min="1" max="12" readonly>
-                                        <button type="button" class="counter-btn" onclick="changeValue('rooms', 1)">+</button>
+                                        <button type="button" class="counter-btn" onclick="changeValue('roomsCount', -1)">-</button>
+                                        <input type="number" name="rooms" id="roomsCount" value="1" min="1" max="12" readonly>
+                                        <button type="button" class="counter-btn" onclick="changeValue('roomsCount', 1)">+</button>
                                     </div>
                                 </div>
                                 <div class="guest-option">
@@ -2022,7 +2022,7 @@
 
         // Update display text
         function updateGuestDisplay() {
-            var rooms = parseInt(document.getElementById('rooms').value);
+            var rooms = parseInt(document.getElementById('roomsCount').value);
             var adults = parseInt(document.getElementById('adults').value);
             var children = parseInt(document.getElementById('children').value);
 
