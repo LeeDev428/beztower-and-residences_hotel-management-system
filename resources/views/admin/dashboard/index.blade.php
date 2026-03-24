@@ -12,9 +12,7 @@
             :value="'₱' . number_format($revenueToday, 2)"
             color="linear-gradient(135deg, #D4AF37 0%, #B8941F 100%)">
             <x-slot name="icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 48px; height: 48px;">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+                <div style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; line-height: 1;">₱</div>
             </x-slot>
             <x-slot name="subtitle">This Month: ₱{{ number_format($revenueThisMonth, 2) }}</x-slot>
         </x-admin.stat-card>
@@ -113,37 +111,6 @@
                 @endif
             </x-admin.card>
 
-            <!-- Housekeeping Status -->
-            <x-admin.card title="Housekeeping">
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
-                        <span style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--success);"></span>
-                            Clean
-                        </span>
-                        <span style="font-weight: 600;">{{ $cleanRooms }}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
-                        <span style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--danger);"></span>
-                            Dirty
-                        </span>
-                        <span style="font-weight: 600;">{{ $dirtyRooms }}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
-                        <span style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--info);"></span>
-                            In Progress
-                        </span>
-                        <span style="font-weight: 600;">{{ $inProgressRooms }}</span>
-                    </div>
-                </div>
-                <div style="margin-top: 1rem;">
-                    <x-admin.button type="outline" size="sm" href="{{ route('admin.housekeeping.index') }}" style="width: 100%;">
-                        Manage Housekeeping
-                    </x-admin.button>
-                </div>
-            </x-admin.card>
         </div>
     </div>
 
@@ -164,10 +131,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Revenue Chart
-    const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+    const revenueCanvas = document.getElementById('revenueChart');
     const monthlyData = @json($monthlyRevenue);
-    
-    new Chart(ctxRevenue, {
+
+    if (revenueCanvas) {
+        const ctxRevenue = revenueCanvas.getContext('2d');
+        new Chart(ctxRevenue, {
         type: 'line',
         data: {
             labels: monthlyData.map(item => item.month),
@@ -212,12 +181,15 @@
             }
         }
     });
+    }
 
     // Bookings Chart
-    const ctxBookings = document.getElementById('bookingsChart').getContext('2d');
+    const bookingsCanvas = document.getElementById('bookingsChart');
     const bookingsData = @json($monthlyBookings);
-    
-    new Chart(ctxBookings, {
+
+    if (bookingsCanvas) {
+        const ctxBookings = bookingsCanvas.getContext('2d');
+        new Chart(ctxBookings, {
         type: 'bar',
         data: {
             labels: bookingsData.map(item => item.month),
@@ -306,6 +278,7 @@
             }
         }
     });
+    }
 </script>
 @endpush
 @endsection
