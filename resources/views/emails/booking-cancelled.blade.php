@@ -125,7 +125,7 @@
                     <span class="label">Room(s):</span>
                     <span class="value">
                         @foreach($reservedRooms as $reservedRoom)
-                            Room {{ $reservedRoom->room_number }} - {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
+                            {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
                         @endforeach
                     </span>
                 </div>
