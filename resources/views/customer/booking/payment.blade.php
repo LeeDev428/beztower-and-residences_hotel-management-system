@@ -426,7 +426,7 @@
                     @if($booking->rooms->count() > 0)
                         @foreach($booking->rooms as $reservedRoom)
                             <div class="summary-row">
-                                <span>Room {{ $reservedRoom->room_number }} ({{ $reservedRoom->roomType->name }})</span>
+                                <span>{{ $reservedRoom->roomType->name }}</span>
                                 <span>₱{{ number_format($reservedRoom->pivot->nightly_rate, 2) }}/night</span>
                             </div>
                         @endforeach
