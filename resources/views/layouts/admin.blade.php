@@ -34,7 +34,7 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: var(--light-gray);
+            background-color: #f4f2ec;
             color: var(--text-dark);
             min-height: 100vh;
         }
@@ -343,7 +343,7 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-logo">Bez Tower & Residences</div>
+            <div class="sidebar-logo">BEZ TOWER AND RESIDENCES</div>
             {{-- <div class="sidebar-subtitle">Admin Panel</div> --}}
         </div>
 
@@ -556,6 +556,10 @@
     <!-- Toast Notification System -->
     <div id="toastContainer" style="position: fixed; top: 1.25rem; right: 1.25rem; z-index: 99999; display: flex; flex-direction: column; gap: 0.6rem; pointer-events: none; max-width: 380px;"></div>
 
+    <button id="adminBackToTopBtn" aria-label="Back to top" style="position: fixed; right: 1.25rem; bottom: 1.25rem; width: 52px; height: 52px; border: none; border-radius: 999px; background: linear-gradient(135deg, #2fa0ff, #1c86e2); color: #fff; font-size: 1.15rem; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.18); display: none; z-index: 99999;">
+        <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+    </button>
+
     @if(session('success'))
     <script>document.addEventListener('DOMContentLoaded',function(){showToast('{{ addslashes(session('success')) }}','success');});</script>
     @endif
@@ -618,6 +622,28 @@
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 350);
     }
+    </script>
+
+    <script>
+        (function () {
+            const btn = document.getElementById('adminBackToTopBtn');
+            if (!btn) {
+                return;
+            }
+
+            const toggle = () => {
+                btn.style.display = window.scrollY > 260 ? 'inline-flex' : 'none';
+                btn.style.alignItems = 'center';
+                btn.style.justifyContent = 'center';
+            };
+
+            window.addEventListener('scroll', toggle, { passive: true });
+            toggle();
+
+            btn.addEventListener('click', function () {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        })();
     </script>
 
     <script>
