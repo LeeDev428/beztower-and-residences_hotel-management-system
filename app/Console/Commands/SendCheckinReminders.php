@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Mail\CheckinReminder;
+use App\Models\AppSetting;
 use App\Models\Booking;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
@@ -15,15 +17,31 @@ class SendCheckinReminders extends Command
 
     public function handle()
     {
-        $tomorrow = now()->addDay()->toDateString();
+        $configuredCheckInTime = AppSetting::getValue('check_in_time', '14:00');
+        $now = now();
+        $windowStart = $now->copy()->addHours(24)->subMinutes(30);
+        $windowEnd = $now->copy()->addHours(24)->addMinutes(30);
 
         $bookings = Booking::with(['guest', 'rooms.roomType', 'room.roomType'])
-            ->whereDate('check_in_date', $tomorrow)
-            ->whereIn('status', ['confirmed'])
+            ->whereIn('status', ['confirmed', 'rescheduled'])
+            ->whereHas('payments', function ($query) {
+                $query->whereIn('payment_status', ['verified', 'completed']);
+            })
             ->get();
 
+        $bookings = $bookings->filter(function (Booking $booking) use ($configuredCheckInTime, $windowStart, $windowEnd) {
+            $checkInDate = optional($booking->check_in_date)?->toDateString();
+            if (!$checkInDate) {
+                return false;
+            }
+
+            $checkInDateTime = Carbon::parse($checkInDate . ' ' . $configuredCheckInTime);
+
+            return $checkInDateTime->between($windowStart, $windowEnd);
+        });
+
         if ($bookings->isEmpty()) {
-            $this->info('No check-ins scheduled for tomorrow.');
+            $this->info('No qualified check-in reminders to send in the 24-hour window.');
             return 0;
         }
 
