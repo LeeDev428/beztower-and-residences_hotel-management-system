@@ -21,11 +21,9 @@ class PaymentController extends Controller
             ->whereHas('booking.guest');
 
         // Filter by payment status
-        if ($request->filled('status')) {
-            $query->where('payment_status', $request->status);
-        } else {
-            // Default to pending payments
-            $query->where('payment_status', 'pending');
+        $status = trim((string) $request->input('status', ''));
+        if (in_array($status, ['pending', 'verified', 'failed', 'completed', 'refunded'], true)) {
+            $query->where('payment_status', $status);
         }
 
         $payments = $query->latest()->paginate(20);
