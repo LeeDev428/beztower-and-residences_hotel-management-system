@@ -50,7 +50,7 @@
                         <option value="">Select Type</option>
                         @foreach($roomTypes as $type)
                         <option value="{{ $type->id }}" {{ old('room_type_id', $room->room_type_id) == $type->id ? 'selected' : '' }}>
-                            {{ $type->name }} - ₱{{ number_format($type->base_price, 2) }}{{ $type->archived_at ? ' (Archived)' : '' }}
+                            {{ $type->name }} - ₱{{ number_format($type->base_price, 2) }}
                         </option>
                         @endforeach
                     </select>
