@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Confirmed</title>
+    <title>Booking Confirmed</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -97,7 +97,7 @@
     <div class="container">
         <div class="header">
             <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences" style="pointer-events: none; user-select: none; -webkit-user-drag: none;">
-            <h1>✅ Payment Confirmed</h1>
+            <h1>✅ Booking Confirmed</h1>
             <p>Your reservation is now confirmed!</p>
         </div>
         
@@ -197,7 +197,7 @@
                     <span class="value"><strong>₱{{ number_format($booking->total_amount - $payment->amount, 2) }}</strong></span>
                 </div>
                 <div style="margin-top:15px; padding:10px; background:#fff3cd; border-radius:5px;">
-                    <small>📌 The remaining balance can be paid upon check-in or through our online portal.</small>
+                    <small>📌 To be paid upon check-in.</small>
                 </div>
                 @endif
             </div>
