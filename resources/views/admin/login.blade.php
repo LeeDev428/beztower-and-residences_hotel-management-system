@@ -53,11 +53,13 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 2rem;
+            overflow: hidden;
         }
 
-        .logo-icon {
-            font-size: 3rem;
-            color: #2c2c2c;
+        .logo-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .login-left h1 {
@@ -259,9 +261,9 @@
         <!-- Left Side - Branding -->
         <div class="login-left">
             <div class="logo-container">
-                <i class="fas fa-gem logo-icon"></i>
+                <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="BEZ TOWER AND RESIDENCES" class="logo-image">
             </div>
-            <h1>BEZTOWER</h1>
+            <h1>BEZ TOWER AND RESIDENCES</h1>
             <p>Hotel Management System</p>
         </div>
 
