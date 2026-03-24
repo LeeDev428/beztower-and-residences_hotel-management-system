@@ -113,11 +113,31 @@ class HotelSeeder extends Seeder
             Housekeeping::create(['room_id' => $room->id, 'status' => 'clean', 'last_cleaned_at' => now()]);
         }
 
-        // Create Extras
-        Extra::create(['name' => 'Extra Bedding', 'description' => 'Additional bed linens and pillows', 'price' => 300.00]);
-        Extra::create(['name' => 'Extra Towels', 'description' => 'Set of premium towels', 'price' => 150.00]);
-        Extra::create(['name' => 'Breakfast Buffet', 'description' => 'All-you-can-eat breakfast buffet', 'price' => 500.00]);
-        Extra::create(['name' => 'Airport Transfer', 'description' => 'Round-trip airport shuttle service', 'price' => 1200.00]);
+        // Create/Update Extras
+        Extra::updateOrCreate(
+            ['name' => 'Extra Bed'],
+            ['description' => 'Additional extra bed setup', 'price' => 800.00, 'is_active' => true]
+        );
+        Extra::updateOrCreate(
+            ['name' => 'Extra Bedding'],
+            ['description' => 'Includes 2 pillows, 1 bedding, and 1 cover', 'price' => 300.00, 'is_active' => true]
+        );
+        Extra::updateOrCreate(
+            ['name' => 'Soap, Shampoo, Conditioner'],
+            ['description' => 'Toiletries set per request', 'price' => 50.00, 'is_active' => true]
+        );
+        Extra::updateOrCreate(
+            ['name' => 'Towel'],
+            ['description' => 'Additional towel set', 'price' => 200.00, 'is_active' => true]
+        );
+        Extra::updateOrCreate(
+            ['name' => 'Motorcycle Parking'],
+            ['description' => 'Motorcycle parking per night', 'price' => 100.00, 'is_active' => true]
+        );
+        Extra::updateOrCreate(
+            ['name' => 'Car Parking'],
+            ['description' => 'Car parking per night', 'price' => 200.00, 'is_active' => true]
+        );
     
 
         $this->command->info('Hotel data seeded successfully!');
