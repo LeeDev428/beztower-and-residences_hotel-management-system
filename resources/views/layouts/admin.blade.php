@@ -21,7 +21,7 @@
             --light-gold: #F5E6C8;
             --navy: #1a2332;
             --dark-navy: #0f1419;
-            --light-gray: #f8f9fa;
+            --light-gray: #f6f3ed;
             --border-gray: #e9ecef;
             --text-dark: #2c3e50;
             --text-muted: #6c757d;
