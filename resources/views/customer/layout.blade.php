@@ -15,6 +15,8 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             overflow-x: hidden;
+            background: #f8f5ef;
+            color: #2c2c2c;
         }
 
         /* Navigation */
