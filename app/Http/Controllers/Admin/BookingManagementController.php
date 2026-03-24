@@ -326,7 +326,7 @@ class BookingManagementController extends Controller
 
         Payment::create([
             'booking_id' => $booking->id,
-            'payment_type' => 'balance_due',
+            'payment_type' => 'remaining_payment',
             'payment_method' => $request->input('payment_method', 'cash'),
             'payment_reference' => $request->input('payment_reference') ?: ('SETTLE-' . strtoupper(substr($booking->booking_reference ?? 'BOOKING', -6)) . '-' . now()->format('YmdHis')),
             'amount' => $remainingBalance,
@@ -516,6 +516,7 @@ class BookingManagementController extends Controller
             'room_manual_adjustments.*' => 'nullable|numeric',
             'adjustment_reason' => 'nullable|string|max:500',
             'payment_method' => 'nullable|in:cash,gcash',
+            'payment_reference' => 'nullable|string|max:255',
         ]);
 
         $booking->loadMissing('rooms');
@@ -640,6 +641,19 @@ class BookingManagementController extends Controller
             $pwdSeniorDiscount = 0;
         }
 
+        $adjustmentReason = trim((string) ($validated['adjustment_reason'] ?? ''));
+        $billingPaymentMethod = $validated['payment_method'] ?? null;
+        $billingPaymentReference = trim((string) ($validated['payment_reference'] ?? ''));
+
+        if ($billingPaymentMethod === 'gcash' && $billingPaymentReference !== '') {
+            $gcashRefLine = 'Billing GCash Reference: ' . $billingPaymentReference;
+            if ($adjustmentReason === '') {
+                $adjustmentReason = $gcashRefLine;
+            } elseif (stripos($adjustmentReason, $gcashRefLine) === false) {
+                $adjustmentReason .= "\n" . $gcashRefLine;
+            }
+        }
+
         // Update booking with validated data
         $booking->update([
             'early_checkin_hours' => $earlyCheckinHours,
@@ -650,7 +664,7 @@ class BookingManagementController extends Controller
             'pwd_senior_count' => $pwdSeniorCount,
             'pwd_senior_discount' => $pwdSeniorDiscount,
             'manual_adjustment' => $manualAdjustment,
-            'adjustment_reason' => $validated['adjustment_reason'],
+            'adjustment_reason' => $adjustmentReason,
         ]);
 
         // Log the activity
@@ -664,6 +678,8 @@ class BookingManagementController extends Controller
                 'late_checkout' => $validated['late_checkout_hours'] ?? 0,
                 'pwd_senior_discount' => $validated['pwd_senior_discount'] ?? 0,
                 'manual_adjustment' => $manualAdjustment,
+                'payment_method' => $validated['payment_method'] ?? null,
+                'payment_reference' => $validated['payment_reference'] ?? null,
                 'final_total' => $booking->final_total,
             ]
         );
