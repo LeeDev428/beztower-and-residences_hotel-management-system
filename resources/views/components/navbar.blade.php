@@ -13,6 +13,10 @@
     </ul>
 </nav>
 
+<button id="globalBackToTopBtn" aria-label="Back to top" style="position: fixed; right: 1.25rem; bottom: 1.25rem; width: 52px; height: 52px; border: none; border-radius: 999px; background: linear-gradient(135deg, #2fa0ff, #1c86e2); color: #fff; font-size: 1.15rem; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.18); display: none; z-index: 1200;">
+    <i class="fas fa-chevron-up"></i>
+</button>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const normalizePath = (path) => path.replace(/\/+$/, '') || '/';
@@ -57,6 +61,22 @@
                 scrollToHashWithOffset(window.location.hash);
             }, 120);
         }
+
+        const backToTopBtn = document.getElementById('globalBackToTopBtn');
+        if (backToTopBtn) {
+            const toggleBackToTop = () => {
+                backToTopBtn.style.display = window.scrollY > 260 ? 'inline-flex' : 'none';
+                backToTopBtn.style.alignItems = 'center';
+                backToTopBtn.style.justifyContent = 'center';
+            };
+
+            window.addEventListener('scroll', toggleBackToTop, { passive: true });
+            toggleBackToTop();
+
+            backToTopBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
     });
 </script>
 
@@ -74,6 +94,10 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+    }
+
+    body {
+        background: #f7f6f2 !important;
     }
 
     .logo {
