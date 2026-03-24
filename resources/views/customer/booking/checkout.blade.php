@@ -667,6 +667,10 @@
                     <p>Please fill in your details to complete the booking</p>
                 </div>
 
+                <div style="background:#fff3cd;border:1px solid #f0cc65;color:#7c5a00;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:0.92rem;">
+                    <strong>Important:</strong> Please provide an active Gmail account. We will use this email to send payment verification and booking updates.
+                </div>
+
                 @if ($errors->has('error'))
                     <div style="background:#fee2e2;border:1px solid #f87171;color:#991b1b;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:0.95rem;">
                         <strong>Booking Limit Reached:</strong> {{ $errors->first('error') }}
