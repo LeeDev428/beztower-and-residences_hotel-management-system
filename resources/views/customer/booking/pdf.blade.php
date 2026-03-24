@@ -148,7 +148,7 @@
                 <td>Reserved Rooms:</td>
                 <td>
                     @foreach($booking->rooms as $reservedRoom)
-                        Room {{ $reservedRoom->room_number }} ({{ $reservedRoom->roomType->name }})@if(!$loop->last), @endif
+                        {{ $reservedRoom->roomType->name }}@if(!$loop->last), @endif
                     @endforeach
                 </td>
             </tr>
@@ -156,10 +156,6 @@
             <tr>
                 <td>Room Type:</td>
                 <td>{{ $booking->room->roomType->name }}</td>
-            </tr>
-            <tr>
-                <td>Room Number:</td>
-                <td>{{ $booking->room->room_number }}</td>
             </tr>
             @endif
             <tr>
@@ -197,7 +193,7 @@
                 @if($booking->rooms->count() > 0)
                     @foreach($booking->rooms as $reservedRoom)
                     <tr>
-                        <td style="padding-left: 20px;">Room {{ $reservedRoom->room_number }} ({{ $booking->total_nights }} × PHP {{ number_format($reservedRoom->pivot->nightly_rate, 2) }})</td>
+                        <td style="padding-left: 20px;">{{ $reservedRoom->roomType->name }} ({{ $booking->total_nights }} × PHP {{ number_format($reservedRoom->pivot->nightly_rate, 2) }})</td>
                         <td style="text-align: right;">PHP {{ number_format($booking->total_nights * $reservedRoom->pivot->nightly_rate, 2) }}</td>
                     </tr>
                     @endforeach
