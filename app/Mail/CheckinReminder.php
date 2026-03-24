@@ -23,7 +23,7 @@ class CheckinReminder extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Check-in Reminder - Beztower & Residences',
+            subject: 'Reminder: Your Upcoming Stay at Bez Tower and Residences',
         );
     }
 
