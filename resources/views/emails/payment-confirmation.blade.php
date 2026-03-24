@@ -206,7 +206,7 @@
                 <h3 style="margin-top:0; color:#2c2c2c;">📋 What to Bring</h3>
                 <ul style="margin:10px 0; padding-left:20px;">
                     <li>Valid government-issued ID</li>
-                    <li>Booking reference number: <strong>{{ $booking->reference_number }}</strong></li>
+                    <li>Booking reference number: <strong>{{ $booking->booking_reference }}</strong></li>
                     <li>Payment receipt (this email)</li>
                 </ul>
             </div>
