@@ -156,7 +156,7 @@
                 <li>The requested new check-in date must be <strong>within 14 days</strong> from the original check-in date and is subject to availability.</li>
             </ul>
 
-            <p>If you require further clarification or would like to double-check whether your refund has already been processed, or if you wish to reschedule your booking, kindly contact Bez Tower using the details below:</p>
+            <p>If you need assistance with your cancellation details or rescheduling options, kindly contact Bez Tower using the details below:</p>
 
             <div class="contact-info">
                 <h3>Contact Information</h3>
