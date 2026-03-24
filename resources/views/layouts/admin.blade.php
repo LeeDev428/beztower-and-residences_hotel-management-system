@@ -416,6 +416,12 @@
                         <span class="nav-badge">{{ $unreadMsgs }}</span>
                     @endif
                 </a>
+                <a href="{{ route('admin.extras.index') }}" class="nav-link {{ request()->routeIs('admin.extras.*') ? 'active' : '' }}">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4m16 0a8 8 0 11-16 0 8 8 0 0116 0z"/>
+                    </svg>
+                    Extras
+                </a>
             </div>
 
             <div class="nav-section">
