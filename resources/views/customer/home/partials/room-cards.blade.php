@@ -17,8 +17,13 @@
         }
         $roomImagesText = implode('|', $roomImages);
         $roomInclusions = $room->amenities->pluck('name')->filter()->values()->all();
+        $roomTypeFeatures = collect(preg_split('/\r\n|\r|\n/', (string) ($room->roomType->features_text ?? '')))
+            ->map(fn ($line) => trim((string) $line))
+            ->filter()
+            ->values()
+            ->all();
         $roomInclusionsText = !empty($roomInclusions)
-            ? implode(' | ', $roomInclusions)
+            ? implode(' | ', (!empty($roomTypeFeatures) ? $roomTypeFeatures : $roomInclusions))
             : 'WiFi | Shower Heater | Smart TV';
     @endphp
     <div class="room-card">
@@ -69,7 +74,7 @@
                     data-room-inclusions="{{ e($roomInclusionsText) }}"
                     data-room-url="{{ route('rooms.index', ['room_type' => $room->room_type_id]) }}"
                 >
-                    Explore Rooms
+                    View Details
                 </button>
             </div>
         </div>
