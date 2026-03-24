@@ -18,13 +18,6 @@ use Illuminate\Support\Str;
 
 class WalkInController extends Controller
 {
-    private const EXCLUDED_WALKIN_EXTRA_NAMES = [
-        'Late Check-Out',
-        'Early Check-In',
-        'Car Parking',
-        'Motorcycle Parking',
-    ];
-
     public function create()
     {
         $checkIn = Carbon::now()->format('Y-m-d');
@@ -32,7 +25,6 @@ class WalkInController extends Controller
 
         $availableRooms = $this->availableRoomsQuery($checkIn, $checkOut)->get();
         $extras = Extra::where('is_active', true)
-            ->whereNotIn('name', self::EXCLUDED_WALKIN_EXTRA_NAMES)
             ->orderBy('name')
             ->get();
 
@@ -129,7 +121,6 @@ class WalkInController extends Controller
         if (!empty($validated['extras'])) {
             $extras = Extra::whereIn('id', $validated['extras'])
                 ->where('is_active', true)
-                ->whereNotIn('name', self::EXCLUDED_WALKIN_EXTRA_NAMES)
                 ->get();
             foreach ($extras as $extra) {
                 $quantity = max(1, (int) ($validated['extra_quantities'][$extra->id] ?? 1));
