@@ -820,7 +820,6 @@
                                     ? $preselectedRooms->map(function ($selectedRoom) {
                                         return [
                                             'id' => (int) $selectedRoom->id,
-                                            'room_number' => $selectedRoom->room_number,
                                             'room_type' => $selectedRoom->roomType->name ?? 'Room',
                                             'price' => (float) ($selectedRoom->effective_price ?? 0),
                                             'capacity' => (int) ($selectedRoom->roomType->max_guests ?? 0),
@@ -831,7 +830,7 @@
                             <div id="autoAssignedRoomsSummary" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:8px;padding:0.9rem;font-size:0.9rem;color:#444;">
                                 @if($lockedRoomMeta->isNotEmpty())
                                     {!! $lockedRoomMeta->map(function ($lockedRoom) {
-                                        return '<div style="padding:0.2rem 0;">Room ' . e($lockedRoom['room_number']) . ' - ' . e($lockedRoom['room_type']) . ' (₱' . number_format((float) $lockedRoom['price'], 2) . '/night)</div>';
+                                        return '<div style="padding:0.2rem 0;">' . e($lockedRoom['room_type']) . ' (₱' . number_format((float) $lockedRoom['price'], 2) . '/night)</div>';
                                     })->implode('') !!}
                                 @else
                                     Rooms will be automatically assigned after selecting dates.
@@ -992,7 +991,6 @@
 
                         return [
                             'id' => (int) $selectedRoom->id,
-                            'room_number' => $selectedRoom->room_number,
                             'name' => $selectedRoom->roomType->name ?? 'Room',
                             'price' => (float) ($selectedRoom->effective_price ?? 0),
                             'images' => $imageUrls,
@@ -1176,9 +1174,7 @@ We are committed to protecting your personal data in accordance with the Data Pr
             }
 
             if (name) {
-                name.textContent = room.room_number
-                    ? `${room.name} (Room ${room.room_number})`
-                    : room.name;
+                name.textContent = room.name;
             }
 
             if (price) {
@@ -1310,7 +1306,7 @@ We are committed to protecting your personal data in accordance with the Data Pr
                 const nightlyText = nightly.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const totalText = total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 return `<div style="display:flex;justify-content:space-between;gap:0.8rem;padding:0.22rem 0;">
-                    <span>Room ${selectedRoom.room_number} - ${selectedRoom.room_type}</span>
+                    <span>${selectedRoom.room_type}</span>
                     <span>₱${nightlyText}/night (₱${totalText})</span>
                 </div>`;
             }).join('');
@@ -1386,7 +1382,7 @@ We are committed to protecting your personal data in accordance with the Data Pr
 
                 summary.innerHTML = selectedRooms.map((roomData) => {
                     const nightly = Number(roomData.price || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    return `<div style="padding:0.2rem 0;">Room ${roomData.room_number} - ${roomData.room_type} (₱${nightly}/night)</div>`;
+                    return `<div style="padding:0.2rem 0;">${roomData.room_type} (₱${nightly}/night)</div>`;
                 }).join('');
                 return;
             }
@@ -1400,7 +1396,7 @@ We are committed to protecting your personal data in accordance with the Data Pr
             const prioritized = [...availableRooms].sort((a, b) => {
                 if (a.id === preferredRoomId) return -1;
                 if (b.id === preferredRoomId) return 1;
-                return Number(a.room_number) - Number(b.room_number);
+                return Number(a.id) - Number(b.id);
             });
 
             let selectedRooms = [];
@@ -1449,7 +1445,7 @@ We are committed to protecting your personal data in accordance with the Data Pr
 
             summary.innerHTML = selectedRooms.map((room) => {
                 const nightly = Number(room.price || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                return `<div style="padding:0.2rem 0;">Room ${room.room_number} - ${room.room_type} (₱${nightly}/night)</div>`;
+                return `<div style="padding:0.2rem 0;">${room.room_type} (₱${nightly}/night)</div>`;
             }).join('');
         }
 
