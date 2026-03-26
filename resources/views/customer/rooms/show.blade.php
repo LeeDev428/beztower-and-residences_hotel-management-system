@@ -1252,7 +1252,6 @@
                             </div>
                             <div class="feature-content">
                                 <h4>{{ $featureLine }}</h4>
-                                <p>Room feature</p>
                             </div>
                         </div>
                     @endforeach
