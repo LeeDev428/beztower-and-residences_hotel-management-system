@@ -85,6 +85,18 @@
             </div>
             @endif
 
+            @php
+                $feedbackFormUrl = \App\Models\AppSetting::getValue('checkout_feedback_form_url', 'https://docs.google.com/forms/');
+                $feedbackQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' . urlencode($feedbackFormUrl);
+            @endphp
+
+            <div style="background:#f7fbff; border:1px solid #d7e9ff; border-radius:8px; padding:16px; margin:18px 0; text-align:center;">
+                <div style="font-weight:700; margin-bottom:8px; color:#1d3557;">We Value Your Feedback</div>
+                <p style="margin:0 0 10px;">Please scan the QR code or tap the link below to complete our short feedback survey.</p>
+                <img src="{{ $feedbackQrUrl }}" alt="Feedback Survey QR" style="max-width:180px; width:100%; height:auto; border:1px solid #d5d5d5; border-radius:8px; background:#fff; padding:6px;">
+                <p style="margin:10px 0 0;"><a href="{{ $feedbackFormUrl }}" target="_blank" style="color:#0b63ce; word-break:break-all;">{{ $feedbackFormUrl }}</a></p>
+            </div>
+
             <p>We hope to welcome you again soon. Safe travels.</p>
 
             <p style="margin-top:20px;">Warm regards,<br><strong>Beztower & Residences Team</strong></p>
