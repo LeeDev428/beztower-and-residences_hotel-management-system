@@ -4,6 +4,7 @@
 @section('page-title', 'Booking Details')
 
 @section('content')
+@php($vatPercentage = \App\Models\AppSetting::getVatPercentage())
 <div style="margin-bottom: 1.5rem;">
     <x-admin.button type="outline" href="{{ route('admin.bookings.index') }}">← Back to Bookings</x-admin.button>
 </div>
@@ -212,7 +213,7 @@
                     <span style="font-weight: 600;">₱{{ number_format($baseRoomTotal, 2) }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; color: #666;">
-                    <span>VAT (12%) Included</span>
+                    <span>VAT ({{ number_format($vatPercentage, 2) }}%) Included</span>
                     <span style="font-weight: 600;">₱{{ number_format((float) ($booking->tax_amount ?? 0), 2) }}</span>
                 </div>
                 @if(abs($billingAdjustmentDelta) > 0.00001)
