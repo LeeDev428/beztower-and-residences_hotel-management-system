@@ -748,9 +748,7 @@
                     }
 
                     if (latestBookingId > lastSeenId || pendingCount > lastPendingCount) {
-                        const reference = data.latest_booking_reference || 'New Booking';
-                        const guestName = data.latest_guest_name ? ` from ${data.latest_guest_name}` : '';
-                        showToast(`New booking received: ${reference}${guestName}`, 'info');
+                        showToast('New booking just came in. Refresh to see the latest updates.', 'info');
                         sessionStorage.setItem(storageKey, String(latestBookingId));
                         sessionStorage.setItem(pendingCountKey, String(pendingCount));
                     }
