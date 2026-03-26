@@ -612,7 +612,7 @@
                             </div>
                         @endif
                         <div class="price-row">
-                            <span>VAT (12%) Included in Room Charges</span>
+                            <span>VAT ({{ number_format(\App\Models\AppSetting::getVatPercentage(), 2) }}%) Included in Room Charges</span>
                             <span>₱{{ number_format((float) ($booking->tax_amount ?? 0), 2) }}</span>
                         </div>
                         @if($booking->extras_total > 0)
