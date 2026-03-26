@@ -4,12 +4,14 @@
 @section('page-title', 'Booking Details')
 
 @section('content')
-@php($vatPercentage = \App\Models\AppSetting::getVatPercentage())
-@php($guestIdPhoto = trim((string) (optional($booking->guest)->id_photo ?? '')))
-@php($guestIdPhotoIsPdf = $guestIdPhoto !== '' && str_ends_with(strtolower($guestIdPhoto), '.pdf'))
-@php($computedGrossTotal = (float) ($grossTotal ?? ($booking->total_amount ?? 0)))
-@php($computedRoomTotal = (float) ($booking->total_amount ?? 0))
-@php($billingAdjustmentDelta = round($computedGrossTotal - $computedRoomTotal, 2))
+@php
+    $vatPercentage = \App\Models\AppSetting::getVatPercentage();
+    $guestIdPhoto = trim((string) (optional($booking->guest)->id_photo ?? ''));
+    $guestIdPhotoIsPdf = $guestIdPhoto !== '' && str_ends_with(strtolower($guestIdPhoto), '.pdf');
+    $computedGrossTotal = (float) ($grossTotal ?? ($booking->total_amount ?? 0));
+    $computedRoomTotal = (float) ($booking->total_amount ?? 0);
+    $billingAdjustmentDelta = round($computedGrossTotal - $computedRoomTotal, 2);
+@endphp
 
 <div style="margin-bottom: 1.5rem;">
     <x-admin.button type="outline" href="{{ route('admin.bookings.index') }}">← Back to Bookings</x-admin.button>
