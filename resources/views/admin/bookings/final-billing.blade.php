@@ -494,7 +494,7 @@
                     <input type="hidden" name="overall_manual_adjustment" id="overallManualAdjustment" value="0">
                 @endif
                 <div>
-                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Reason for Adjustment</label>
+                    <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Gcash Payment</label>
                     <textarea name="adjustment_reason" rows="5"
                         style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; outline: none; resize: vertical; box-sizing: border-box;"
                         placeholder="Explain the reason for manual adjustment...">{{ $booking->adjustment_reason }}</textarea>
