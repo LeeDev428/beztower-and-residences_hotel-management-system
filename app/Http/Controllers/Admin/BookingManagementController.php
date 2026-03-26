@@ -118,14 +118,9 @@ class BookingManagementController extends Controller
         $allowedStatuses = $this->getAllowedStatusTransitions($booking->status);
         $today = now()->toDateString();
         $checkInDate = optional($booking->check_in_date)->toDateString();
-        $checkOutDate = optional($booking->check_out_date)->toDateString();
 
         if ($today !== $checkInDate) {
             $allowedStatuses = array_values(array_filter($allowedStatuses, fn ($status) => $status !== 'checked_in'));
-        }
-
-        if (!is_null($checkInDate) && $today < $checkInDate) {
-            $allowedStatuses = array_values(array_filter($allowedStatuses, fn ($status) => $status !== 'checked_out'));
         }
 
         $statusLocked = in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true);
@@ -198,24 +193,6 @@ class BookingManagementController extends Controller
             $allowedCheckInDate = optional($booking->check_in_date)->toDateString();
             if ($today !== $allowedCheckInDate) {
                 return back()->with('error', 'Check-in is only allowed on the booking check-in date.');
-            }
-        }
-
-        if ($targetStatus === 'checked_out') {
-            $today = now()->toDateString();
-            $allowedCheckInDate = optional($booking->check_in_date)->toDateString();
-            if (!is_null($allowedCheckInDate) && $today < $allowedCheckInDate) {
-                return back()->with('error', 'Check-out is only allowed on or after the booking check-in date.');
-            }
-
-            $amountPaid = (float) $booking->payments()
-                ->whereIn('payment_status', ['verified', 'completed'])
-                ->sum('amount');
-            $finalTotal = (float) ($booking->final_total ?? $booking->total_amount ?? 0);
-            $remainingBalance = round($finalTotal - $amountPaid, 2);
-
-            if ($remainingBalance > 0) {
-                return back()->with('error', 'Cannot check out with outstanding balance. Remaining balance: ₱' . number_format($remainingBalance, 2));
             }
         }
 
@@ -344,10 +321,10 @@ class BookingManagementController extends Controller
     private function getAllowedStatusTransitions(string $currentStatus): array
     {
         $map = [
-            'pending' => ['confirmed', 'cancelled'],
-            'confirmed' => ['checked_in', 'rescheduled', 'cancelled'],
+            'pending' => ['confirmed', 'checked_out', 'cancelled'],
+            'confirmed' => ['checked_in', 'checked_out', 'rescheduled', 'cancelled'],
             'checked_in' => ['checked_out'],
-            'rescheduled' => ['checked_in', 'cancelled'],
+            'rescheduled' => ['checked_in', 'checked_out', 'cancelled'],
             'checked_out' => [],
             'cancelled' => [],
             'rejected_payment' => [],
