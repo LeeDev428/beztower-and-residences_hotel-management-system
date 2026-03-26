@@ -170,7 +170,7 @@
                     <span class="value">₱{{ number_format($booking->subtotal, 2) }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">VAT (12%) Included in Room Charges:</span>
+                    <span class="label">VAT ({{ number_format(\App\Models\AppSetting::getVatPercentage(), 2) }}%) Included in Room Charges:</span>
                     <span class="value">₱{{ number_format((float) ($booking->tax_amount ?? 0), 2) }}</span>
                 </div>
                 
