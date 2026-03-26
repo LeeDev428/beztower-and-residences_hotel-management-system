@@ -4,22 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Beztower & Residences Hotel</title>
-    <link rel="icon" type="image/png" sizes="48x48" href="{{ asset('favicon-48x48.png') }}">
-    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('favicon-192x192.png') }}">
-    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo/bezlogo.jpg') }}">
+    <link rel="shortcut icon" href="{{ asset('images/logo/bezlogo.jpg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo/bezlogo.jpg') }}">
     <link rel="canonical" href="{{ url()->current() }}">
     <meta name="description" content="Beztower & Residences Hotel — Safe, secure accommodation in the heart of San Juan City. Located at 205 F. Blumentritt Street, Brgy. Pedro Cruz. Book your stay today.">
     <meta property="og:title" content="Beztower & Residences Hotel">
     <meta property="og:description" content="Beztower & Residences Hotel — Safe, secure accommodation in the heart of San Juan City. Located at 205 F. Blumentritt Street, Brgy. Pedro Cruz. Book your stay today.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ asset('favicon-192x192.png') }}">
+    <meta property="og:image" content="{{ asset('images/logo/bezlogo.jpg') }}">
     <meta property="og:image:alt" content="Beztower & Residences Hotel logo">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Beztower & Residences Hotel">
     <meta name="twitter:description" content="Safe, secure accommodation in the heart of San Juan City.">
-    <meta name="twitter:image" content="{{ asset('favicon-192x192.png') }}">
+    <meta name="twitter:image" content="{{ asset('images/logo/bezlogo.jpg') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         * {
@@ -943,7 +942,7 @@
                     
                     <div class="form-group">
                         <label><i class="far fa-calendar"></i> Check-Out Date *</label>
-                        <input type="date" name="check_out" id="heroCheckOut" min="{{ date('Y-m-d', strtotime('+1 day')) }}" required>
+                        <input type="date" name="check_out" id="heroCheckOut" min="{{ date('Y-m-d') }}" required>
                     </div>
                     
                     <div class="form-group">
@@ -1779,11 +1778,9 @@
         if (checkInElement && checkOutElement) {
             checkInElement.addEventListener('change', function() {
                 const checkIn = new Date(this.value);
-                const minCheckOut = new Date(checkIn);
-                minCheckOut.setDate(minCheckOut.getDate() + 1);
-                checkOutElement.min = minCheckOut.toISOString().split('T')[0];
+                checkOutElement.min = this.value;
                 
-                if (checkOutElement.value && new Date(checkOutElement.value) <= checkIn) {
+                if (checkOutElement.value && new Date(checkOutElement.value) < checkIn) {
                     checkOutElement.value = '';
                 }
             });
@@ -2061,11 +2058,9 @@
         if (heroCheckIn && heroCheckOut) {
             heroCheckIn.addEventListener('change', function() {
                 var checkIn = new Date(this.value);
-                var minCheckOut = new Date(checkIn);
-                minCheckOut.setDate(minCheckOut.getDate() + 1);
-                heroCheckOut.min = minCheckOut.toISOString().split('T')[0];
+                heroCheckOut.min = this.value;
                 
-                if (heroCheckOut.value && new Date(heroCheckOut.value) <= checkIn) {
+                if (heroCheckOut.value && new Date(heroCheckOut.value) < checkIn) {
                     heroCheckOut.value = '';
                 }
             });
