@@ -35,6 +35,11 @@
                 <input type="time" name="check_out_time" value="{{ old('check_out_time', $settings['check_out_time'] ?? '12:00') }}" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
             </div>
 
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">VAT Percentage (%)</label>
+                <input type="number" name="vat_percentage" value="{{ old('vat_percentage', $settings['vat_percentage'] ?? '12') }}" min="0" max="100" step="0.01" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+            </div>
+
         </div>
 
         <div style="margin-bottom: 1.5rem;">
