@@ -76,13 +76,7 @@ class Booking extends Model
 
     public static function applyActiveReservationFilter($query)
     {
-        return $query->where(function ($statusQuery) {
-            $statusQuery
-                ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                ->orWhereHas('payments', function ($paymentQuery) {
-                    $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                });
-        });
+        return $query->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled']);
     }
 
     public static function applyDateConflictWindow($query, string $checkInDate, string $checkOutDate)
