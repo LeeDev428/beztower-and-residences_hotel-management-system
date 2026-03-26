@@ -1013,7 +1013,7 @@
                         </div>
                         <div class="spec-details">
                             <span class="spec-label">Max Guests</span>
-                            <span class="spec-value">{{ $room->roomType->max_guests }} Guests</span>
+                            <span class="spec-value">Up to {{ $room->roomType->max_guests }} adults + 1 child</span>
                         </div>
                     </div>
 
@@ -1252,7 +1252,7 @@
                             </div>
                             <div class="feature-content">
                                 <h4>{{ $featureLine }}</h4>
-                                <p>Included in this room type offering.</p>
+                                <p>Room feature</p>
                             </div>
                         </div>
                     @endforeach
