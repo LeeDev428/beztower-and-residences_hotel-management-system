@@ -112,8 +112,8 @@
             </div>
 
             <p>Thank you for choosing Bez Tower and Residences!</p>
-            <p>Your booking has been successfully confirmed, and the room is currently reserved for you for the next 8 hours. Please ensure that you send your proof of payment within this time frame to secure your reservation.</p>
-            <p>If we do not receive your proof of payment within 8 hours, the reservation will be cancelled. However, if you have already submitted your proof of payment, kindly disregard this message.</p>
+            <p>Your booking is now in <strong>Confirmed</strong> status by our admin team.</p>
+            <p>Your submitted payment has been reviewed and accepted. Please keep your booking reference for check-in assistance.</p>
 
             <p><strong>Here are your booking details:</strong></p>
             
@@ -141,6 +141,14 @@
                 <div class="info-row">
                     <span class="label">Guests:</span>
                     <span class="value">{{ $booking->number_of_guests }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Payment Reference:</span>
+                    <span class="value"><strong>{{ $payment->payment_reference }}</strong></span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Amount Received:</span>
+                    <span class="value"><strong>₱{{ number_format($payment->amount, 2) }}</strong></span>
                 </div>
             </div>
 
