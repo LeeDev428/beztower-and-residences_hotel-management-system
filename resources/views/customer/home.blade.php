@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Beztower & Residences Hotel</title>
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo/bezlogo.jpg') }}">
+    <link rel="shortcut icon" href="{{ asset('images/logo/bezlogo.jpg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo/bezlogo.jpg') }}">
     <meta name="description" content="Beztower & Residences Hotel — Safe, secure accommodation in the heart of San Juan City. Located at 205 F. Blumentritt Street, Brgy. Pedro Cruz. Book your stay today.">
     <meta property="og:title" content="Beztower & Residences Hotel">
     <meta property="og:description" content="Beztower & Residences Hotel — Safe, secure accommodation in the heart of San Juan City. Located at 205 F. Blumentritt Street, Brgy. Pedro Cruz. Book your stay today.">
