@@ -316,12 +316,7 @@
                 </button>
             </form>
 
-            <div class="demo-credentials">
-                <h4>Demo Credentials</h4>
-                <p><strong>Admin:</strong> admin@beztower.com / admin123</p>
-                <p><strong>Manager:</strong> manager@beztower.com / manager123</p>
-                <p><strong>Receptionist:</strong> receptionist@beztower.com / receptionist123</p>
-            </div>
+           
 
             <div class="back-link">
                 <a href="{{ route('home') }}">
