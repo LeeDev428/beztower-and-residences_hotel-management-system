@@ -13,6 +13,7 @@ class AppSetting extends Model
         'hotel_address' => '205 F. Blumentritt Street, Brgy. Pedro Cruz, San Juan City, Philippines',
         'check_in_time' => '14:00',
         'check_out_time' => '12:00',
+        'vat_percentage' => '12',
         'terms_and_conditions' => "Full payment is expected upon check-in\n"
             . "Check-in Time: 2:00 PM\n"
             . "Check-out Time: 12:00 PM\n"
@@ -81,5 +82,28 @@ class AppSetting extends Model
             ['key' => $key],
             ['value' => $value]
         );
+    }
+
+    public static function getVatPercentage(): float
+    {
+        $rawVat = static::getValue('vat_percentage', self::DEFAULTS['vat_percentage'] ?? '12');
+        $vatPercentage = is_numeric($rawVat) ? (float) $rawVat : 12.0;
+
+        return max(0.0, min(100.0, $vatPercentage));
+    }
+
+    /**
+     * Returns the VAT component from VAT-inclusive pricing.
+     * Example: for 12%, component is 12 / 112.
+     */
+    public static function getVatFractionFromInclusive(): float
+    {
+        $vatPercentage = static::getVatPercentage();
+
+        if ($vatPercentage <= 0) {
+            return 0.0;
+        }
+
+        return $vatPercentage / (100 + $vatPercentage);
     }
 }
