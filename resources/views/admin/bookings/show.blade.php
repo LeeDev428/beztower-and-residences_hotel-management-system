@@ -178,7 +178,8 @@
     <!-- Sidebar -->
     <div>
         <!-- Payment Summary -->
-        <x-admin.card title="Payment">
+        <div style="background: #fff; border: 1px solid var(--border-gray); border-radius: 12px; padding: 1rem 1.25rem;">
+            <div style="font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-dark);">Payment</div>
             @php
                 $baseRoomTotal = (float) ($booking->total_amount ?? 0);
                 $grossAmount = (float) ($grossTotal ?? $baseRoomTotal);
@@ -221,7 +222,7 @@
                     </form>
                 @endif
             </div>
-        </x-admin.card>
+        </div>
 
         <!-- Actions -->
         <x-admin.card title="Actions" style="margin-top: 1.5rem;">
