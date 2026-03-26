@@ -87,11 +87,24 @@ class Booking extends Model
 
     public static function applyDateConflictWindow($query, string $checkInDate, string $checkOutDate)
     {
-        return $query->where(function ($overlapQuery) use ($checkInDate, $checkOutDate) {
+        $requestedCheckIn = Carbon::parse($checkInDate)->startOfDay();
+        $requestedCheckOut = Carbon::parse($checkOutDate)->startOfDay();
+
+        if ($requestedCheckOut->lessThanOrEqualTo($requestedCheckIn)) {
+            $requestedCheckOut = $requestedCheckIn->copy()->addDay();
+        }
+
+        $normalizedCheckOutDate = $requestedCheckOut->toDateString();
+
+        return $query->where(function ($overlapQuery) use ($checkInDate, $normalizedCheckOutDate) {
             $overlapQuery
-                ->where(function ($rangeQuery) use ($checkInDate, $checkOutDate) {
-                    $rangeQuery->where('check_in_date', '<', $checkOutDate)
-                        ->where('check_out_date', '>', $checkInDate);
+                ->where(function ($rangeQuery) use ($checkInDate, $normalizedCheckOutDate) {
+                    $rangeQuery
+                        ->where('check_in_date', '<', $normalizedCheckOutDate)
+                        ->whereRaw(
+                            "(CASE WHEN check_out_date <= check_in_date THEN DATE_ADD(check_out_date, INTERVAL 1 DAY) ELSE check_out_date END) > ?",
+                            [$checkInDate]
+                        );
                 })
                 ->orWhere(function ($lateCheckoutQuery) use ($checkInDate) {
                     // Late checkout blocks same-day turnover until checkout extension is resolved.
