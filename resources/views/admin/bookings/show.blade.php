@@ -319,7 +319,7 @@
                     @endif
                 </div>
                 @if(!$statusLocked)
-                    <small style="display:block; margin-top:0.5rem; color:#777;">Check-in option appears only on {{ optional($booking->check_in_date)->format('M d, Y') ?? 'N/A' }} and check-out option appears only on {{ optional($booking->check_out_date)->format('M d, Y') ?? 'N/A' }}.</small>
+                    <small style="display:block; margin-top:0.5rem; color:#777;">Check-in option appears only on {{ optional($booking->check_in_date)->format('M d, Y') ?? 'N/A' }}. Check-out is always available for admin override.</small>
                 @endif
                 @if($statusLocked)
                     <small style="display:block; margin-top:0.5rem; color:#777;">Status is locked for {{ ucwords(str_replace('_', ' ', $booking->status)) }} bookings.</small>
