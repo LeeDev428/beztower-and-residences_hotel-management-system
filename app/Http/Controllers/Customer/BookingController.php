@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Mail\BookingAcknowledgement;
 use App\Mail\PaymentConfirmation;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -145,9 +146,9 @@ class BookingController extends Controller
             'address' => 'nullable|string',
             'id_photo' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:5120',
             'check_in_date' => 'required|date|after_or_equal:today',
-            'check_out_date' => 'required|date|after:check_in_date',
+            'check_out_date' => 'required|date|after_or_equal:check_in_date',
             'number_of_guests' => 'required|integer|min:1',
-            'total_nights' => 'required|integer|min:1',
+            'total_nights' => 'nullable|integer|min:1',
             'payment_option' => 'required|in:full_payment,down_payment',
             'special_requests' => 'nullable|string',
             'terms_accepted' => 'accepted',
@@ -188,6 +189,10 @@ class BookingController extends Controller
                 'room_ids' => 'Please select at least one room.',
             ])->withInput();
         }
+
+        $checkInDate = Carbon::parse((string) $validated['check_in_date'])->startOfDay();
+        $checkOutDate = Carbon::parse((string) $validated['check_out_date'])->startOfDay();
+        $totalNights = max(1, $checkInDate->diffInDays($checkOutDate));
 
         if ($selectedRoomIds->count() !== (int) $validated['number_of_rooms']) {
             return back()->withErrors([
@@ -293,7 +298,7 @@ class BookingController extends Controller
             $nightlyTotal = (float) $selectedRooms->sum(fn ($room) => (float) ($room->effective_price ?? 0));
 
             // Room price is VAT-inclusive; compute VAT portion for reporting.
-            $subtotal = $nightlyTotal * $validated['total_nights'];
+            $subtotal = $nightlyTotal * $totalNights;
             $extrasTotal = 0;
 
             // Get selected extras with quantities
@@ -326,7 +331,7 @@ class BookingController extends Controller
                 'check_in_date' => $validated['check_in_date'],
                 'check_out_date' => $validated['check_out_date'],
                 'number_of_guests' => $validated['number_of_guests'],
-                'total_nights' => $validated['total_nights'],
+                'total_nights' => $totalNights,
                 'subtotal' => $subtotal,
                 'extras_total' => $extrasTotal,
                 'tax_amount' => $taxAmount,
@@ -385,7 +390,7 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'check_in_date' => 'required|date|after_or_equal:today',
-            'check_out_date' => 'required|date|after:check_in_date',
+            'check_out_date' => 'required|date|after_or_equal:check_in_date',
             'number_of_rooms' => 'nullable|integer|min:1|max:12',
             'number_of_guests' => 'nullable|integer|min:1|max:50',
         ]);
@@ -696,7 +701,7 @@ class BookingController extends Controller
         $validated = $request->validate([
             'room_id' => 'required|exists:rooms,id',
             'check_in_date' => 'required|date',
-            'check_out_date' => 'required|date|after:check_in_date'
+            'check_out_date' => 'required|date|after_or_equal:check_in_date'
         ]);
 
         // Check if room is already booked for these dates
