@@ -99,7 +99,7 @@
                     <div class="label">Total Rooms</div>
                 </td>
                 <td class="stat-box">
-                    <div class="value" style="font-size: 18px;">{{ number_format($totalRevenue, 0) }}</div>
+                    <div class="value" style="font-size: 18px;">₱{{ number_format($totalRevenue, 0) }}</div>
                     <div class="label">Revenue</div>
                 </td>
             </tr>
@@ -147,7 +147,7 @@
                         @forelse($revenueByType as $rt)
                         <tr>
                             <td>{{ $rt->name }}</td>
-                            <td style="text-align: right; font-weight: 600;">{{ number_format($rt->revenue, 2) }}</td>
+                            <td style="text-align: right; font-weight: 600;">₱{{ number_format($rt->revenue, 2) }}</td>
                         </tr>
                         @empty
                         <tr><td colspan="2" style="text-align: center; color: #999;">No revenue data</td></tr>
@@ -155,7 +155,7 @@
                         @if($revenueByType->isNotEmpty())
                         <tr style="border-top: 2px solid #d4af37;">
                             <td style="font-weight: 700;">Total</td>
-                            <td style="text-align: right; font-weight: 700; color: #d4af37;">{{ number_format($revenueByType->sum('revenue'), 2) }}</td>
+                            <td style="text-align: right; font-weight: 700; color: #d4af37;">₱{{ number_format($revenueByType->sum('revenue'), 2) }}</td>
                         </tr>
                         @endif
                     </tbody>
@@ -191,7 +191,7 @@
                     <td>{{ $row['check_in'] }}</td>
                     <td>{{ $row['check_out'] }}</td>
                     <td style="text-align: center;">{{ $row['nights'] }}</td>
-                    <td style="text-align: right; font-weight: 600;">{{ number_format($row['amount'], 2) }}</td>
+                    <td style="text-align: right; font-weight: 600;">₱{{ number_format($row['amount'], 2) }}</td>
                     <td><span class="badge badge-{{ $row['status_class'] }}">{{ $row['status_label'] }}</span></td>
                 </tr>
                 @empty
