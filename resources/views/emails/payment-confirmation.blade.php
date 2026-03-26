@@ -108,7 +108,7 @@
             <p>Dear {{ $booking->guest->first_name }} {{ $booking->guest->last_name }},</p>
             
             <div class="success-badge">
-                <strong>🎉 Your booking has been successfully confirmed.</strong>
+                <strong>Your booking has been successfully confirmed.</strong>
             </div>
 
             <p>Thank you for choosing Bez Tower and Residences!</p>
@@ -139,71 +139,9 @@
                     <span class="value">{{ \Carbon\Carbon::parse($booking->check_out_date)->format('F d, Y, l') }} at 12:00 PM</span>
                 </div>
                 <div class="info-row">
-                    <span class="label">Nights:</span>
-                    <span class="value">{{ $booking->total_nights }}</span>
-                </div>
-                <div class="info-row">
                     <span class="label">Guests:</span>
-                    <span class="value">{{ $booking->number_of_guests }} Guest(s)</span>
+                    <span class="value">{{ $booking->number_of_guests }}</span>
                 </div>
-            </div>
-
-            <div class="info-box">
-                <h3 style="margin-top:0; color:#2c2c2c;">💰 Total Amount Breakdown</h3>
-                <div class="info-row">
-                    <span class="label">Room Charges ({{ $reservedRooms->count() }} room(s), {{ $booking->total_nights }} night(s)):</span>
-                    <span class="value">₱{{ number_format($booking->subtotal, 2) }}</span>
-                </div>
-                
-                @if($booking->extras && $booking->extras->count() > 0)
-                    <div class="info-row" style="background:#f0f0f0; margin-top:10px; padding:10px; border-radius:5px;">
-                        <span class="label" style="color:#2c2c2c;"><strong>Additional Services/Extras:</strong></span>
-                    </div>
-                    @foreach($booking->extras as $extra)
-                    <div class="info-row" style="padding-left:20px;">
-                        <span class="label">{{ $extra->name }} ({{ $extra->pivot->quantity }} × ₱{{ number_format($extra->pivot->price_at_booking, 2) }}):</span>
-                        <span class="value">₱{{ number_format($extra->pivot->quantity * $extra->pivot->price_at_booking, 2) }}</span>
-                    </div>
-                    @endforeach
-                    <div class="info-row">
-                        <span class="label"><strong>Subtotal Extras:</strong></span>
-                        <span class="value"><strong>₱{{ number_format($booking->extras_total, 2) }}</strong></span>
-                    </div>
-                @endif
-
-                <div class="info-row" style="background:#e8f5e9; padding:12px; margin-top:10px; border-radius:5px;">
-                    <span class="label" style="font-size:18px; color:#2c2c2c;"><strong>TOTAL AMOUNT:</strong></span>
-                    <span class="value" style="font-size:18px; color:#4caf50;"><strong>₱{{ number_format($booking->total_amount, 2) }}</strong></span>
-                </div>
-            </div>
-
-            <div class="payment-box">
-                <h3 style="margin-top:0; color:#2c2c2c;">💳 Payment Details</h3>
-                <div class="info-row">
-                    <span class="label">Payment Type:</span>
-                    <span class="value">{{ ucfirst(str_replace('_', ' ', $payment->payment_type)) }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Amount Paid:</span>
-                    <span class="value"><strong>₱{{ number_format($payment->amount, 2) }}</strong></span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Payment Method:</span>
-                    <span class="value">{{ ucfirst($payment->payment_method) }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Reference Number:</span>
-                    <span class="value">{{ $payment->payment_reference }}</span>
-                </div>
-                @if($payment->payment_type === 'down_payment')
-                <div class="info-row">
-                    <span class="label">Remaining Balance:</span>
-                    <span class="value"><strong>₱{{ number_format($booking->total_amount - $payment->amount, 2) }}</strong></span>
-                </div>
-                <div style="margin-top:15px; padding:10px; background:#fff3cd; border-radius:5px;">
-                    <small>📌 To be paid upon check-in.</small>
-                </div>
-                @endif
             </div>
 
             <p>If you have any questions or need assistance, please feel free to contact us:</p>
