@@ -14,7 +14,7 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         $allRooms = Room::with(['roomType', 'amenities', 'photos'])
-            ->whereIn('status', ['available', 'occupied']) // Exclude dirty and maintenance
+            ->whereIn('status', ['available', 'dirty', 'occupied'])
             ->whereNull('archived_at')
             ->whereHas('roomType', function ($query) {
                 $query->whereNull('archived_at');
