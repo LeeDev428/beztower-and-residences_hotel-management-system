@@ -756,6 +756,7 @@ class BookingController extends Controller
             ->latest('id')
             ->get();
 
+        /** @var Booking $recentBooking */
         foreach ($recentBookings as $recentBooking) {
             $existingRoomIds = $recentBooking->rooms->pluck('id')
                 ->map(fn ($id) => (int) $id)
