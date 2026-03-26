@@ -204,8 +204,8 @@ class GuestManagementController extends Controller
         $guestKeyValue = $guest->{$guestKeyColumn} ?? ($guest->id ?? $guest->guest_id ?? $guestIdentifier);
 
         $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'first_name' => "required|string|max:255|regex:/^[A-Za-z][A-Za-z\\s'-]*$/",
+            'last_name' => "required|string|max:255|regex:/^[A-Za-z][A-Za-z\\s'-]*$/",
             'email' => 'required|email|unique:guests,email,' . $guestKeyValue . ',' . $guestKeyColumn,
             'phone' => 'required|string|max:20',
             'address' => 'nullable|string',
