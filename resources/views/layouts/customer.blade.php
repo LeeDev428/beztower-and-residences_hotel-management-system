@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Beztower & Residences Hotel')</title>
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/logo/bezlogo.jpg') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     @stack('styles')
@@ -15,7 +16,7 @@
             <div class="flex justify-between h-20">
                 <div class="flex items-center">
                     <a href="{{ route('home') }}" class="flex items-center">
-                        <img src="/images/logo.png" alt="Beztower Logo" class="h-12" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Beztower Logo" class="h-12" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                         <span class="hidden text-2xl font-bold text-gray-800">BEZTOWER</span>
                     </a>
                 </div>
