@@ -170,7 +170,7 @@
 
                         <div id="gcashReferenceWrap" style="display: none; margin-top: 0.75rem;">
                             <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">GCash Reference Number <span style="color: var(--danger);">*</span></label>
-                            <input type="text" name="payment_reference" id="walkinPaymentReference" value="{{ old('payment_reference') }}" maxlength="13" pattern="\d{13}" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,13)" placeholder="Enter 13-digit GCash reference" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                            <input type="text" name="payment_reference" id="walkinPaymentReference" value="{{ old('payment_reference') }}" maxlength="13" pattern="\d{13}" inputmode="numeric" oninput="lockWalkinGcashReferenceInput(this)" placeholder="Enter 13-digit GCash reference" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
                         </div>
                     </div>
                 </div>
@@ -393,7 +393,23 @@ function toggleGcash() {
         refInput.required = isGcash;
         if (!isGcash) {
             refInput.value = '';
+            refInput.readOnly = false;
+            refInput.style.background = 'white';
+            refInput.style.cursor = 'text';
         }
+    }
+}
+
+function lockWalkinGcashReferenceInput(input) {
+    if (!input) {
+        return;
+    }
+
+    input.value = input.value.replace(/\D/g, '').slice(0, 13);
+    if (input.value.length === 13) {
+        input.readOnly = true;
+        input.style.background = '#f3f4f6';
+        input.style.cursor = 'not-allowed';
     }
 }
 
@@ -478,6 +494,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     toggleGcash();
+    const walkinRefInput = document.getElementById('walkinPaymentReference');
+    if (walkinRefInput && String(walkinRefInput.value || '').length === 13) {
+        walkinRefInput.readOnly = true;
+        walkinRefInput.style.background = '#f3f4f6';
+        walkinRefInput.style.cursor = 'not-allowed';
+    }
     syncEffectiveAdultsDisplay();
     renderRoomSelectors();
     calculateTotal();
