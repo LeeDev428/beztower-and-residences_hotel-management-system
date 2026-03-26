@@ -538,6 +538,8 @@ class BookingManagementController extends Controller
             'room_pwd_senior_counts.*' => 'nullable|integer|min:0',
             'room_manual_adjustments' => 'nullable|array',
             'room_manual_adjustments.*' => 'nullable|numeric',
+            'services_total_adjustment' => 'nullable|numeric|min:0',
+            'services_breakdown' => 'nullable|string|max:1000',
             'adjustment_reason' => 'nullable|string|max:500',
             'payment_method' => 'nullable|in:cash,gcash',
             'payment_reference' => 'nullable|string|max:255',
@@ -547,6 +549,8 @@ class BookingManagementController extends Controller
 
         $manualAdjustment = (float) ($validated['manual_adjustment'] ?? 0);
         $overallManualAdjustment = (float) ($validated['overall_manual_adjustment'] ?? 0);
+        $servicesTotalAdjustment = (float) ($validated['services_total_adjustment'] ?? 0);
+        $servicesBreakdown = trim((string) ($validated['services_breakdown'] ?? ''));
         $isMultiRoom = $booking->rooms->isNotEmpty() && $booking->rooms->count() > 1;
         $totalPwdSeniorDiscount = 0.0;
         $hasAnyPwdSeniorDiscount = false;
@@ -612,6 +616,7 @@ class BookingManagementController extends Controller
         }
 
         $manualAdjustment += $overallManualAdjustment;
+        $manualAdjustment += $servicesTotalAdjustment;
 
         $earlyCheckinHours = $validated['early_checkin_hours'] ?? 0;
         $earlyCheckinCharge = $validated['early_checkin_charge'] ?? 0;
@@ -666,6 +671,14 @@ class BookingManagementController extends Controller
         }
 
         $adjustmentReason = trim((string) ($validated['adjustment_reason'] ?? ''));
+        if ($servicesBreakdown !== '') {
+            $servicesLine = 'Amenities & Services: ' . $servicesBreakdown;
+            if ($adjustmentReason === '') {
+                $adjustmentReason = $servicesLine;
+            } elseif (stripos($adjustmentReason, $servicesLine) === false) {
+                $adjustmentReason .= "\n" . $servicesLine;
+            }
+        }
         $billingPaymentMethod = $validated['payment_method'] ?? null;
         $billingPaymentReference = trim((string) ($validated['payment_reference'] ?? ''));
 
