@@ -25,7 +25,22 @@ class BookingManagementController extends Controller
 {
     public function notificationsSnapshot(Request $request)
     {
-        $pendingBookings = Booking::with('guest:id,first_name,last_name,name')
+        $guestColumns = ['id'];
+        if (Schema::hasColumn('guests', 'name')) {
+            $guestColumns[] = 'name';
+        }
+        if (Schema::hasColumn('guests', 'first_name')) {
+            $guestColumns[] = 'first_name';
+        }
+        if (Schema::hasColumn('guests', 'last_name')) {
+            $guestColumns[] = 'last_name';
+        }
+
+        $pendingBookings = Booking::with([
+            'guest' => function ($query) use ($guestColumns) {
+                $query->select(array_values(array_unique($guestColumns)));
+            }
+        ])
             ->where('status', 'pending')
             ->latest('id')
             ->take(5)
