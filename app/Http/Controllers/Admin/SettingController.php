@@ -17,6 +17,7 @@ class SettingController extends Controller
             'hotel_address',
             'check_in_time',
             'check_out_time',
+            'vat_percentage',
             'terms_and_conditions',
             'booking_policies',
         ]);
@@ -33,6 +34,7 @@ class SettingController extends Controller
             'hotel_address' => 'required|string',
             'check_in_time' => 'required|date_format:H:i',
             'check_out_time' => 'required|date_format:H:i',
+            'vat_percentage' => 'required|numeric|min:0|max:100',
             'terms_and_conditions' => 'required|string',
             'booking_policies' => 'required|string',
         ]);
