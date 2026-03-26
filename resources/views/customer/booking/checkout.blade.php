@@ -710,12 +710,12 @@
                     <div class="booking-form-grid">
                         <div>
                             <label class="form-label">First Name <span class="required">*</span></label>
-                            <input type="text" name="first_name" class="form-input" required>
+                            <input type="text" name="first_name" class="form-input" required pattern="[A-Za-z][A-Za-z\s'\-]*" oninput="this.value=this.value.replace(/[^A-Za-z\s'\-]/g,'')">
                         </div>
                         
                         <div>
                             <label class="form-label">Last Name <span class="required">*</span></label>
-                            <input type="text" name="last_name" class="form-input" required>
+                            <input type="text" name="last_name" class="form-input" required pattern="[A-Za-z][A-Za-z\s'\-]*" oninput="this.value=this.value.replace(/[^A-Za-z\s'\-]/g,'')">
                         </div>
                         
                         <div>
