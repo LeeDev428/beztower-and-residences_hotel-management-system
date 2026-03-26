@@ -11,6 +11,7 @@ class AppSetting extends Model
         'contact_email' => 'beztowerresidences@gmail.com',
         'contact_phone' => '(02) 88075046 or 09171221429',
         'hotel_address' => '205 F. Blumentritt Street, Brgy. Pedro Cruz, San Juan City, Philippines',
+        'checkout_feedback_form_url' => 'https://docs.google.com/forms/',
         'check_in_time' => '14:00',
         'check_out_time' => '12:00',
         'vat_percentage' => '12',
