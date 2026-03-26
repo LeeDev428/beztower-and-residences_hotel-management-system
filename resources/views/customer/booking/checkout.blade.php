@@ -836,37 +836,26 @@
                             <input type="number" name="number_of_rooms" id="numberOfRooms" class="form-input" min="1" max="12" value="{{ max(1, min(12, (int) ($requestedRooms ?? request('rooms', 1)))) }}" {{ isset($preselectedRooms) && $preselectedRooms->count() > 0 ? 'readonly' : '' }} required onchange="syncAutoSelectedRooms(); updateTotal();" style="{{ isset($preselectedRooms) && $preselectedRooms->count() > 0 ? 'background:#f0f0f0; cursor:not-allowed;' : '' }}">
                         </div>
 
-                        <div class="form-group-full" style="display: none;">
-                            <label class="form-label">Room Assignment <span class="required">*</span></label>
-                            <div id="availabilityByType" style="font-size: 0.9rem; color: #666; margin-bottom: 0.7rem;">Select check-in and check-out dates to load available rooms.</div>
-                            @php
-                                $lockedRoomMeta = (isset($preselectedRooms) && $preselectedRooms->count() > 0)
-                                    ? $preselectedRooms->map(function ($selectedRoom) {
-                                        return [
-                                            'id' => (int) $selectedRoom->id,
-                                            'room_type' => $selectedRoom->roomType->name ?? 'Room',
-                                            'price' => (float) ($selectedRoom->effective_price ?? 0),
-                                            'capacity' => (int) ($selectedRoom->roomType->max_guests ?? 0),
-                                        ];
-                                    })->values()
-                                    : collect();
-                            @endphp
-                            <div id="autoAssignedRoomsSummary" style="background:#f8f8f8;border:1px solid #e5e5e5;border-radius:8px;padding:0.9rem;font-size:0.9rem;color:#444;">
-                                @if($lockedRoomMeta->isNotEmpty())
-                                    {!! $lockedRoomMeta->map(function ($lockedRoom) {
-                                        return '<div style="padding:0.2rem 0;">' . e($lockedRoom['room_type']) . ' (₱' . number_format((float) $lockedRoom['price'], 2) . '/night)</div>';
-                                    })->implode('') !!}
-                                @else
-                                    Rooms will be automatically assigned after selecting dates.
-                                @endif
-                            </div>
-                            <div id="autoSelectedRoomInputs">
-                                @if($lockedRoomMeta->isNotEmpty())
-                                    @foreach($lockedRoomMeta as $lockedRoom)
-                                        <input type="hidden" name="room_ids[]" value="{{ $lockedRoom['id'] }}">
-                                    @endforeach
-                                @endif
-                            </div>
+                        @php
+                            $lockedRoomMeta = (isset($preselectedRooms) && $preselectedRooms->count() > 0)
+                                ? $preselectedRooms->map(function ($selectedRoom) {
+                                    return [
+                                        'id' => (int) $selectedRoom->id,
+                                        'room_type' => $selectedRoom->roomType->name ?? 'Room',
+                                        'price' => (float) ($selectedRoom->effective_price ?? 0),
+                                        'capacity' => (int) ($selectedRoom->roomType->max_guests ?? 0),
+                                    ];
+                                })->values()
+                                : collect();
+                        @endphp
+                        <div id="availabilityByType" style="display:none;">Availability data hidden by request.</div>
+                        <div id="autoAssignedRoomsSummary" style="display:none;"></div>
+                        <div id="autoSelectedRoomInputs">
+                            @if($lockedRoomMeta->isNotEmpty())
+                                @foreach($lockedRoomMeta as $lockedRoom)
+                                    <input type="hidden" name="room_ids[]" value="{{ $lockedRoom['id'] }}">
+                                @endforeach
+                            @endif
                         </div>
                     </div>
                     
@@ -1778,7 +1767,7 @@ Provided once only. Additional requests may incur a fee.`;
                         summary.innerHTML = '<span style="color:#b00020;">Some selected rooms are no longer available for the selected dates. Please reselect rooms before submitting.</span>';
                     }
 
-                    showAvailabilityValidationMessage('One or more selected rooms are no longer available for the selected dates. Please review the room assignment and try again.');
+                    showAvailabilityValidationMessage('One or more selected rooms are no longer available for the selected dates. Please review your selected dates and try again.');
                     return false;
                 }
 
