@@ -1067,7 +1067,7 @@
 
                     <div class="price-row">
                         <span class="price-label">VAT ({{ number_format((float) ($vatPercentage ?? 12), 2) }}%) Included in Room Rate</span>
-                        <span class="price-value" id="vatDisplay">₱{{ number_format($room->effective_price * ((float) ($vatInclusiveFraction ?? (12 / 112))), 2) }}</span>
+                        <span class="price-value" id="vatDisplay">₱{{ number_format($room->effective_price * (float) $vatInclusiveFraction, 2) }}</span>
                     </div>
 
                     <div class="price-row">
@@ -1098,7 +1098,7 @@
 
     <script>
         const legalTermsText = @json($termsAndConditionsText ?? '');
-        const vatInclusiveFraction = {{ (float) ($vatInclusiveFraction ?? (12 / 112)) }};
+        const vatInclusiveFraction = {{ (float) $vatInclusiveFraction }};
 
         const legalPrivacyText = `At Bez Tower Residences, your privacy is important to us. When you use our online reservation system, we collect only the information necessary to make your booking smooth and secure.
 
