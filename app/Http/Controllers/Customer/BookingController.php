@@ -249,7 +249,7 @@ class BookingController extends Controller
             $selectedRooms = Room::with('roomType')
                 ->whereIn('id', $selectedRoomIds)
                 ->lockForUpdate()
-                ->where('status', 'available')
+                ->whereIn('status', ['available', 'dirty', 'occupied'])
                 ->whereNull('archived_at')
                 ->get();
 
@@ -390,7 +390,7 @@ class BookingController extends Controller
         $requestedGuests = max(1, (int) ($validated['number_of_guests'] ?? 1));
 
         $availableRooms = Room::with('roomType')
-            ->where('status', 'available')
+            ->whereIn('status', ['available', 'dirty', 'occupied'])
             ->whereNull('archived_at')
             ->whereHas('roomType', function ($roomTypeQuery) {
                 $roomTypeQuery->whereNull('archived_at');
