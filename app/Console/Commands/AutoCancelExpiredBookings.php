@@ -24,8 +24,13 @@ class AutoCancelExpiredBookings extends Command
                 'cancellation_reason' => 'Automatically cancelled: payment not received within 8 hours.',
             ]);
 
-            if ($booking->room) {
-                $booking->room->update(['status' => 'available']);
+            $booking->loadMissing(['rooms', 'room']);
+            $roomsToRelease = $booking->rooms->isNotEmpty()
+                ? $booking->rooms
+                : collect([$booking->room])->filter();
+
+            foreach ($roomsToRelease as $room) {
+                $room->update(['status' => 'available']);
             }
         }
 
