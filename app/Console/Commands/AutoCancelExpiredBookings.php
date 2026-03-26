@@ -12,12 +12,14 @@ class AutoCancelExpiredBookings extends Command
 
     public function handle(): void
     {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\Booking> $expired */
         $expired = Booking::where('status', 'pending')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<', now())
             ->whereDoesntHave('payments', fn ($q) => $q->whereIn('payment_status', ['verified', 'completed']))
             ->get();
 
+        /** @var \App\Models\Booking $booking */
         foreach ($expired as $booking) {
             $booking->update([
                 'status' => 'cancelled',
