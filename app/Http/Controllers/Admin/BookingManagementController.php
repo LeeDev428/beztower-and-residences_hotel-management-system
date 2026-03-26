@@ -124,7 +124,7 @@ class BookingManagementController extends Controller
             $allowedStatuses = array_values(array_filter($allowedStatuses, fn ($status) => $status !== 'checked_in'));
         }
 
-        if ($today !== $checkOutDate) {
+        if (!is_null($checkInDate) && $today < $checkInDate) {
             $allowedStatuses = array_values(array_filter($allowedStatuses, fn ($status) => $status !== 'checked_out'));
         }
 
@@ -146,7 +146,7 @@ class BookingManagementController extends Controller
             ? $booking->rooms->pluck('id')->all()
             : array_filter([$booking->room_id]);
         $availableRooms = Room::with('roomType')
-            ->where('status', 'available')
+            ->whereIn('status', ['available', 'dirty'])
             ->whereNull('archived_at')
             ->when(!empty($assignedRoomTypeIds), fn($q) => $q->whereIn('room_type_id', $assignedRoomTypeIds))
             ->when(!empty($assignedRoomIds), fn($q) => $q->whereNotIn('id', $assignedRoomIds))
@@ -203,9 +203,9 @@ class BookingManagementController extends Controller
 
         if ($targetStatus === 'checked_out') {
             $today = now()->toDateString();
-            $allowedCheckOutDate = optional($booking->check_out_date)->toDateString();
-            if ($today !== $allowedCheckOutDate) {
-                return back()->with('error', 'Check-out is only allowed on the booking check-out date.');
+            $allowedCheckInDate = optional($booking->check_in_date)->toDateString();
+            if (!is_null($allowedCheckInDate) && $today < $allowedCheckInDate) {
+                return back()->with('error', 'Check-out is only allowed on or after the booking check-in date.');
             }
 
             $amountPaid = (float) $booking->payments()
@@ -914,7 +914,7 @@ class BookingManagementController extends Controller
             $availableRooms = Room::query()
                 ->where('room_type_id', $roomTypeId)
                 ->whereNull('archived_at')
-                ->whereIn('status', ['available', 'occupied'])
+                ->whereIn('status', ['available', 'dirty', 'occupied'])
                 ->whereDoesntHave('blockDates', function ($q) use ($checkInDate, $checkOutDate) {
                     $q->where('start_date', '<', $checkOutDate)
                         ->where('end_date', '>', $checkInDate);
