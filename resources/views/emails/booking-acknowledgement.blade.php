@@ -204,39 +204,7 @@
                 <p style="margin:3px 0 0 0; font-size:12px; word-break: break-all; color:#444;">{{ route('booking.payment', ['reference' => $booking->booking_reference]) }}</p>
             </div>
 
-            {{-- <div class="highlight">
-                <strong>⚠️ Important:</strong> Please proceed with the payment within 8 hours to confirm your reservation.
-            </div> --}}
-
-            {{-- <div class="info-box">
-                <h3 style="margin-top:0; color:#2c2c2c;">💳 Payment Instructions</h3>
-                <p style="margin:10px 0;"><strong>Accepted Payment Methods:</strong></p>
-                <ul style="margin:10px 0; padding-left:20px;">
-                    <li><strong>Bank Transfer:</strong>
-                        <ul style="margin:5px 0;">
-                            <li>Bank Name: BDO - Banco de Oro</li>
-                            <li>Account Name: Beztower & Residences Inc.</li>
-                            <li>Account Number: 1234-5678-9012</li>
-                        </ul>
-                    </li>
-                    <li><strong>GCash:</strong> 09778325550 (MICHAEL ANG)</li>
-                    <li><strong>Over-the-counter:</strong> Available at our front desk</li>
-                </ul>
-
-                <div style="background:#e8f5e9; padding:15px; border-radius:5px; margin-top:15px; border:1px solid #4caf50;">
-                    <p style="margin:0;"><strong>📧 Where to Send Proof of Payment:</strong></p>
-                    <ul style="margin:8px 0; padding-left:20px;">
-                        <li><strong>Email:</strong> payments@beztower.com</li>
-                        <li><strong>Subject:</strong> Payment Proof - {{ $booking->booking_reference }}</li>
-                        <li><strong>Include:</strong> Screenshot/Photo of payment receipt with your booking reference number</li>
-                    </ul>
-                    <p style="margin:8px 0 0 0; font-size:14px;"><em>📱 You can also send via WhatsApp: +63 917 123 4567</em></p>
-                </div>
-
-                <div style="background:#fff3cd; padding:12px; border-radius:5px; margin-top:10px;">
-                    <small><strong>Note:</strong> Your booking will be confirmed once we verify your payment. This usually takes 2-4 hours during business hours.</small>
-                </div>
-            </div> --}}
+         
 
             @if($booking->special_requests)
             <div class="info-box">
