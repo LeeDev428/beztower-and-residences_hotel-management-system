@@ -542,7 +542,7 @@ class BookingManagementController extends Controller
             'services_breakdown' => 'nullable|string|max:1000',
             'adjustment_reason' => 'nullable|string|max:500',
             'payment_method' => 'nullable|in:cash,gcash',
-            'payment_reference' => 'nullable|string|max:255',
+            'payment_reference' => 'nullable|required_if:payment_method,gcash|regex:/^\d{13}$/',
         ]);
 
         $booking->loadMissing('rooms');
