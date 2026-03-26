@@ -72,8 +72,8 @@ class WalkInController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'first_name'      => 'required|string|max:100',
-            'last_name'       => 'required|string|max:100',
+            'first_name'      => "required|string|max:100|regex:/^[A-Za-z][A-Za-z\\s'-]*$/",
+            'last_name'       => "required|string|max:100|regex:/^[A-Za-z][A-Za-z\\s'-]*$/",
             'email'           => 'nullable|email|max:255',
             'phone'           => 'required|string|max:11',
             'address'         => 'nullable|string|max:500',
@@ -87,7 +87,7 @@ class WalkInController extends Controller
             'adults'          => 'nullable|integer|min:1|max:30',
             'children'        => 'nullable|integer|min:0|max:30',
             'payment_method'  => 'required|in:cash,gcash',
-            'payment_reference' => 'nullable|string|max:255|required_if:payment_method,gcash',
+            'payment_reference' => 'nullable|required_if:payment_method,gcash|regex:/^\d{13}$/',
             'payment_type'    => 'required|in:full_payment',
             'extras'          => 'nullable|array',
             'extras.*'        => 'exists:extras,id',
