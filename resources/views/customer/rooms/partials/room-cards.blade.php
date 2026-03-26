@@ -45,7 +45,7 @@
             @else
                 <img src="https://via.placeholder.com/400x300/d4af37/2c2c2c?text={{ urlencode($room->roomType->name) }}" alt="{{ $room->roomType->name }}">
             @endif
-            <div class="room-badge">{{ $room->status }}</div>
+       
             @if($isSelected)
                 <div style="position:absolute;top:10px;right:10px;background:#27ae60;color:#fff;padding:0.4rem 0.7rem;border-radius:6px;font-size:0.8rem;font-weight:700;">Selected</div>
             @endif
