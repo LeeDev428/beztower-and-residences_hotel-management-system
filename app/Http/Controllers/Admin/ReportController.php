@@ -286,6 +286,12 @@ class ReportController extends Controller
             $sheet->setCellValue('H' . $row, $payment->amount);
             $row++;
         }
+
+        if ($row > 2) {
+            $sheet->getStyle('H2:H' . ($row - 1))
+                ->getNumberFormat()
+                ->setFormatCode('"₱"#,##0.00');
+        }
         
         // Auto-size columns
         foreach (range('A', 'H') as $col) {
@@ -409,6 +415,12 @@ class ReportController extends Controller
             $sheet->setCellValue('J' . $row, $booking->final_total ?? $booking->total_amount);
             $sheet->setCellValue('K' . $row, $booking->status);
             $row++;
+        }
+
+        if ($row > 2) {
+            $sheet->getStyle('J2:J' . ($row - 1))
+                ->getNumberFormat()
+                ->setFormatCode('"₱"#,##0.00');
         }
         
         // Auto-size columns
