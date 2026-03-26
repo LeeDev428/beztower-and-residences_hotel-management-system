@@ -218,7 +218,7 @@
             <p>If you have any questions or need to make changes to your booking, please contact us:</p>
             <ul>
                 <li><strong>Email:</strong> beztowerresidences@gmail.com</li>
-                <li><strong>Phone:</strong> (02) 88075046 or 09171221429</li>
+                <li><strong>Phone:</strong> 09171221429</li>
             </ul>
 
             <p>We look forward to welcoming you!</p>
