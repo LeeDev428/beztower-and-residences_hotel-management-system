@@ -525,7 +525,7 @@
 
                 <div id="gcashReferenceSection" style="display: none; margin-top: 0.8rem;">
                     <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">GCash Reference Number</label>
-                    <input type="text" name="payment_reference" id="billingPaymentReference" value="{{ old('payment_reference') }}" placeholder="Enter customer GCash reference" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem;">
+                    <input type="text" name="payment_reference" id="billingPaymentReference" value="{{ old('payment_reference') }}" maxlength="13" pattern="\d{13}" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,13)" placeholder="Enter 13-digit customer GCash reference" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem;">
                     <small style="display:block; margin-top:0.35rem; color:#777; font-size:0.78rem;">Saved to booking adjustment notes for record keeping.</small>
                 </div>
             </x-admin.card>
@@ -855,6 +855,13 @@ function toggleGcashQR() {
     const showGcash = gcashRadio.checked;
     document.getElementById('gcashQRSection').style.display = showGcash ? 'block' : 'none';
     document.getElementById('gcashReferenceSection').style.display = showGcash ? 'block' : 'none';
+    const refInput = document.getElementById('billingPaymentReference');
+    if (refInput) {
+        refInput.required = showGcash;
+        if (!showGcash) {
+            refInput.value = '';
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
