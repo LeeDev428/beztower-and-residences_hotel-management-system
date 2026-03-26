@@ -108,11 +108,14 @@
             <p>Dear {{ $booking->guest->first_name }} {{ $booking->guest->last_name }},</p>
             
             <div class="success-badge">
-                <strong>🎉 Your booking has been confirmed.</strong>
+                <strong>🎉 Your booking has been successfully confirmed.</strong>
             </div>
 
-            <p>Thank you for choosing Bez Tower and Residences.</p>
-            <p>Your booking has now been confirmed.</p>
+            <p>Thank you for choosing Bez Tower and Residences!</p>
+            <p>Your booking has been successfully confirmed, and the room is currently reserved for you for the next 8 hours. Please ensure that you send your proof of payment within this time frame to secure your reservation.</p>
+            <p>If we do not receive your proof of payment within 8 hours, the reservation will be cancelled. However, if you have already submitted your proof of payment, kindly disregard this message.</p>
+
+            <p><strong>Here are your booking details:</strong></p>
             
             <div class="info-box">
                 <div class="info-row">
@@ -203,40 +206,22 @@
                 @endif
             </div>
 
-            <div class="info-box">
-                <h3 style="margin-top:0; color:#2c2c2c;">📋 What to Bring</h3>
-                <ul style="margin:10px 0; padding-left:20px;">
-                    <li>Valid government-issued ID</li>
-                    <li>Booking reference number: <strong>{{ $booking->booking_reference }}</strong></li>
-                    <li>Payment receipt (this email)</li>
-                </ul>
-            </div>
-
-            <div class="info-box">
-                <h3 style="margin-top:0; color:#2c2c2c;">🕒 Check-in/Check-out Times</h3>
-                <ul style="margin:10px 0; padding-left:20px;">
-                    <li><strong>Check-in:</strong> 2:00 PM onwards</li>
-                    <li><strong>Check-out:</strong> 12:00 PM</li>
-                    <li><strong>Early check-in/Late check-out:</strong> Subject to availability</li>
-                </ul>
-            </div>
-
-            <p>Should you have any questions or require assistance, please don't hesitate to contact us:</p>
+            <p>If you have any questions or need assistance, please feel free to contact us:</p>
             <ul>
                 <li><strong>Email:</strong> beztowerresidences@gmail.com</li>
                 <li><strong>Phone:</strong> (02) 88075046 or 09171221429</li>
             </ul>
 
-            <p>We look forward to providing you with an exceptional stay!</p>
+            <p>We look forward to welcoming you!</p>
             
-            <p>Warm regards,<br>
-            <strong>Bez Tower and Residences Team</strong></p>
+            <p>Best regards,<br>
+            <strong>Bez Tower and Residences</strong></p>
         </div>
         
         <div class="footer">
             <p><strong>Bez Tower and Residences</strong></p>
             <p>205 F. Blumentritt Street, Brgy. Pedro Cruz<br>San Juan City, Philippines</p>
-            <p>Email: <a href="mailto:info@beztower.com">info@beztower.com</a> | Phone: (02) 88075046 or 09171221429</p>
+            <p>Email: <a href="mailto:beztowerresidences@gmail.com">beztowerresidences@gmail.com</a> | Phone: (02) 88075046 or 09171221429</p>
         </div>
     </div>
 </body>
