@@ -254,7 +254,7 @@ class WalkInController extends Controller
     private function availableRoomsQuery(string $checkInDate, string $checkOutDate)
     {
         return Room::with('roomType')
-            ->where('status', 'available')
+            ->whereIn('status', ['available', 'dirty', 'occupied'])
             ->whereNull('archived_at')
             ->whereHas('roomType')
             ->whereDoesntHave('bookings', function ($query) use ($checkInDate, $checkOutDate) {
