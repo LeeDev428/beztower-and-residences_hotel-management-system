@@ -20,46 +20,78 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Throwable;
 
 class BookingManagementController extends Controller
 {
     public function notificationsSnapshot(Request $request)
     {
-        $guestColumns = ['id'];
-        if (Schema::hasColumn('guests', 'name')) {
-            $guestColumns[] = 'name';
-        }
-        if (Schema::hasColumn('guests', 'first_name')) {
-            $guestColumns[] = 'first_name';
-        }
-        if (Schema::hasColumn('guests', 'last_name')) {
-            $guestColumns[] = 'last_name';
-        }
-
-        $pendingBookings = Booking::with([
-            'guest' => function ($query) use ($guestColumns) {
-                $query->select(array_values(array_unique($guestColumns)));
+        try {
+            if (!Schema::hasTable('bookings')) {
+                return response()->json([
+                    'pending_count' => 0,
+                    'latest_booking_id' => null,
+                    'latest_booking_reference' => null,
+                    'latest_booking_created_at' => null,
+                    'latest_guest_name' => null,
+                ]);
             }
-        ])
-            ->where('status', 'pending')
-            ->latest('id')
-            ->take(5)
-            ->get();
 
-        $latest = $pendingBookings->first();
-        $latestGuestName = null;
+            $guestColumns = ['id'];
+            $hasGuestsTable = Schema::hasTable('guests');
 
-        if ($latest && $latest->guest) {
-            $latestGuestName = trim((string) ($latest->guest->name ?? (($latest->guest->first_name ?? '') . ' ' . ($latest->guest->last_name ?? ''))));
+            if ($hasGuestsTable && Schema::hasColumn('guests', 'name')) {
+                $guestColumns[] = 'name';
+            }
+            if ($hasGuestsTable && Schema::hasColumn('guests', 'first_name')) {
+                $guestColumns[] = 'first_name';
+            }
+            if ($hasGuestsTable && Schema::hasColumn('guests', 'last_name')) {
+                $guestColumns[] = 'last_name';
+            }
+
+            $pendingQuery = Booking::query()
+                ->where('status', 'pending')
+                ->latest('id')
+                ->take(5);
+
+            if ($hasGuestsTable) {
+                $pendingQuery->with([
+                    'guest' => function ($query) use ($guestColumns) {
+                        $query->select(array_values(array_unique($guestColumns)));
+                    }
+                ]);
+            }
+
+            $pendingBookings = $pendingQuery->get();
+            $latest = $pendingBookings->first();
+            $latestGuestName = null;
+
+            if ($latest && $latest->guest) {
+                $latestGuestName = trim((string) ($latest->guest->name ?? (($latest->guest->first_name ?? '') . ' ' . ($latest->guest->last_name ?? ''))));
+            }
+
+            return response()->json([
+                'pending_count' => $pendingBookings->count(),
+                'latest_booking_id' => $latest?->id,
+                'latest_booking_reference' => $latest?->booking_reference,
+                'latest_booking_created_at' => $latest?->created_at?->toIso8601String(),
+                'latest_guest_name' => $latestGuestName,
+            ]);
+        } catch (Throwable $e) {
+            Log::error('Failed to build admin booking notifications snapshot', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'pending_count' => 0,
+                'latest_booking_id' => null,
+                'latest_booking_reference' => null,
+                'latest_booking_created_at' => null,
+                'latest_guest_name' => null,
+            ]);
         }
-
-        return response()->json([
-            'pending_count' => $pendingBookings->count(),
-            'latest_booking_id' => $latest?->id,
-            'latest_booking_reference' => $latest?->booking_reference,
-            'latest_booking_created_at' => $latest?->created_at?->toIso8601String(),
-            'latest_guest_name' => $latestGuestName,
-        ]);
     }
 
     public function index(Request $request)
