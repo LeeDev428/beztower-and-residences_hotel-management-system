@@ -142,31 +142,6 @@
                     <div style="font-weight: 600;">{{ optional($booking->guest)->address }}</div>
                 </div>
                 @endif
-                {{-- @if($booking->guest->id_photo)
-                <div style="grid-column: 1 / -1;">
-                    <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">ID Photo</div>
-                    <div style="display: flex; gap: 1rem; align-items: flex-start;">
-                        <div style="position: relative; width: 200px; height: 200px; border: 2px solid #e5e5e5; border-radius: 8px; overflow: hidden; cursor: pointer;" onclick="openIdPhotoModal()">
-                            @if(str_ends_with($booking->guest->id_photo, '.pdf'))
-                                <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f8f8f8;">
-                                    <i class="fas fa-file-pdf" style="font-size: 3rem; color: #dc3545; margin-bottom: 0.5rem;"></i>
-                                    <span style="font-size: 0.875rem; color: #666;">PDF Document</span>
-                                </div>
-                            @else
-                                <img src="{{ asset('storage/' . $booking->guest->id_photo) }}" alt="ID Photo" style="width: 100%; height: 100%; object-fit: cover;">
-                            @endif
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <a href="{{ asset('storage/' . $booking->guest->id_photo) }}" target="_blank" class="btn-primary" style="display: inline-block; padding: 0.5rem 1rem; background: linear-gradient(135deg, #d4af37, #f4e4c1); color: #2c2c2c; text-decoration: none; border-radius: 6px; font-weight: 600; text-align: center;">
-                                <i class="fas fa-external-link-alt"></i> View Full Size
-                            </a>
-                            <a href="{{ asset('storage/' . $booking->guest->id_photo) }}" download class="btn-secondary" style="display: inline-block; padding: 0.5rem 1rem; background: #6c757d; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; text-align: center;">
-                                <i class="fas fa-download"></i> Download
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                @endif --}}
             </div>
         </x-admin.card>
     
