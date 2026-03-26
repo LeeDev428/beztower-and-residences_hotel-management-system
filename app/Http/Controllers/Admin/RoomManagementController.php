@@ -70,7 +70,7 @@ class RoomManagementController extends Controller
             'room_number' => 'required|string|max:3|unique:rooms',
             'room_type_id' => ['required', Rule::exists('room_types', 'id')->whereNull('archived_at')],
             'floor' => 'required|integer|in:2,3,4,5,8',
-            'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
+            'status' => 'required|in:available,occupied,maintenance,blocked',
             'discount_percentage' => 'nullable|numeric|min:0|max:100|multiple_of:5',
             'description' => 'nullable|string',
             'amenities' => 'array',
@@ -119,7 +119,7 @@ class RoomManagementController extends Controller
     {
         // Manager/Receptionist can only update room status
         if (in_array(Auth::user()?->role, ['manager', 'receptionist'])) {
-            $validated = $request->validate(['status' => 'required|in:available,occupied,dirty,in_progress,maintenance']);
+            $validated = $request->validate(['status' => 'required|in:available,occupied,maintenance']);
             $room->update(['status' => $validated['status']]);
             ActivityLog::log('room_status_update', 'Updated room #' . $room->room_number . ' status to ' . $validated['status'], 'App\Models\Room', $room->id);
             return redirect()->route('admin.rooms.index')->with('success', 'Room status updated successfully!');
@@ -132,7 +132,7 @@ class RoomManagementController extends Controller
                 Rule::exists('room_types', 'id')->whereNull('archived_at'),
             ],
             'floor' => 'required|integer|in:2,3,4,5,8',
-            'status' => 'required|in:available,occupied,dirty,in_progress,maintenance,blocked',
+            'status' => 'required|in:available,occupied,maintenance,blocked',
             'discount_percentage' => 'nullable|numeric|min:0|max:100|multiple_of:5',
             'description' => 'nullable|string',
             'amenities' => 'array',
