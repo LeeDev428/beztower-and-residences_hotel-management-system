@@ -175,20 +175,16 @@
         <!-- Payment Summary -->
         <div style="background: #fff; border: 1px solid var(--border-gray); border-radius: 12px; padding: 1rem 1.25rem;">
             <div style="font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-dark);">Payment</div>
-            @php
-                $baseRoomTotal = (float) ($booking->total_amount ?? 0);
-                $grossAmount = (float) ($grossTotal ?? $baseRoomTotal);
-                $billingAdjustmentDelta = round($grossAmount - $baseRoomTotal, 2);
-            @endphp
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 <div style="display: flex; justify-content: space-between;">
                     <span>Room Charges ({{ $booking->total_nights ?? 0 }} nights)</span>
-                    <span style="font-weight: 600;">₱{{ number_format($baseRoomTotal, 2) }}</span>
+                    <span style="font-weight: 600;">₱{{ number_format((float) ($booking->total_amount ?? 0), 2) }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; color: #666;">
                     <span>VAT ({{ number_format($vatPercentage, 2) }}%) Included</span>
                     <span style="font-weight: 600;">₱{{ number_format((float) ($booking->tax_amount ?? 0), 2) }}</span>
                 </div>
+                @php($billingAdjustmentDelta = round((float) (($grossTotal ?? ($booking->total_amount ?? 0)) - ($booking->total_amount ?? 0)), 2))
                 @if(abs($billingAdjustmentDelta) > 0.00001)
                 <div style="display: flex; justify-content: space-between;">
                     <span>Billing Adjustment</span>
@@ -197,7 +193,7 @@
                 @endif
                 <div style="display: flex; justify-content: space-between;">
                     <span>Gross Total (After Billing)</span>
-                    <span style="font-weight: 700;">₱{{ number_format($grossAmount, 2) }}</span>
+                    <span style="font-weight: 700;">₱{{ number_format((float) ($grossTotal ?? ($booking->total_amount ?? 0)), 2) }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; color: #2e7d32;">
                     <span>Verified Payments</span>
