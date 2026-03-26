@@ -114,26 +114,6 @@
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
           
 
-            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                <h3 style="margin-top: 0; color: #2c2c2c;">💳 Accepted Payment Methods:</h3>
-                <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li><strong>GCash</strong></li>
-                </ul>
-
-                <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #2c2c2c;">
-                    <div><strong>GCash Number:</strong> 09778325550</div>
-                    <div><strong>Account Name:</strong> MICHAEL ANG</div>
-                </div>
-
-                <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #4caf50;">
-                    <p style="margin: 0;"><strong>📧 Where to Send Proof of Payment:</strong></p>
-                    <ul style="margin: 8px 0; padding-left: 20px;">
-                        <li><strong>Email:</strong> beztowerresidences@gmail.com</li>
-                        <li><strong>Subject:</strong> Payment Proof - {{ $payment->booking->booking_reference }}</li>
-                        <li><strong>Include:</strong> Screenshot/Photo of payment receipt with your booking reference number</li>
-                    </ul>
-                </div>
-            </div>
         </div>
         
         <p style="margin-top: 30px;">
