@@ -21,8 +21,6 @@
             <select name="status" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                 <option value="available" {{ old('status', $room->status) == 'available' ? 'selected' : '' }}>Available</option>
                 <option value="occupied" {{ old('status', $room->status) == 'occupied' ? 'selected' : '' }}>Occupied</option>
-                <option value="dirty" {{ old('status', $room->status) == 'dirty' ? 'selected' : '' }}>Dirty</option>
-                <option value="in_progress" {{ old('status', $room->status) == 'in_progress' ? 'selected' : '' }}>In Progress</option>
                 <option value="maintenance" {{ old('status', $room->status) == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
             </select>
             @error('status')
@@ -75,8 +73,6 @@
                 <select name="status" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                     <option value="available" {{ old('status', $room->status) == 'available' ? 'selected' : '' }}>Available</option>
                     <option value="occupied" {{ old('status', $room->status) == 'occupied' ? 'selected' : '' }}>Occupied</option>
-                    <option value="dirty" {{ old('status', $room->status) == 'dirty' ? 'selected' : '' }}>Dirty</option>
-                    <option value="in_progress" {{ old('status', $room->status) == 'in_progress' ? 'selected' : '' }}>In Progress</option>
                     <option value="maintenance" {{ old('status', $room->status) == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
                 </select>
                 @error('status')
