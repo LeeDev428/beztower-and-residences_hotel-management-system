@@ -1493,12 +1493,10 @@ Provided once only. Additional requests may incur a fee.`;
             const checkOut = checkOutInput.value;
 
             if (checkIn) {
-                const minCheckOutDate = new Date(checkIn + 'T00:00:00');
-                minCheckOutDate.setDate(minCheckOutDate.getDate() + 1);
-                const minCheckOut = minCheckOutDate.toISOString().split('T')[0];
+                const minCheckOut = checkIn;
                 checkOutInput.min = minCheckOut;
 
-                if (checkOut && checkOut <= checkIn) {
+                if (checkOut && checkOut < checkIn) {
                     checkOutInput.value = '';
                 }
             }
@@ -1507,11 +1505,12 @@ Provided once only. Additional requests may incur a fee.`;
                 const d1 = new Date(checkIn + 'T00:00:00');
                 const d2 = new Date(checkOut + 'T00:00:00');
                 const nights = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
-                document.getElementById('totalNights').value = nights > 0 ? nights : '';
+                const normalizedNights = nights > 0 ? nights : 1;
+                document.getElementById('totalNights').value = normalizedNights;
                 if (document.getElementById('nightsCount')) {
-                    document.getElementById('nightsCount').textContent = nights > 0 ? nights : 0;
+                    document.getElementById('nightsCount').textContent = normalizedNights;
                 }
-                if (nights > 0) updateTotal();
+                updateTotal();
             } else {
                 document.getElementById('totalNights').value = '';
             }
@@ -1537,9 +1536,7 @@ Provided once only. Additional requests may incur a fee.`;
             }
 
             if (checkInInput.value) {
-                const minCheckOutDate = new Date(checkInInput.value + 'T00:00:00');
-                minCheckOutDate.setDate(minCheckOutDate.getDate() + 1);
-                const minCheckOut = minCheckOutDate.toISOString().split('T')[0];
+                const minCheckOut = checkInInput.value;
                 checkOutInput.min = minCheckOut;
 
                 if (checkOutInput.value && checkOutInput.value < minCheckOut) {
@@ -1815,8 +1812,8 @@ Provided once only. Additional requests may incur a fee.`;
                 return;
             }
 
-            if (!checkOutDate || checkOutDate <= checkInDate) {
-                alert('Check-out date must be at least 1 day after check-in.');
+            if (!checkOutDate || checkOutDate < checkInDate) {
+                alert('Check-out date cannot be earlier than check-in date. Same-day booking is allowed and counted as 1 night.');
                 return;
             }
 
