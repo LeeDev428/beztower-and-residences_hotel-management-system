@@ -55,7 +55,7 @@
             <h3>{{ $room->roomType->name }}</h3>
 
             <div class="room-info">
-                <span><i class="fas fa-users"></i> Up to {{ $room->roomType->max_guests }} Guests</span>
+                <span><i class="fas fa-users"></i> Up to {{ $room->roomType->max_guests }} adults + 1 child</span>
                 <span><i class="fas fa-bed"></i> {{ $room->roomType->bed_type }}</span>
             </div>
 
