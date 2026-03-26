@@ -43,29 +43,24 @@
                                 @endforeach
                             </div>
                         @else
-                            <div style="font-weight: 600;">{{ optional($booking->room)->room_number ?? 'Unassigned' }} - {{ optional($booking->roomType)->name ?? 'N/A' }}</div>
-                        @endif
-                    </div>
-                    <div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Number of Guests</div>
                         <div style="font-weight: 600;">{{ $booking->number_of_guests }}</div>
                     </div>
                 </div>
-
+                                                <span style="font-weight: 600;">₱{{ number_format((float) ($booking->total_amount ?? 0), 2) }}</span>
                 <!-- Special Requests -->
                 @if($booking->special_requests)
                 <div>
                     <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">Special Requests</div>
                     <div style="padding: 1rem; background: var(--light-gray); border-radius: 8px;">
-                        {{ $booking->special_requests }}
+                                            @if(abs(round((float) (($grossTotal ?? ($booking->total_amount ?? 0)) - ($booking->total_amount ?? 0)), 2)) > 0.00001)
                     </div>
                 </div>
-                @endif
+                                                <span style="font-weight: 600; color: {{ round((float) (($grossTotal ?? ($booking->total_amount ?? 0)) - ($booking->total_amount ?? 0)), 2) < 0 ? '#2e7d32' : '#c62828' }};">{{ round((float) (($grossTotal ?? ($booking->total_amount ?? 0)) - ($booking->total_amount ?? 0)), 2) < 0 ? '-₱' : '+₱' }}{{ number_format(abs(round((float) (($grossTotal ?? ($booking->total_amount ?? 0)) - ($booking->total_amount ?? 0)), 2)), 2) }}</span>
             </div>
         </x-admin.card>
 
         <!-- Room Assignment -->
-        @if(!in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment']))
+                                                <span style="font-weight: 700;">₱{{ number_format((float) ($grossTotal ?? ($booking->total_amount ?? 0)), 2) }}</span>
         <x-admin.card title="Room Assignment / Transfer" style="margin-top: 1.5rem;">
             <div style="margin-bottom: 1rem;">
                 <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Currently Assigned Room(s)</div>
