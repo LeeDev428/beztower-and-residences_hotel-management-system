@@ -138,7 +138,6 @@
                         <li><strong>Subject:</strong> Payment Proof - {{ $payment->booking->booking_reference }}</li>
                         <li><strong>Include:</strong> Screenshot/Photo of payment receipt with your booking reference number</li>
                     </ul>
-                    <p style="margin: 8px 0 0 0; font-size: 14px;"><em>📱 You may also contact us at 09171221429 for assistance.</em></p>
                 </div>
             </div>
         </div>
