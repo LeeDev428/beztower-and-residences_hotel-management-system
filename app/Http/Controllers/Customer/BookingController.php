@@ -26,6 +26,8 @@ class BookingController extends Controller
     public function checkout(Request $request, Room $room)
     {
         $room->load(['roomType', 'photos']);
+        $vatPercentage = AppSetting::getVatPercentage();
+        $vatInclusiveFraction = AppSetting::getVatFractionFromInclusive();
 
         $roomIdsInput = $request->input('room_ids', []);
         $preselectedRoomIds = collect();
@@ -122,7 +124,9 @@ class BookingController extends Controller
             'requestedRooms',
             'maxGuestCapacity',
             'termsAndConditionsText',
-            'bookingPoliciesText'
+            'bookingPoliciesText',
+            'vatPercentage',
+            'vatInclusiveFraction'
         ));
     }
 
@@ -308,7 +312,7 @@ class BookingController extends Controller
                 }
             }
 
-            $taxAmount = round($subtotal * (12 / 112), 2);
+            $taxAmount = round($subtotal * AppSetting::getVatFractionFromInclusive(), 2);
             $totalAmount = $subtotal + $extrasTotal;
 
             // Generate unique booking reference
