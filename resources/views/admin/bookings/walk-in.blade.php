@@ -66,7 +66,7 @@
                     </div>
                     <div>
                         <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Check-Out Date <span style="color: var(--danger);">*</span></label>
-                        <input type="date" name="check_out_date" id="checkOutDate" value="{{ old('check_out_date', $checkOut) }}" required min="{{ now()->addDay()->format('Y-m-d') }}" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                        <input type="date" name="check_out_date" id="checkOutDate" value="{{ old('check_out_date', $checkOut) }}" required min="{{ now()->format('Y-m-d') }}" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
                     </div>
                 </div>
 
@@ -242,9 +242,9 @@ function formatPeso(value) {
 function getNights() {
     const ci = document.getElementById('checkInDate').value;
     const co = document.getElementById('checkOutDate').value;
-    if (!ci || !co) return 0;
+    if (!ci || !co) return 1;
     const diff = (new Date(co) - new Date(ci)) / (1000 * 60 * 60 * 24);
-    return Math.max(0, diff);
+    return Math.max(1, diff);
 }
 
 function getSelectedRoomIds() {
@@ -387,7 +387,7 @@ async function refreshAvailableRooms() {
     const checkIn = document.getElementById('checkInDate').value;
     const checkOut = document.getElementById('checkOutDate').value;
 
-    if (!checkIn || !checkOut || new Date(checkOut) <= new Date(checkIn)) {
+    if (!checkIn || !checkOut || new Date(checkOut) < new Date(checkIn)) {
         availableRooms = [];
         renderRoomSelectors();
         return;
@@ -416,12 +416,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     checkInEl.addEventListener('change', function() {
         const ci = new Date(this.value + 'T00:00:00');
-        if (checkOutEl.value && new Date(checkOutEl.value + 'T00:00:00') <= ci) {
-            const nextDay = new Date(ci);
-            nextDay.setDate(nextDay.getDate() + 1);
-            const yyyy = nextDay.getFullYear();
-            const mm = String(nextDay.getMonth() + 1).padStart(2, '0');
-            const dd = String(nextDay.getDate()).padStart(2, '0');
+        if (checkOutEl.value && new Date(checkOutEl.value + 'T00:00:00') < ci) {
+            const yyyy = ci.getFullYear();
+            const mm = String(ci.getMonth() + 1).padStart(2, '0');
+            const dd = String(ci.getDate()).padStart(2, '0');
             checkOutEl.value = `${yyyy}-${mm}-${dd}`;
         }
         checkOutEl.min = this.value;
