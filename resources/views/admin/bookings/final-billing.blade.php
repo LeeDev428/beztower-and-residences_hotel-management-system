@@ -26,6 +26,7 @@
     <!-- Booking Details + Final Total -->
     @php
         $reservedRooms = $booking->rooms->isNotEmpty() ? $booking->rooms : collect([$booking->room])->filter();
+        $vatPercentage = \App\Models\AppSetting::getVatPercentage();
         $isMultiRoomBilling = $reservedRooms->count() > 1;
         $roomManualAdjustments = [];
         $roomAdditionalCharges = [];
@@ -146,7 +147,7 @@
                     <span style="font-weight: 600;">₱{{ number_format($booking->total_amount, 2) }}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
-                    <span style="color: var(--text-muted);">VAT (12%) Included</span>
+                    <span style="color: var(--text-muted);">VAT ({{ number_format($vatPercentage, 2) }}%) Included</span>
                     <span style="font-weight: 600;">₱{{ number_format((float) ($booking->tax_amount ?? 0), 2) }}</span>
                 </div>
                 @if($isMultiRoomBilling)
