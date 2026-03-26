@@ -78,6 +78,13 @@
             $initialOverallManualAdjustment = 0;
         }
 
+        $billingAmenityCatalog = [
+            ['key' => 'extra_bed', 'name' => 'Extra Bed', 'price' => 800],
+            ['key' => 'extra_bedding', 'name' => 'Extra Bedding', 'price' => 300],
+            ['key' => 'extra_towels', 'name' => 'Extra Towels', 'price' => 200],
+            ['key' => 'soap_set', 'name' => 'Soap, Shampoo, Conditioner', 'price' => 50],
+        ];
+
         $initialPerRoomAdditionalTotal = array_sum($roomAdditionalCharges);
         $initialPerRoomDiscountTotal = array_sum($roomDiscountAmounts);
     @endphp
@@ -179,6 +186,10 @@
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--success); font-weight: 600;">Verified Payments</span>
                     <span style="font-weight: 700; color: var(--success);" id="verifiedPaymentsDisplay">-₱{{ number_format($verifiedPaymentsTotal, 2) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
+                    <span style="color: var(--text-muted);">Amenities & Services</span>
+                    <span style="font-weight: 600;" id="servicesAdjustmentDisplay">₱0.00</span>
                 </div>
                 @if(!$isMultiRoomBilling)
                 <div style="display: flex; justify-content: space-between; padding: 5px 0;">
@@ -301,6 +312,48 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
 
             <x-admin.card title="Manual Adjustment">
+                <div style="margin-bottom: 1rem; border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.9rem; background: #fbfbfb;">
+                    <div style="font-weight: 700; font-size: 0.9rem; color: #333; margin-bottom: 0.7rem;">Additional Amenities & Services</div>
+                    <div style="display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap: 0.65rem;">
+                        @foreach($billingAmenityCatalog as $billingAmenity)
+                            <div style="border: 1px solid #e5e5e5; border-radius: 8px; padding: 0.55rem 0.7rem; background: white;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.55rem; margin-bottom: 0.35rem;">
+                                    <label style="display: flex; align-items: center; gap: 0.45rem; margin: 0; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: #2c2c2c;">
+                                        <input
+                                            type="checkbox"
+                                            class="service-item-checkbox"
+                                            data-service-key="{{ $billingAmenity['key'] }}"
+                                            data-service-name="{{ $billingAmenity['name'] }}"
+                                            data-service-price="{{ $billingAmenity['price'] }}"
+                                            onchange="updateServicesAdjustment()"
+                                            style="width: 14px; height: 14px; accent-color: var(--primary-gold);"
+                                        >
+                                        <span>{{ $billingAmenity['name'] }}</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        class="service-item-qty"
+                                        data-service-key="{{ $billingAmenity['key'] }}"
+                                        min="1"
+                                        max="50"
+                                        value="1"
+                                        disabled
+                                        oninput="updateServicesAdjustment()"
+                                        style="width: 54px; padding: 0.25rem 0.35rem; border: 1px solid var(--border-gray); border-radius: 6px; font-size: 0.82rem;"
+                                    >
+                                </div>
+                                <div style="font-size: 0.8rem; color: #777;">PHP {{ number_format((float) $billingAmenity['price'], 2) }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div style="margin-top: 0.7rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #ddd; padding-top: 0.6rem; font-size: 0.86rem;">
+                        <span style="font-weight: 600; color: #555;">Services Total</span>
+                        <span style="font-weight: 700; color: #2c2c2c;" id="servicesTotalPreview">₱0.00</span>
+                    </div>
+                    <input type="hidden" name="services_total_adjustment" id="servicesTotalAdjustmentInput" value="0">
+                    <input type="hidden" name="services_breakdown" id="servicesBreakdownInput" value="">
+                </div>
+
                 <div style="margin-bottom: 1rem; padding: 0.8rem 0.9rem; border: 1px solid var(--border-gray); border-radius: 8px; background: #fafafa;">
                     <div style="font-weight: 700; font-size: 0.86rem; color: #333; margin-bottom: 0.45rem;">Additional Amenities & Services (Reference)</div>
                     <ul style="margin: 0; padding-left: 1rem; color: #555; font-size: 0.82rem; line-height: 1.5;">
@@ -573,6 +626,57 @@ function getManualAdjustmentTotal() {
     return parseFloat(document.getElementById('manualAdjustment').value) || 0;
 }
 
+function updateServicesAdjustment() {
+    const serviceCheckboxes = document.querySelectorAll('.service-item-checkbox');
+    const selectedBreakdown = [];
+    let servicesTotal = 0;
+
+    serviceCheckboxes.forEach((checkbox) => {
+        const serviceKey = checkbox.dataset.serviceKey;
+        const qtyInput = document.querySelector('.service-item-qty[data-service-key="' + serviceKey + '"]');
+        const servicePrice = parseFloat(checkbox.dataset.servicePrice || '0') || 0;
+        const serviceName = checkbox.dataset.serviceName || 'Service';
+
+        if (!qtyInput) {
+            return;
+        }
+
+        qtyInput.disabled = !checkbox.checked;
+        if (!checkbox.checked) {
+            qtyInput.value = '1';
+            return;
+        }
+
+        const qty = Math.max(1, Math.min(50, parseInt(qtyInput.value || '1', 10) || 1));
+        qtyInput.value = String(qty);
+        const lineTotal = servicePrice * qty;
+        servicesTotal += lineTotal;
+        selectedBreakdown.push(serviceName + ' x' + qty + ' (₱' + lineTotal.toLocaleString('en-PH', {minimumFractionDigits: 2}) + ')');
+    });
+
+    const servicesTotalPreview = document.getElementById('servicesTotalPreview');
+    if (servicesTotalPreview) {
+        servicesTotalPreview.textContent = '₱' + servicesTotal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    }
+
+    const servicesAdjustmentDisplay = document.getElementById('servicesAdjustmentDisplay');
+    if (servicesAdjustmentDisplay) {
+        servicesAdjustmentDisplay.textContent = '₱' + servicesTotal.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    }
+
+    const servicesTotalAdjustmentInput = document.getElementById('servicesTotalAdjustmentInput');
+    if (servicesTotalAdjustmentInput) {
+        servicesTotalAdjustmentInput.value = servicesTotal.toFixed(2);
+    }
+
+    const servicesBreakdownInput = document.getElementById('servicesBreakdownInput');
+    if (servicesBreakdownInput) {
+        servicesBreakdownInput.value = selectedBreakdown.join(', ');
+    }
+
+    calculateTotal();
+}
+
 function syncPerRoomDiscountInput(row, discountType = null) {
     const roomBase = parseFloat(row.dataset.roomBaseTotal) || 0;
     const roomCapacity = Math.max(parseInt(row.dataset.roomCapacity || '1', 10), 1);
@@ -726,7 +830,10 @@ function calculateTotal() {
     const pwdDiscountInput = document.getElementById('pwdSeniorDiscountInput');
     const pwdDiscount  = pwdDiscountInput ? (parseFloat(pwdDiscountInput.value) || 0) : 0;
     const overallManualAdjust = parseFloat(document.getElementById('overallManualAdjustment')?.value || '0') || 0;
-    const manualAdjust = hasPerRoomBilling ? (perRoomNetAdjustment + overallManualAdjust) : getManualAdjustmentTotal();
+    const servicesAdjustment = parseFloat(document.getElementById('servicesTotalAdjustmentInput')?.value || '0') || 0;
+    const manualAdjust = hasPerRoomBilling
+        ? (perRoomNetAdjustment + overallManualAdjust + servicesAdjustment)
+        : (getManualAdjustmentTotal() + servicesAdjustment);
 
     const grossTotal = roomTotal + earlyCheckin + lateCheckout - pwdDiscount + manualAdjust;
     const balanceDue = Math.max(grossTotal - verifiedPaymentsTotal, 0);
@@ -764,6 +871,13 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.room-manual-adjustment').forEach(input => {
         input.addEventListener('change', calculateTotal);
     });
+
+    document.querySelectorAll('.service-item-checkbox, .service-item-qty').forEach(input => {
+        input.addEventListener('change', updateServicesAdjustment);
+        input.addEventListener('input', updateServicesAdjustment);
+    });
+
+    updateServicesAdjustment();
     calculateTotal();
 });
 </script>
