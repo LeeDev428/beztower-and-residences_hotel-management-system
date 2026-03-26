@@ -112,13 +112,7 @@
             </table>
         </div>
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h2 style="color: #C9A961; margin-top: 0;">Next Steps - Payment Instructions</h2>
-            <ol style="line-height: 1.8;">
-                <li>Please review the rejection reason above</li>
-                <li>Verify your payment details</li>
-                <li>Return to your booking payment page and upload a new valid proof of payment</li>
-                <li>Contact us if you need assistance</li>
-            </ol>
+          
 
             <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
                 <h3 style="margin-top: 0; color: #2c2c2c;">💳 Accepted Payment Methods:</h3>
