@@ -115,6 +115,10 @@
                         <span style="font-weight: 600;" id="roomChargeDisplay">PHP 0.00</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                        <span style="color: var(--text-muted);">VAT ({{ number_format((float) \App\Models\AppSetting::getVatPercentage(), 2) }}%) Included</span>
+                        <span style="font-weight: 600;" id="vatIncludedDisplay">PHP 0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
                         <span style="color: var(--text-muted);">Amenities & Services</span>
                         <span style="font-weight: 600;" id="extrasDisplay">PHP 0.00</span>
                     </div>
@@ -234,6 +238,7 @@
 
 <script>
 let availableRooms = @json($availableRoomsForJs);
+const walkInVatFraction = {{ (float) \App\Models\AppSetting::getVatFractionFromInclusive() }};
 
 function formatPeso(value) {
     return 'PHP ' + Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -369,9 +374,11 @@ function calculateTotal() {
     });
 
     const grandTotal = roomCharge + extrasTotal;
+    const vatIncluded = roomCharge * walkInVatFraction;
 
     document.getElementById('nightsDisplay').textContent = nights;
     document.getElementById('roomChargeDisplay').textContent = formatPeso(roomCharge);
+    document.getElementById('vatIncludedDisplay').textContent = formatPeso(vatIncluded);
     document.getElementById('extrasDisplay').textContent = formatPeso(extrasTotal);
     document.getElementById('totalDisplay').textContent = formatPeso(grandTotal);
     document.getElementById('amountDue').textContent = formatPeso(grandTotal);
