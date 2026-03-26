@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Booking;
 use App\Models\Extra;
 use App\Models\Guest;
@@ -168,7 +169,7 @@ class WalkInController extends Controller
             $nightlySubtotal = (float) $selectedRooms->sum(fn ($room) => (float) ($room->effective_price ?? 0));
             $overallSubtotal = $nightlySubtotal * $nights;
             $overallTotal = round($overallSubtotal + $extrasTotal, 2);
-            $taxAmount = round($overallSubtotal * (12 / 112), 2);
+            $taxAmount = round($overallSubtotal * AppSetting::getVatFractionFromInclusive(), 2);
             $reference = 'WI-' . strtoupper(Str::random(8));
 
             // Create one reservation (walk-ins are immediately checked-in)
