@@ -637,13 +637,7 @@ class BookingManagementController extends Controller
                 $hasSameDayArrivalConflict = Booking::query()
                     ->where('bookings.id', '!=', $booking->id)
                     ->whereDate('check_in_date', optional($booking->check_out_date)->toDateString())
-                    ->where(function ($statusQuery) {
-                        $statusQuery
-                            ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                            ->orWhereHas('payments', function ($paymentQuery) {
-                                $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                            });
-                    })
+                    ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
                     ->where(function ($roomQuery) use ($bookingRoomIds) {
                         $roomQuery->whereIn('room_id', $bookingRoomIds)
                             ->orWhereHas('rooms', function ($roomsRelationQuery) use ($bookingRoomIds) {
@@ -958,13 +952,7 @@ class BookingManagementController extends Controller
                 })
                 ->whereDoesntHave('bookings', function ($q) use ($booking, $checkInDate, $checkOutDate) {
                     $q->where('bookings.id', '!=', $booking->id)
-                        ->where(function ($statusQuery) {
-                            $statusQuery
-                                ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                                ->orWhereHas('payments', function ($paymentQuery) {
-                                    $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                                });
-                        })
+                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
                         ->where(function ($overlapQuery) use ($checkInDate, $checkOutDate) {
                             $overlapQuery
                                 ->where(function ($rangeQuery) use ($checkInDate, $checkOutDate) {
@@ -980,13 +968,7 @@ class BookingManagementController extends Controller
                 })
                 ->whereDoesntHave('reservationBookings', function ($q) use ($booking, $checkInDate, $checkOutDate) {
                     $q->where('bookings.id', '!=', $booking->id)
-                        ->where(function ($statusQuery) {
-                            $statusQuery
-                                ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
-                                ->orWhereHas('payments', function ($paymentQuery) {
-                                    $paymentQuery->whereIn('payment_status', ['verified', 'completed']);
-                                });
-                        })
+                        ->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
                         ->where(function ($overlapQuery) use ($checkInDate, $checkOutDate) {
                             $overlapQuery
                                 ->where(function ($rangeQuery) use ($checkInDate, $checkOutDate) {
