@@ -5,6 +5,8 @@
 
 @section('content')
 @php($vatPercentage = \App\Models\AppSetting::getVatPercentage())
+@php($guestIdPhoto = trim((string) (optional($booking->guest)->id_photo ?? '')))
+@php($guestIdPhotoIsPdf = $guestIdPhoto !== '' && str_ends_with(strtolower($guestIdPhoto), '.pdf'))
 <div style="margin-bottom: 1.5rem;">
     <x-admin.button type="outline" href="{{ route('admin.bookings.index') }}">← Back to Bookings</x-admin.button>
 </div>
@@ -172,15 +174,15 @@
     <div id="idPhotoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; padding: 2rem;" onclick="closeIdPhotoModal()">
         <div style="position: relative; max-width: 90%; max-height: 90%; margin: auto; top: 50%; transform: translateY(-50%);">
             <button onclick="closeIdPhotoModal()" style="position: absolute; top: -40px; right: 0; background: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.5rem; cursor: pointer; color: #2c2c2c;">&times;</button>
-            @if(optional($booking->guest)->id_photo && !str_ends_with(optional($booking->guest)->id_photo, '.pdf'))
-                <img src="{{ asset('storage/' . optional($booking->guest)->id_photo) }}" alt="ID Photo" style="max-width: 100%; max-height: 80vh; display: block; margin: auto; border-radius: 8px;">
+            @if($guestIdPhoto !== '' && !$guestIdPhotoIsPdf)
+                <img src="{{ asset('storage/' . $guestIdPhoto) }}" alt="ID Photo" style="max-width: 100%; max-height: 80vh; display: block; margin: auto; border-radius: 8px;">
             @endif
         </div>
     </div>
     
     <script>
         function openIdPhotoModal() {
-            @if(optional($booking->guest)->id_photo && !str_ends_with(optional($booking->guest)->id_photo, '.pdf'))
+            @if($guestIdPhoto !== '' && !$guestIdPhotoIsPdf)
                 document.getElementById('idPhotoModal').style.display = 'block';
             @endif
         }
