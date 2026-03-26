@@ -33,11 +33,11 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">First Name <span style="color: var(--danger);">*</span></label>
-                        <input type="text" name="first_name" value="{{ old('first_name') }}" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Juan">
+                        <input type="text" name="first_name" value="{{ old('first_name') }}" required pattern="[A-Za-z][A-Za-z\s'\-]*" oninput="this.value=this.value.replace(/[^A-Za-z\s'\-]/g,'')" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Juan">
                     </div>
                     <div>
                         <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Last Name <span style="color: var(--danger);">*</span></label>
-                        <input type="text" name="last_name" value="{{ old('last_name') }}" required style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Dela Cruz">
+                        <input type="text" name="last_name" value="{{ old('last_name') }}" required pattern="[A-Za-z][A-Za-z\s'\-]*" oninput="this.value=this.value.replace(/[^A-Za-z\s'\-]/g,'')" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;" placeholder="Dela Cruz">
                     </div>
                 </div>
 
@@ -170,7 +170,7 @@
 
                         <div id="gcashReferenceWrap" style="display: none; margin-top: 0.75rem;">
                             <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">GCash Reference Number <span style="color: var(--danger);">*</span></label>
-                            <input type="text" name="payment_reference" id="walkinPaymentReference" value="{{ old('payment_reference') }}" placeholder="Enter customer GCash reference" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                            <input type="text" name="payment_reference" id="walkinPaymentReference" value="{{ old('payment_reference') }}" maxlength="13" pattern="\d{13}" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,13)" placeholder="Enter 13-digit GCash reference" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
                         </div>
                     </div>
                 </div>
@@ -388,6 +388,13 @@ function toggleGcash() {
     const isGcash = document.querySelector('input[name="payment_method"]:checked')?.value === 'gcash';
     document.getElementById('gcashInfo').style.display = isGcash ? 'block' : 'none';
     document.getElementById('gcashReferenceWrap').style.display = isGcash ? 'block' : 'none';
+    const refInput = document.getElementById('walkinPaymentReference');
+    if (refInput) {
+        refInput.required = isGcash;
+        if (!isGcash) {
+            refInput.value = '';
+        }
+    }
 }
 
 async function refreshAvailableRooms() {
