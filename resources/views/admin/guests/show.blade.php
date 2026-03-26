@@ -17,11 +17,11 @@
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">First Name</label>
-                        <input type="text" name="first_name" value="{{ $guest->first_name }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" {{ optional(auth()->user())->role === 'manager' ? 'readonly' : 'required' }}>
+                        <input type="text" name="first_name" value="{{ $guest->first_name }}" pattern="[A-Za-z][A-Za-z\s'\-]*" oninput="this.value=this.value.replace(/[^A-Za-z\s'\-]/g,'')" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" {{ optional(auth()->user())->role === 'manager' ? 'readonly' : 'required' }}>
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Last Name</label>
-                        <input type="text" name="last_name" value="{{ $guest->last_name }}" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" {{ optional(auth()->user())->role === 'manager' ? 'readonly' : 'required' }}>
+                        <input type="text" name="last_name" value="{{ $guest->last_name }}" pattern="[A-Za-z][A-Za-z\s'\-]*" oninput="this.value=this.value.replace(/[^A-Za-z\s'\-]/g,'')" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" {{ optional(auth()->user())->role === 'manager' ? 'readonly' : 'required' }}>
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Email</label>
