@@ -261,19 +261,20 @@ class BookingManagementController extends Controller
         $booking->update($updateData);
 
         if ($targetStatus === 'confirmed') {
-            $latestVerifiedPayment = $booking->payments()
-                ->whereIn('payment_status', ['verified', 'completed'])
+            $latestPayment = $booking->payments()
                 ->latest('payment_date')
                 ->latest('created_at')
                 ->first();
 
             $guestEmail = optional($booking->guest)->email;
-            if ($latestVerifiedPayment && !empty($guestEmail)) {
+            if (!empty($guestEmail)) {
                 try {
-                    Mail::to($guestEmail)->send(new PaymentConfirmation($booking, $latestVerifiedPayment));
+                    Mail::to($guestEmail)->send(new PaymentConfirmation($booking, $latestPayment));
                 } catch (\Exception $e) {
                     Log::error('Failed to send booking confirmation email from status update: ' . $e->getMessage());
                 }
+            } else {
+                Log::warning('Skipped confirmation email from status update: guest email missing for booking #' . $booking->booking_reference);
             }
         }
 
