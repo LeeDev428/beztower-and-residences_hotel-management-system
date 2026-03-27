@@ -105,8 +105,7 @@
 
     <div class="container">
         <div class="header">
-            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences" style="pointer-events: none; user-select: none; -webkit-user-drag: none;">
-            <h1>Reschedule Confirmed</h1>
+
             <p>Your updated stay details are ready.</p>
         </div>
 
