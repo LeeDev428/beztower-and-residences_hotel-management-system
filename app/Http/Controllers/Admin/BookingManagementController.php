@@ -180,6 +180,11 @@ class BookingManagementController extends Controller
         $grossTotal = $booking->final_total ?? $booking->total_amount;
         $balanceDue = max(round($grossTotal - $verifiedPaymentsTotal, 2), 0);
 
+        // Checkout is only allowed when the booking is fully paid.
+        if ($balanceDue > 0) {
+            $allowedStatuses = array_values(array_filter($allowedStatuses, fn ($status) => $status !== 'checked_out'));
+        }
+
         // Available rooms for the same assigned room type(s) (for assign/transfer)
         $assignedRoomTypeIds = $booking->rooms->isNotEmpty()
             ? $booking->rooms->pluck('room_type_id')->filter()->unique()->values()->all()
@@ -247,6 +252,18 @@ class BookingManagementController extends Controller
             $hasVerifiedPayment = $booking->payments()->whereIn('payment_status', ['verified', 'completed'])->exists();
             if (!$hasVerifiedPayment) {
                 return back()->with('error', 'Rescheduling status is not allowed until payment is verified in the Payment Module.');
+            }
+        }
+
+        if ($targetStatus === 'checked_out') {
+            $amountPaid = (float) $booking->payments()
+                ->whereIn('payment_status', ['verified', 'completed'])
+                ->sum('amount');
+            $finalTotal = (float) ($booking->final_total ?? $booking->total_amount ?? 0);
+            $remainingBalance = round($finalTotal - $amountPaid, 2);
+
+            if ($remainingBalance > 0.00001) {
+                return back()->with('error', 'Checkout is not allowed while there is an outstanding balance. Please click Settle Balance first.');
             }
         }
 
