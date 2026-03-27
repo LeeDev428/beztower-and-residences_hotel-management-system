@@ -484,7 +484,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    checkOutEl.addEventListener('change', refreshAvailableRooms);
+    checkOutEl.addEventListener('change', function () {
+        const checkInDate = new Date(checkInEl.value + 'T00:00:00');
+        const checkOutDate = new Date(checkOutEl.value + 'T00:00:00');
+
+        if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+            refreshAvailableRooms();
+            return;
+        }
+
+        if (checkOutDate <= checkInDate) {
+            checkOutEl.value = tomorrowStr;
+            alert('Walk-in checkout date must be at least next day (1 night minimum).');
+        }
+
+        refreshAvailableRooms();
+    });
     roomsCountEl.addEventListener('input', renderRoomSelectors);
     adultsEl.addEventListener('input', function () {
         syncEffectiveAdultsDisplay();
@@ -501,6 +516,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     formEl.addEventListener('submit', function (event) {
+        const checkInValue = checkInEl.value;
+        const checkOutValue = checkOutEl.value;
+        const checkInDate = new Date(checkInValue + 'T00:00:00');
+        const checkOutDate = new Date(checkOutValue + 'T00:00:00');
+
+        if (!checkInValue || !checkOutValue || isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime()) || checkOutDate <= checkInDate) {
+            event.preventDefault();
+            alert('Walk-in checkout date must be after check-in date. Same-day checkout is not allowed.');
+            return;
+        }
+
         const requestedRooms = Math.max(1, parseInt(roomsCountEl.value || '1', 10));
         const selectedRoomIds = getSelectedRoomIds();
         if (selectedRoomIds.length !== requestedRooms) {
