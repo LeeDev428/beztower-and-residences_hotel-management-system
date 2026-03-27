@@ -493,12 +493,12 @@
                     </div>
                     <input type="hidden" name="overall_manual_adjustment" id="overallManualAdjustment" value="0">
                 @endif
-                <div>
+                {{-- <div>
                     <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Gcash Payment</label>
                     <div style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; background: #f9f9f9; color: var(--text-muted); min-height: 120px; line-height: 1.5;">
                         {{ $booking->adjustment_reason ?? (($existingBillingPaymentReference ?? '') !== '' ? ('Billing GCash Reference: ' . $existingBillingPaymentReference) : 'No adjustment reason recorded') }}
                     </div>
-                </div>
+                </div> --}}
             </x-admin.card>
 
             <x-admin.card title="Payment Method for Additional Charges">
