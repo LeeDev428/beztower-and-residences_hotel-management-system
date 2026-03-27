@@ -170,6 +170,13 @@ class RoomManagementController extends Controller
                     'photo_path' => $path,
                 ]);
             }
+
+            ActivityLog::log(
+                'image_update',
+                'Updated room images for room #' . $room->room_number,
+                'App\Models\Room',
+                $room->id
+            );
         }
 
         // Log the activity
