@@ -50,7 +50,7 @@ class RoomManagementController extends Controller
             $query->where('status', $request->status);
         }
 
-        $rooms = $query->paginate(15);
+        $rooms = $query->paginate(15)->withQueryString();
         $roomTypes = RoomType::active()->get();
 
         return view('admin.rooms.index', compact('rooms', 'roomTypes'));
