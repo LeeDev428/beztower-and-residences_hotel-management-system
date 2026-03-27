@@ -103,6 +103,7 @@
 <body>
     <div class="email-container">
         <div class="header">
+            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences Logo" style="max-width: 120px; height: auto; margin-bottom: 10px; border-radius: 8px; background: #fff; padding: 6px;">
             <div class="logo-text">Bez Tower & Residences</div>
             <h1>Booking Cancellation Notice</h1>
         </div>
