@@ -170,7 +170,8 @@
 
                         <div id="gcashReferenceWrap" style="display: none; margin-top: 0.75rem;">
                             <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">GCash Reference Number <span style="color: var(--danger);">*</span></label>
-                            <input type="text" name="payment_reference" id="walkinPaymentReference" value="{{ old('payment_reference') }}" maxlength="13" pattern="\d{13}" inputmode="numeric" oninput="lockWalkinGcashReferenceInput(this)" placeholder="Enter 13-digit GCash reference" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                            <input type="text" name="payment_reference" id="walkinPaymentReference" value="{{ old('payment_reference') }}" maxlength="13" pattern="\d{1,13}" inputmode="numeric" oninput="lockWalkinGcashReferenceInput(this)" placeholder="Enter GCash reference (max 13 digits)" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                            <small style="display:block; margin-top:0.35rem; color:#777; font-size:0.78rem;">Numbers only, maximum 13 digits.</small>
                         </div>
                     </div>
                 </div>
