@@ -17,10 +17,7 @@
             <option value="">All Status</option>
             <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
             <option value="occupied" {{ request('status') == 'occupied' ? 'selected' : '' }}>Occupied</option>
-            <option value="dirty" {{ request('status') == 'dirty' ? 'selected' : '' }}>Dirty</option>
-            <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>In Progress</option>
             <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-            <option value="blocked" {{ request('status') == 'blocked' ? 'selected' : '' }}>Blocked</option>
         </select>
         <select name="archived" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
             <option value="">Active Rooms</option>
