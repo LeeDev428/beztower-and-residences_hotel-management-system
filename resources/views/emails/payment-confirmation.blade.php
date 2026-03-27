@@ -29,7 +29,7 @@
 
     <div class="container">
         <div class="header">
-            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences" style="pointer-events: none; user-select: none; -webkit-user-drag: none;">
+          
             <h2 style="margin: 0; font-weight: 700;">Booking Confirmation</h2>
         </div>
 
