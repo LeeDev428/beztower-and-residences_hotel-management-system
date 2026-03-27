@@ -11,8 +11,6 @@
             <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending Payments</option>
             <option value="verified" {{ request('status') == 'verified' ? 'selected' : '' }}>Verified</option>
             <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Rejected</option>
-            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-            <option value="refunded" {{ request('status') == 'refunded' ? 'selected' : '' }}>Refunded</option>
         </select>
     </form>
 </div>
