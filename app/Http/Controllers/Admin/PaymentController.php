@@ -22,7 +22,7 @@ class PaymentController extends Controller
 
         // Filter by payment status
         $status = trim((string) $request->input('status', ''));
-        if (in_array($status, ['pending', 'verified', 'failed', 'completed', 'refunded'], true)) {
+        if (in_array($status, ['pending', 'verified', 'failed'], true)) {
             $query->where('payment_status', $status);
         }
 
