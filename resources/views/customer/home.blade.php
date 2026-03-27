@@ -2058,10 +2058,14 @@
         if (heroCheckIn && heroCheckOut) {
             heroCheckIn.addEventListener('change', function() {
                 var checkIn = new Date(this.value);
-                heroCheckOut.min = this.value;
-                
-                if (heroCheckOut.value && new Date(heroCheckOut.value) < checkIn) {
-                    heroCheckOut.value = '';
+                var minCheckoutDate = new Date(checkIn);
+                minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
+                var minCheckoutString = minCheckoutDate.toISOString().split('T')[0];
+
+                heroCheckOut.min = minCheckoutString;
+
+                if (heroCheckOut.value && new Date(heroCheckOut.value) <= checkIn) {
+                    heroCheckOut.value = minCheckoutString;
                 }
             });
         }
