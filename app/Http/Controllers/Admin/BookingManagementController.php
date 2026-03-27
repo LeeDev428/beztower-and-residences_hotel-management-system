@@ -146,7 +146,7 @@ class BookingManagementController extends Controller
             $query->where('check_in_date', '<=', $request->date_to);
         }
 
-        $bookings = $query->latest()->paginate(20);
+        $bookings = $query->latest()->paginate(20)->withQueryString();
 
         // Statistics
         $stats = [
@@ -495,6 +495,24 @@ class BookingManagementController extends Controller
 
         $grossTotal = $booking->final_total ?? $booking->total_amount;
         $balanceDue = max(round($grossTotal - $verifiedPaymentsTotal, 2), 0);
+        $existingBillingPaymentReference = null;
+
+        $adjustmentNotes = (string) ($booking->adjustment_reason ?? '');
+        if (preg_match('/Billing\s+GCash\s+Reference:\s*(\d{1,13})/i', $adjustmentNotes, $matches)) {
+            $existingBillingPaymentReference = $matches[1];
+        }
+
+        if (!$existingBillingPaymentReference) {
+            $existingBillingPaymentReference = (string) ($booking->payments()
+                ->where('payment_method', 'gcash')
+                ->whereNotNull('payment_reference')
+                ->latest('payment_date')
+                ->latest('created_at')
+                ->value('payment_reference') ?? '');
+
+            $existingBillingPaymentReference = preg_replace('/\D+/', '', $existingBillingPaymentReference);
+            $existingBillingPaymentReference = substr((string) $existingBillingPaymentReference, 0, 13);
+        }
 
         // Determine hourly rate based on room type
         $primaryRoomTypeName = $booking->rooms->first()?->roomType?->name
@@ -506,7 +524,7 @@ class BookingManagementController extends Controller
             $hourlyRate = 250;
         }
 
-        return view('admin.bookings.final-billing', compact('booking', 'hourlyRate', 'verifiedPaymentsTotal', 'grossTotal', 'balanceDue'));
+        return view('admin.bookings.final-billing', compact('booking', 'hourlyRate', 'verifiedPaymentsTotal', 'grossTotal', 'balanceDue', 'existingBillingPaymentReference'));
     }
 
     public function updateFinalBilling(Request $request, Booking $booking)
@@ -542,7 +560,7 @@ class BookingManagementController extends Controller
             'services_breakdown' => 'nullable|string|max:1000',
             'adjustment_reason' => 'nullable|string|max:500',
             'payment_method' => 'nullable|in:cash,gcash',
-            'payment_reference' => 'nullable|required_if:payment_method,gcash|regex:/^\d{13}$/',
+            'payment_reference' => 'nullable|required_if:payment_method,gcash|regex:/^\d{1,13}$/',
         ]);
 
         $booking->loadMissing('rooms');
