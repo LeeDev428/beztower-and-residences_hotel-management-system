@@ -96,7 +96,7 @@
     </div>
 
     <div style="margin-top: 1.5rem;">
-        {{ $rooms->links() }}
+        {{ $rooms->appends(request()->query())->links() }}
     </div>
 </x-admin.card>
 
