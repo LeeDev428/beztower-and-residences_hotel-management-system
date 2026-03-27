@@ -6,6 +6,9 @@
     <title>Request to Reschedule Your Booking</title>
 </head>
 <body style="margin:0; padding:24px; font-family: Arial, sans-serif; line-height:1.6; color:#222; background:#ffffff;">
+    <div style="text-align:center; margin-bottom: 14px;">
+        <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences Logo" style="max-width: 130px; height: auto; border-radius: 8px;">
+    </div>
     <p>Subject: Request to Reschedule Your Booking</p>
 
     @php
