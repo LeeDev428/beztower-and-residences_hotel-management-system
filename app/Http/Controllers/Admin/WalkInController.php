@@ -42,7 +42,7 @@ class WalkInController extends Controller
     {
         $validated = $request->validate([
             'check_in_date' => 'required|date|date_equals:today',
-            'check_out_date' => 'required|date|after_or_equal:check_in_date',
+            'check_out_date' => 'required|date|after:check_in_date',
         ]);
 
         $rooms = $this->availableRoomsQuery($validated['check_in_date'], $validated['check_out_date'])
@@ -79,7 +79,7 @@ class WalkInController extends Controller
             'address'         => 'nullable|string|max:500',
             'id_photo'        => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
             'check_in_date'   => 'required|date|date_equals:today',
-            'check_out_date'  => 'required|date|after_or_equal:check_in_date',
+            'check_out_date'  => 'required|date|after:check_in_date',
             'number_of_rooms' => 'required|integer|min:1|max:5',
             'room_ids'        => 'required|array|min:1',
             'room_ids.*'      => 'required|distinct|exists:rooms,id',
