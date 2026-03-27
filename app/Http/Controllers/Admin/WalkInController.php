@@ -87,7 +87,7 @@ class WalkInController extends Controller
             'adults'          => 'nullable|integer|min:1|max:30',
             'children'        => 'nullable|integer|min:0|max:30',
             'payment_method'  => 'required|in:cash,gcash',
-            'payment_reference' => 'nullable|required_if:payment_method,gcash|regex:/^\d{13}$/',
+            'payment_reference' => 'nullable|required_if:payment_method,gcash|regex:/^\d{1,13}$/',
             'payment_type'    => 'required|in:full_payment',
             'extras'          => 'nullable|array',
             'extras.*'        => 'exists:extras,id',
@@ -221,6 +221,12 @@ class WalkInController extends Controller
                 'verified_at' => now(),
                 'verified_by' => $verifiedBy,
             ]);
+
+            if (($validated['payment_method'] ?? '') === 'gcash' && !empty($validated['payment_reference'])) {
+                $booking->update([
+                    'adjustment_reason' => 'Billing GCash Reference: ' . trim((string) $validated['payment_reference']),
+                ]);
+            }
 
             DB::commit();
 
