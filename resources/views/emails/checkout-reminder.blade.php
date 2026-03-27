@@ -88,7 +88,7 @@
 <body>
     <div class="container">
         <div class="header">
-         
+            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences Logo">
             
             <h1>🏨 Check-out Reminder</h1>
             <p>Your stay is coming to an end</p>
