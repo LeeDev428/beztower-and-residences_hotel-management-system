@@ -8,7 +8,7 @@
 <body style="margin:0; padding:0; font-family: Arial, sans-serif; background:#f4f4f4; color:#2c2c2c;">
     <div style="max-width:600px; margin:20px auto; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 5px 20px rgba(0,0,0,0.1);">
         <div style="background:linear-gradient(135deg, #4caf50, #81c784); color:#fff; text-align:center; padding:24px;">
-            
+            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences Logo" style="max-width:130px; height:auto; margin-bottom:10px; border-radius:8px; background:#fff; padding:6px;">
             <h1 style="margin:0; font-size:26px;">Thank You!</h1>
             <p style="margin:8px 0 0;">We appreciate your stay at Beztower & Residences</p>
         </div>
