@@ -556,10 +556,13 @@
 
                             <div class="form-group">
                                 <label class="form-label">GCash Reference Number <span class="required">*</span></label>
-                                <input type="text" name="payment_reference" class="form-input" 
-                                       placeholder="Enter 13-digit reference number" 
-                                       pattern="[0-9]{13}" 
-                                       title="Please enter a valid 13-digit reference number"
+                                <input type="text" name="payment_reference" id="paymentReferenceInput" class="form-input"
+                                       placeholder="Enter reference number (max 13 digits)"
+                                       pattern="\d{1,13}"
+                                       maxlength="13"
+                                       inputmode="numeric"
+                                       title="Please enter numbers only, up to 13 digits"
+                                       oninput="sanitizePaymentReference(this)"
                                        required>
                                 <small style="color: #666; font-size: 0.85rem;">
                                     <i class="fas fa-info-circle"></i> Found in your GCash transaction details
@@ -633,12 +636,26 @@
             }
         }
 
+        function sanitizePaymentReference(input) {
+            if (!input) {
+                return;
+            }
+
+            input.value = String(input.value || '').replace(/\D/g, '').slice(0, 13);
+        }
+
         // Form validation
-        document.getElementById('paymentForm').addEventListener('submit', function(e) {
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-        });
+        const paymentForm = document.getElementById('paymentForm');
+        if (paymentForm) {
+            paymentForm.addEventListener('submit', function() {
+                const refInput = document.getElementById('paymentReferenceInput');
+                sanitizePaymentReference(refInput);
+
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            });
+        }
     </script>
 </body>
 </html>
