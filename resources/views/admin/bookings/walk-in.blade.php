@@ -449,12 +449,13 @@ document.addEventListener('DOMContentLoaded', function () {
     checkInEl.addEventListener('change', function() {
         const ci = new Date(this.value + 'T00:00:00');
         const minCheckoutDate = new Date(ci);
+        minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
         const yyyy = minCheckoutDate.getFullYear();
         const mm = String(minCheckoutDate.getMonth() + 1).padStart(2, '0');
         const dd = String(minCheckoutDate.getDate()).padStart(2, '0');
         const minCheckout = `${yyyy}-${mm}-${dd}`;
 
-        if (checkOutEl.value && new Date(checkOutEl.value + 'T00:00:00') < ci) {
+        if (checkOutEl.value && new Date(checkOutEl.value + 'T00:00:00') <= ci) {
             checkOutEl.value = minCheckout;
         }
         checkOutEl.min = minCheckout;
@@ -470,9 +471,16 @@ document.addEventListener('DOMContentLoaded', function () {
     checkInEl.value = todayStr;
     checkInEl.min = todayStr;
     checkInEl.max = todayStr;
-    checkOutEl.min = todayStr;
-    if (!checkOutEl.value || checkOutEl.value < todayStr) {
-        checkOutEl.value = todayStr;
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomY = tomorrow.getFullYear();
+    const tomM = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const tomD = String(tomorrow.getDate()).padStart(2, '0');
+    const tomorrowStr = `${tomY}-${tomM}-${tomD}`;
+
+    checkOutEl.min = tomorrowStr;
+    if (!checkOutEl.value || checkOutEl.value <= todayStr) {
+        checkOutEl.value = tomorrowStr;
     }
 
 
@@ -485,9 +493,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        if (checkOutDate < checkInDate) {
-            checkOutEl.value = checkInEl.value;
-            alert('Walk-in checkout date cannot be earlier than check-in date.');
+        if (checkOutDate <= checkInDate) {
+            checkOutEl.value = tomorrowStr;
+            alert('Walk-in checkout date must be at least next day (greater than current date).');
         }
 
         refreshAvailableRooms();
@@ -513,9 +521,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const checkInDate = new Date(checkInValue + 'T00:00:00');
         const checkOutDate = new Date(checkOutValue + 'T00:00:00');
 
-        if (!checkInValue || !checkOutValue || isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime()) || checkOutDate < checkInDate) {
+        if (!checkInValue || !checkOutValue || isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime()) || checkOutDate <= checkInDate) {
             event.preventDefault();
-            alert('Walk-in checkout date cannot be earlier than check-in date.');
+            alert('Walk-in checkout date must be greater than current date. Same-day checkout is not allowed.');
             return;
         }
 
