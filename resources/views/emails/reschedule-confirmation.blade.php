@@ -105,6 +105,7 @@
 
     <div class="container">
         <div class="header" style="background: #2c2c2c; color: #ffffff; text-align: center; padding: 30px;">
+            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences Logo" style="max-width: 130px; height: auto; margin-bottom: 12px; border-radius: 8px; background: #fff; padding: 6px;">
             <p style="margin: 0; color: #ffffff; font-size: 18px; font-weight: 600; line-height: 1.4;">Your updated stay details are ready.</p>
         </div>
 
