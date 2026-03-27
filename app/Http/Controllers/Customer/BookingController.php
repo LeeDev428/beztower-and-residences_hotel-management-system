@@ -146,7 +146,7 @@ class BookingController extends Controller
             'address' => 'nullable|string',
             'id_photo' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:5120',
             'check_in_date' => 'required|date|after_or_equal:today',
-            'check_out_date' => 'required|date|after_or_equal:check_in_date',
+            'check_out_date' => 'required|date|after:check_in_date',
             'number_of_guests' => 'required|integer|min:1',
             'total_nights' => 'nullable|integer|min:1',
             'payment_option' => 'required|in:full_payment,down_payment',
@@ -390,7 +390,7 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'check_in_date' => 'required|date|after_or_equal:today',
-            'check_out_date' => 'required|date|after_or_equal:check_in_date',
+            'check_out_date' => 'required|date|after:check_in_date',
             'number_of_rooms' => 'nullable|integer|min:1|max:12',
             'number_of_guests' => 'nullable|integer|min:1|max:50',
         ]);
@@ -701,7 +701,7 @@ class BookingController extends Controller
         $validated = $request->validate([
             'room_id' => 'required|exists:rooms,id',
             'check_in_date' => 'required|date',
-            'check_out_date' => 'required|date|after_or_equal:check_in_date'
+            'check_out_date' => 'required|date|after:check_in_date'
         ]);
 
         // Check if room is already booked for these dates
