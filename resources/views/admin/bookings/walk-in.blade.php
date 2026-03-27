@@ -62,7 +62,8 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Check-In Date <span style="color: var(--danger);">*</span></label>
-                        <input type="date" name="check_in_date" id="checkInDate" value="{{ old('check_in_date', $checkIn) }}" required min="{{ now()->format('Y-m-d') }}" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box;">
+                        <input type="date" name="check_in_date" id="checkInDate" value="{{ old('check_in_date', $checkIn) }}" required min="{{ now()->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" readonly style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; box-sizing: border-box; background:#f5f5f5; cursor:not-allowed;">
+                        <small style="display:block; margin-top:0.35rem; color:#777; font-size:0.78rem;">Walk-in check-in date is always today.</small>
                     </div>
                     <div>
                         <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">Check-Out Date <span style="color: var(--danger);">*</span></label>
@@ -447,15 +448,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
     checkInEl.addEventListener('change', function() {
         const ci = new Date(this.value + 'T00:00:00');
-        if (checkOutEl.value && new Date(checkOutEl.value + 'T00:00:00') < ci) {
-            const yyyy = ci.getFullYear();
-            const mm = String(ci.getMonth() + 1).padStart(2, '0');
-            const dd = String(ci.getDate()).padStart(2, '0');
-            checkOutEl.value = `${yyyy}-${mm}-${dd}`;
+        const minCheckoutDate = new Date(ci);
+        minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
+        const yyyy = minCheckoutDate.getFullYear();
+        const mm = String(minCheckoutDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(minCheckoutDate.getDate()).padStart(2, '0');
+        const minCheckout = `${yyyy}-${mm}-${dd}`;
+
+        if (checkOutEl.value && new Date(checkOutEl.value + 'T00:00:00') <= ci) {
+            checkOutEl.value = minCheckout;
         }
-        checkOutEl.min = this.value;
+        checkOutEl.min = minCheckout;
         refreshAvailableRooms();
     });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayY = today.getFullYear();
+    const todayM = String(today.getMonth() + 1).padStart(2, '0');
+    const todayD = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${todayY}-${todayM}-${todayD}`;
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomY = tomorrow.getFullYear();
+    const tomM = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const tomD = String(tomorrow.getDate()).padStart(2, '0');
+    const tomorrowStr = `${tomY}-${tomM}-${tomD}`;
+
+    checkInEl.value = todayStr;
+    checkInEl.min = todayStr;
+    checkInEl.max = todayStr;
+    checkOutEl.min = tomorrowStr;
+    if (!checkOutEl.value || checkOutEl.value <= todayStr) {
+        checkOutEl.value = tomorrowStr;
+    }
+
 
     checkOutEl.addEventListener('change', refreshAvailableRooms);
     roomsCountEl.addEventListener('input', renderRoomSelectors);
