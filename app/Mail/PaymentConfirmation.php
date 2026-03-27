@@ -20,7 +20,7 @@ class PaymentConfirmation extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(Booking $booking, Payment $payment)
+    public function __construct(Booking $booking, ?Payment $payment = null)
     {
         $this->booking = $booking;
         $this->payment = $payment;
