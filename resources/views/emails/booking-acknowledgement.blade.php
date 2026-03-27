@@ -113,7 +113,7 @@
 <body>
     <div class="container">
         <div class="header">
-           
+            <img src="{{ asset('images/logo/bezlogo.jpg') }}" alt="Bez Tower and Residences Logo">
             <p>Bez Tower and Residences</p>
         </div>
         
