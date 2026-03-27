@@ -496,7 +496,7 @@
                 <div>
                     <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Gcash Payment</label>
                     <div style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; background: #f9f9f9; color: var(--text-muted); min-height: 120px; line-height: 1.5;">
-                        {{ $booking->adjustment_reason ?? 'No adjustment reason recorded' }}
+                        {{ $booking->adjustment_reason ?? (($existingBillingPaymentReference ?? '') !== '' ? ('Billing GCash Reference: ' . $existingBillingPaymentReference) : 'No adjustment reason recorded') }}
                     </div>
                 </div>
             </x-admin.card>
@@ -525,8 +525,8 @@
 
                 <div id="gcashReferenceSection" style="display: none; margin-top: 0.8rem;">
                     <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: #444;">GCash Reference Number</label>
-                    <input type="text" name="payment_reference" id="billingPaymentReference" value="{{ old('payment_reference') }}" maxlength="13" pattern="\d{13}" inputmode="numeric" oninput="lockGcashReferenceInput(this)" placeholder="Enter 13-digit customer GCash reference" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem;">
-                    <small style="display:block; margin-top:0.35rem; color:#777; font-size:0.78rem;">Saved to booking adjustment notes for record keeping.</small>
+                    <input type="text" name="payment_reference" id="billingPaymentReference" value="{{ old('payment_reference', $existingBillingPaymentReference ?? '') }}" maxlength="13" pattern="\d{1,13}" inputmode="numeric" oninput="lockGcashReferenceInput(this)" placeholder="Enter customer GCash reference (max 13 digits)" style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem;">
+                    <small style="display:block; margin-top:0.35rem; color:#777; font-size:0.78rem;">Numbers only, maximum 13 digits. Saved to booking adjustment notes for record keeping.</small>
                 </div>
             </x-admin.card>
         </div>
