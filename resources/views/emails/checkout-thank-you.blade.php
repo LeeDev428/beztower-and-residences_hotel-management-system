@@ -87,12 +87,21 @@
 
             @php
                 $feedbackFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSePHkVvYTb0zSOXeD_yz-6hlFbDBn7SrF4pCS71d7ky3Et5tA/viewform';
+                $feedbackQrPath = public_path('images/feedback/qrcode.png');
+                $feedbackQrUrl = 'https://beztowerresidences.com/images/feedback/qrcode.png';
+                $feedbackQrSrc = $feedbackQrUrl;
+
+                if (isset($message) && file_exists($feedbackQrPath)) {
+                    $feedbackQrSrc = $message->embed($feedbackQrPath);
+                } elseif (file_exists($feedbackQrPath)) {
+                    $feedbackQrSrc = $feedbackQrUrl;
+                }
             @endphp
 
             <div style="background:#f7fbff; border:1px solid #d7e9ff; border-radius:8px; padding:16px; margin:18px 0; text-align:center;">
                 <div style="font-weight:700; margin-bottom:8px; color:#1d3557;">We Value Your Feedback</div>
                 <p style="margin:0 0 10px;">Please scan the QR code or tap the link below to complete our short feedback survey.</p>
-                <img src="{{ asset('images/feedback/qrcode.png') }}" alt="Feedback Survey QR" style="max-width:180px; width:100%; height:auto; border:1px solid #d5d5d5; border-radius:8px; background:#fff; padding:6px;">
+                <img src="{{ $feedbackQrSrc }}" alt="Feedback Survey QR" style="max-width:180px; width:100%; height:auto; border:1px solid #d5d5d5; border-radius:8px; background:#fff; padding:6px;">
                 <p style="margin:10px 0 0;"><a href="{{ $feedbackFormUrl }}" target="_blank" style="color:#0b63ce; word-break:break-all;">{{ $feedbackFormUrl }}</a></p>
             </div>
 
