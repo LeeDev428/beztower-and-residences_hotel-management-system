@@ -626,8 +626,11 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'payment_method' => 'required|in:gcash,paymaya,bank_transfer',
-            'payment_reference' => 'required|string|max:255',
+            'payment_reference' => ['required', 'string', 'max:13', 'regex:/^\d{1,13}$/'],
             'proof_of_payment' => 'required|image|mimes:jpeg,png,jpg|max:5120', // 5MB max
+        ], [
+            'payment_reference.regex' => 'GCash reference must contain numbers only.',
+            'payment_reference.max' => 'GCash reference must not exceed 13 digits.',
         ]);
 
         $booking = Booking::where('booking_reference', $reference)->firstOrFail();
