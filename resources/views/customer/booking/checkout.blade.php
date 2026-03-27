@@ -1090,6 +1090,7 @@
 
     <script>
         const legalTermsText = @json($termsAndConditionsText ?? '');
+        const legalBookingPoliciesText = @json($bookingPoliciesText ?? '');
         const vatInclusiveFraction = {{ (float) $vatInclusiveFraction }};
 
         const legalPrivacyText = `At Bez Tower Residences, your privacy is important to us. When you use our online reservation system, we collect only the information necessary to make your booking smooth and secure.
@@ -1098,7 +1099,7 @@ We ensure that your personal details such as your name, address, contact informa
 
 We are committed to protecting your personal data in accordance with the Data Privacy Act of 2012 (Republic Act No. 10173) of the Philippines. Your information will not be shared with unauthorized parties and will only be used for purposes directly related to your stay or as required by law.`;
 
-    const billingPoliciesText = `Check-In: 2:00 PM
+    const defaultBillingPoliciesText = `Check-In: 2:00 PM
 Check-Out: 12:00 PM
 
 Note:
@@ -1118,6 +1119,10 @@ Charge: PHP 150/hour
 
 Housekeeping Policy
 Provided once only. Additional requests may incur a fee.`;
+
+    const billingPoliciesText = String(legalBookingPoliciesText || '').trim() !== ''
+        ? legalBookingPoliciesText
+        : defaultBillingPoliciesText;
 
         const legalModal = document.getElementById('legalModal');
         const legalModalTitle = document.getElementById('legalModalTitle');
