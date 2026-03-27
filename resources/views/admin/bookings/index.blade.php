@@ -117,7 +117,7 @@
     </div>
 
     <div style="margin-top: 1.5rem;">
-        {{ $bookings->links() }}
+        {{ $bookings->appends(request()->query())->links() }}
     </div>
 </x-admin.card>
 @endsection
