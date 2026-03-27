@@ -104,9 +104,8 @@
     @endphp
 
     <div class="container">
-        <div class="header">
-
-            <p>Your updated stay details are ready.</p>
+        <div class="header" style="background: #2c2c2c; color: #ffffff; text-align: center; padding: 30px;">
+            <p style="margin: 0; color: #ffffff; font-size: 18px; font-weight: 600; line-height: 1.4;">Your updated stay details are ready.</p>
         </div>
 
         <div class="content">
