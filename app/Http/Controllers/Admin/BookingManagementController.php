@@ -369,10 +369,10 @@ class BookingManagementController extends Controller
     private function getAllowedStatusTransitions(string $currentStatus): array
     {
         $map = [
-            'pending' => ['confirmed', 'checked_out', 'cancelled'],
-            'confirmed' => ['checked_in', 'checked_out', 'rescheduled', 'cancelled'],
+            'pending' => ['confirmed', 'cancelled'],
+            'confirmed' => ['checked_in', 'rescheduled', 'cancelled'],
             'checked_in' => ['checked_out'],
-            'rescheduled' => ['checked_in', 'checked_out', 'cancelled'],
+            'rescheduled' => ['checked_in', 'cancelled'],
             'checked_out' => [],
             'cancelled' => [],
             'rejected_payment' => [],
