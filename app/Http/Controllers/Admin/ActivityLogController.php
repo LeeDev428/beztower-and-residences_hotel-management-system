@@ -15,12 +15,21 @@ class ActivityLogController extends Controller
 
         // Filter by action
         if ($request->filled('action')) {
-            $query->where('action', $request->action);
+            if ($request->action === 'image_update') {
+                $query->whereIn('action', ['image_update', 'image_delete']);
+            } else {
+                $query->where('action', $request->action);
+            }
         }
 
         // Filter by user
         if ($request->filled('user_id')) {
             $query->where('user_id', $request->user_id);
+        }
+
+        // Filter by exact date
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
         }
 
         // Filter by date range
@@ -36,7 +45,7 @@ class ActivityLogController extends Controller
             $query->where('description', 'LIKE', '%' . $request->search . '%');
         }
 
-        $logs = $query->latest()->paginate(20);
+        $logs = $query->latest()->paginate(20)->withQueryString();
 
         // Get unique actions and users for filters
         $actions = ActivityLog::distinct()->pluck('action')->sort();
