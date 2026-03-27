@@ -1498,11 +1498,14 @@ Provided once only. Additional requests may incur a fee.`;
             const checkOut = checkOutInput.value;
 
             if (checkIn) {
-                const minCheckOut = checkIn;
+                const checkInDate = new Date(checkIn + 'T00:00:00');
+                const minCheckoutDate = new Date(checkInDate);
+                minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
+                const minCheckOut = minCheckoutDate.toISOString().split('T')[0];
                 checkOutInput.min = minCheckOut;
 
-                if (checkOut && checkOut < checkIn) {
-                    checkOutInput.value = '';
+                if (checkOut && checkOut <= checkIn) {
+                    checkOutInput.value = minCheckOut;
                 }
             }
 
@@ -1510,10 +1513,9 @@ Provided once only. Additional requests may incur a fee.`;
                 const d1 = new Date(checkIn + 'T00:00:00');
                 const d2 = new Date(checkOut + 'T00:00:00');
                 const nights = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
-                const normalizedNights = nights > 0 ? nights : 1;
-                document.getElementById('totalNights').value = normalizedNights;
+                document.getElementById('totalNights').value = nights > 0 ? nights : 1;
                 if (document.getElementById('nightsCount')) {
-                    document.getElementById('nightsCount').textContent = normalizedNights;
+                    document.getElementById('nightsCount').textContent = nights > 0 ? nights : 1;
                 }
                 updateTotal();
             } else {
@@ -1541,10 +1543,13 @@ Provided once only. Additional requests may incur a fee.`;
             }
 
             if (checkInInput.value) {
-                const minCheckOut = checkInInput.value;
+                const checkInDate = new Date(checkInInput.value + 'T00:00:00');
+                const minCheckoutDate = new Date(checkInDate);
+                minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
+                const minCheckOut = minCheckoutDate.toISOString().split('T')[0];
                 checkOutInput.min = minCheckOut;
 
-                if (checkOutInput.value && checkOutInput.value < minCheckOut) {
+                if (checkOutInput.value && checkOutInput.value <= checkInInput.value) {
                     checkOutInput.value = minCheckOut;
                 }
             }
