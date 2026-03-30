@@ -53,6 +53,10 @@ Route::prefix('admin')->group(function () {
     // Protected Admin Routes
     Route::middleware(['auth', 'admin', 'admin.timeout'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+        // Self Profile (Admin, Manager, Receptionist)
+        Route::get('/profile', [\App\Http\Controllers\Admin\UserController::class, 'profileEdit'])->name('admin.profile.edit');
+        Route::put('/profile', [\App\Http\Controllers\Admin\UserController::class, 'profileUpdate'])->name('admin.profile.update');
         
         // Room Management
         Route::prefix('rooms')->group(function () {
