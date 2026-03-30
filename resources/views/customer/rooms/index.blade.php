@@ -1739,6 +1739,17 @@ document.addEventListener('DOMContentLoaded', function() {
         return selectedRoomIds.filter((roomId) => idSet.has(roomId)).length;
     }
 
+    function syncRequiredRoomsContext() {
+        const ctxRoomsInput = document.getElementById('ctxRooms');
+        if (ctxRoomsInput) {
+            ctxRoomsInput.value = String(requiredRooms);
+        }
+
+        if (checkoutRoomsInput) {
+            checkoutRoomsInput.value = String(requiredRooms);
+        }
+    }
+
     function persistSelection() {
         const endpoint = (document.getElementById('ctxSelectionUpdateUrl') || {}).value;
         if (!endpoint) {
@@ -2164,6 +2175,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    if (addRoomSlotButton) {
+        addRoomSlotButton.addEventListener('click', () => {
+            requiredRooms += 1;
+            syncRequiredRoomsContext();
+            persistSelection().finally(() => {
+                renderSelectedRoomsDrawer();
+                updateModalButtonState();
+                markSelectedCards();
+            });
+        });
+    }
+
     if (openSelectedRoomsDrawerButton && selectedRoomsDrawer) {
         openSelectedRoomsDrawerButton.addEventListener('click', () => {
             selectedRoomsDrawer.classList.add('active');
@@ -2211,6 +2234,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     bindRoomModalTriggers();
     bindRoomQuantityControls();
+    syncRequiredRoomsContext();
     renderSelectedRoomsDrawer();
     markSelectedCards();
 
