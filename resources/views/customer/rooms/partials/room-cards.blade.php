@@ -1,41 +1,37 @@
 @foreach($rooms as $room)
     @php
-        $requestedRooms = max(1, min(12, (int) request('rooms', 1)));
-        $selectedRoomIds = collect(explode(',', (string) request('selected_rooms')))
-            ->map(fn ($id) => (int) trim($id))
+        $requestedRooms = max(1, min(12, (int) ($requestedRooms ?? data_get($bookingContext ?? [], 'rooms', 1))));
+        $selectedRoomIds = collect($selectedRoomIds ?? data_get($bookingContext ?? [], 'selected_rooms', []))
+            ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0)
             ->unique()
             ->values();
         $isSelected = $selectedRoomIds->contains((int) $room->id);
-
-        $baseParams = [];
-        if (request('check_in')) {
-            $baseParams['check_in'] = request('check_in');
+        $roomName = (string) ($room->roomType->name ?? 'Room');
+        $roomDescription = (string) ($room->roomType->description ?? '');
+        $roomImage = $room->photos->count() > 0
+            ? asset('storage/' . $room->photos->first()->photo_path)
+            : 'https://via.placeholder.com/400x300/d4af37/2c2c2c?text=' . urlencode($roomName);
+        $roomImages = $room->photos
+            ->pluck('photo_path')
+            ->filter()
+            ->take(4)
+            ->map(fn ($photoPath) => asset('storage/' . $photoPath))
+            ->values()
+            ->all();
+        if (empty($roomImages)) {
+            $roomImages = [$roomImage];
         }
-        if (request('check_out')) {
-            $baseParams['check_out'] = request('check_out');
-        }
-        if (request('guests')) {
-            $baseParams['guests'] = request('guests');
-        }
-        if (request('adults')) {
-            $baseParams['adults'] = request('adults');
-        }
-        if (request()->has('children')) {
-            $baseParams['children'] = request('children');
-        }
-        $baseParams['rooms'] = $requestedRooms;
-
-        $detailsParams = $baseParams;
-        $detailsParams['origin'] = 'explore_rooms';
-        $detailsParams['selection_action'] = 'view';
-        $detailsParams['current_selected'] = $isSelected ? '1' : '0';
-
-        if ($selectedRoomIds->isNotEmpty()) {
-            $detailsParams['selected_rooms'] = $selectedRoomIds->implode(',');
-        }
-
-        $btnUrl = route('rooms.show', $room) . '?' . http_build_query($detailsParams);
+        $roomImagesText = implode('|', $roomImages);
+        $roomInclusions = $room->amenities->pluck('name')->filter()->values()->all();
+        $roomTypeFeatures = collect(preg_split('/\r\n|\r|\n/', (string) ($room->roomType->features_text ?? '')))
+            ->map(fn ($line) => trim((string) $line))
+            ->filter()
+            ->values()
+            ->all();
+        $roomInclusionsText = !empty($roomInclusions)
+            ? implode(' | ', (!empty($roomTypeFeatures) ? $roomTypeFeatures : $roomInclusions))
+            : 'WiFi | Shower Heater | Smart TV';
     @endphp
 
     <div class="room-card">
@@ -90,7 +86,22 @@
                     @endif
                 </div>
                 <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
-                    <a href="{{ $btnUrl }}" class="book-btn">Explore Rooms</a>
+                    <button
+                        type="button"
+                        class="book-btn"
+                        data-open-room-modal
+                        data-room-id="{{ (int) $room->id }}"
+                        data-room-name="{{ e($roomName) }}"
+                        data-room-price="{{ number_format((float) $room->effective_price, 2) }}"
+                        data-room-capacity="{{ (int) ($room->roomType->max_guests ?? 0) }}"
+                        data-room-image="{{ e($roomImage) }}"
+                        data-room-images="{{ e($roomImagesText) }}"
+                        data-room-description="{{ e($roomDescription) }}"
+                        data-room-inclusions="{{ e($roomInclusionsText) }}"
+                        data-is-selected="{{ $isSelected ? '1' : '0' }}"
+                    >
+                        Explore Rooms
+                    </button>
                 </div>
             </div>
         </div>
