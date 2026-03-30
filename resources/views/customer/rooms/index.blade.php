@@ -103,46 +103,35 @@
         </div>
     </div>
 
-    <!-- Hidden booking context passed from home page -->
-    <input type="hidden" id="ctxCheckIn"  value="{{ request('check_in') }}">
-    <input type="hidden" id="ctxCheckOut" value="{{ request('check_out') }}">
-    <input type="hidden" id="ctxGuests"   value="{{ request('guests') }}">
-    <input type="hidden" id="ctxAdults"   value="{{ request('adults') }}">
-    <input type="hidden" id="ctxChildren" value="{{ request('children') }}">
-    <input type="hidden" id="ctxRooms"    value="{{ request('rooms') }}">
-    <input type="hidden" id="ctxSelectedRooms" value="{{ request('selected_rooms') }}">
+    <!-- Hidden booking context from session-backed flow -->
+    <input type="hidden" id="ctxCheckIn"  value="{{ data_get($bookingContext ?? [], 'check_in', '') }}">
+    <input type="hidden" id="ctxCheckOut" value="{{ data_get($bookingContext ?? [], 'check_out', '') }}">
+    <input type="hidden" id="ctxGuests"   value="{{ data_get($bookingContext ?? [], 'guests', '') }}">
+    <input type="hidden" id="ctxAdults"   value="{{ data_get($bookingContext ?? [], 'adults', '') }}">
+    <input type="hidden" id="ctxChildren" value="{{ data_get($bookingContext ?? [], 'children', '') }}">
+    <input type="hidden" id="ctxRooms"    value="{{ (int) ($requestedRooms ?? data_get($bookingContext ?? [], 'rooms', 1)) }}">
+    <input type="hidden" id="ctxSelectedRooms" value="{{ collect($selectedRoomIds ?? data_get($bookingContext ?? [], 'selected_rooms', []))->implode(',') }}">
+    <input type="hidden" id="ctxSelectionUpdateUrl" value="{{ route('rooms.selection.update') }}">
+    <input type="hidden" id="ctxStartCheckoutUrl" value="{{ route('booking.startCheckout') }}">
 
     @php
-        $requestedRooms = max(1, min(12, (int) request('rooms', 1)));
-        $selectedRoomIds = collect(explode(',', (string) request('selected_rooms')))
-            ->map(fn ($id) => (int) trim($id))
+        $requestedRooms = max(1, min(12, (int) ($requestedRooms ?? data_get($bookingContext ?? [], 'rooms', 1))));
+        $selectedRoomIds = collect($selectedRoomIds ?? data_get($bookingContext ?? [], 'selected_rooms', []))
+            ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0)
             ->unique()
             ->values();
 
-        $requestedGuests = (int) ($selectionMeta['requested_guests'] ?? (int) request('guests', 0));
+        $requestedGuests = (int) ($selectionMeta['requested_guests'] ?? (int) data_get($bookingContext ?? [], 'guests', 0));
         if ($requestedGuests <= 0) {
-            $requestedGuests = max((int) request('adults', 0) + (int) request('children', 0), 0);
+            $requestedGuests = max((int) data_get($bookingContext ?? [], 'adults', 0) + (int) data_get($bookingContext ?? [], 'children', 0), 0);
         }
         $selectedCapacity = (int) ($selectionMeta['selected_capacity'] ?? 0);
         $remainingGuests = (int) ($selectionMeta['remaining_guests'] ?? max($requestedGuests - $selectedCapacity, 0));
         $remainingRooms = max($requestedRooms - $selectedRoomIds->count(), 0);
         $selectedRoomSummary = collect($selectionMeta['selected_rooms_summary'] ?? []);
 
-        $selectionCheckoutUrl = '';
-        if ($selectedRoomIds->count() >= $requestedRooms && $selectedRoomIds->isNotEmpty()) {
-            $checkoutParams = [
-                'check_in' => request('check_in'),
-                'check_out' => request('check_out'),
-                'guests' => request('guests'),
-                'adults' => request('adults'),
-                'children' => request('children'),
-                'rooms' => $requestedRooms,
-                'selected_rooms' => $selectedRoomIds->implode(','),
-                'room_ids' => $selectedRoomIds->all(),
-            ];
-            $selectionCheckoutUrl = route('booking.checkout', $selectedRoomIds->first()) . '?' . http_build_query(array_filter($checkoutParams, fn ($value) => !is_null($value) && $value !== ''));
-        }
+        $selectedRoomSummary = $selectedRoomSummary->values();
     @endphp
 
     @if($requestedRooms > 1)
@@ -172,11 +161,9 @@
                     </div>
                 @endif
             </div>
-            @if($selectionCheckoutUrl)
-                <a href="{{ $selectionCheckoutUrl }}" style="text-decoration:none; background: linear-gradient(135deg, #d4af37, #f4e4c1); color:#2c2c2c; padding:0.55rem 0.9rem; border-radius:6px; font-weight:700; font-size:0.85rem;">
-                    Proceed to Billing Details
-                </a>
-            @endif
+            <button type="button" id="openSelectedRoomsDrawer" style="text-decoration:none; border:none; background: linear-gradient(135deg, #d4af37, #f4e4c1); color:#2c2c2c; padding:0.55rem 0.9rem; border-radius:6px; font-weight:700; font-size:0.85rem; cursor:pointer;">
+                View Selected Rooms ({{ $selectedRoomIds->count() }}/{{ $requestedRooms }})
+            </button>
         </div>
     @endif
 
@@ -190,7 +177,11 @@
 
     @if($rooms->count() > 0)
         <div class="rooms-grid" id="roomsGrid">
-            @include('customer.rooms.partials.room-cards')
+            @include('customer.rooms.partials.room-cards', [
+                'bookingContext' => $bookingContext,
+                'requestedRooms' => $requestedRooms,
+                'selectedRoomIds' => $selectedRoomIds,
+            ])
         </div>
 
         <!-- Pagination -->
@@ -204,6 +195,51 @@
         </div>
     @endif
 </section>
+
+<div id="selectedRoomsDrawer" class="selected-rooms-drawer" aria-hidden="true">
+    <div class="selected-rooms-panel">
+        <div class="selected-rooms-header">
+            <h3>Selected Rooms</h3>
+            <button type="button" id="closeSelectedRoomsDrawer" class="selected-rooms-close">&times;</button>
+        </div>
+        <div id="selectedRoomsList" class="selected-rooms-list"></div>
+        <div class="selected-rooms-footer">
+            <div id="selectedRoomsProgressText" class="selected-rooms-progress"></div>
+            <form id="startCheckoutForm" method="POST" action="{{ route('booking.startCheckout') }}">
+                @csrf
+                <input type="hidden" name="rooms" value="{{ $requestedRooms }}">
+                <div id="selectedRoomIdsInputs"></div>
+                <button type="submit" id="proceedCheckoutButton" class="proceed-checkout-btn" disabled>Proceed to Billing Details</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="room-preview-modal" id="roomPreviewModal" aria-hidden="true">
+    <div class="room-preview-card" role="dialog" aria-modal="true" aria-labelledby="roomPreviewTitle">
+        <button type="button" class="room-preview-close" id="roomPreviewClose" aria-label="Close room preview">
+            <i class="fas fa-times"></i>
+        </button>
+        <img src="" alt="Room preview" class="room-preview-image" id="roomPreviewImage">
+        <div class="room-preview-thumbnails" id="roomPreviewThumbnails"></div>
+        <div class="room-preview-content">
+            <h3 class="room-preview-title" id="roomPreviewTitle"></h3>
+            <div class="room-preview-meta" id="roomPreviewMeta"></div>
+            <p class="room-preview-description" id="roomPreviewDescription"></p>
+            <div class="room-preview-inclusions-wrap">
+                <div class="room-preview-inclusions-title">Room Inclusions</div>
+                <ul class="room-preview-inclusions" id="roomPreviewInclusions"></ul>
+            </div>
+            <div class="room-preview-footer">
+                <div class="room-preview-price" id="roomPreviewPrice"></div>
+                <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+                    <button type="button" class="book-btn" id="roomPreviewBackBtn">Back</button>
+                    <button type="button" class="book-btn" id="roomPreviewToggleSelectBtn">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Calendar Modal -->
 <div class="calendar-modal" id="calendarModal">
@@ -886,6 +922,227 @@
         background: #f5f5f5;
         border-color: #e0e0e0;
     }
+
+    .selected-rooms-drawer {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 1200;
+        display: none;
+        justify-content: flex-end;
+    }
+
+    .selected-rooms-drawer.active {
+        display: flex;
+    }
+
+    .selected-rooms-panel {
+        width: 100%;
+        max-width: 430px;
+        background: #fff;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-shadow: -10px 0 35px rgba(0, 0, 0, 0.2);
+    }
+
+    .selected-rooms-header {
+        padding: 1rem 1.2rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .selected-rooms-close {
+        border: none;
+        background: transparent;
+        font-size: 1.6rem;
+        line-height: 1;
+        cursor: pointer;
+        color: #666;
+    }
+
+    .selected-rooms-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.85rem 1.2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+    }
+
+    .selected-room-item {
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .selected-room-item button {
+        border: none;
+        background: #f44336;
+        color: #fff;
+        border-radius: 6px;
+        padding: 0.35rem 0.55rem;
+        cursor: pointer;
+    }
+
+    .selected-rooms-footer {
+        border-top: 1px solid #eee;
+        padding: 0.9rem 1.2rem 1rem;
+    }
+
+    .selected-rooms-progress {
+        font-size: 0.88rem;
+        color: #5f4b1b;
+        margin-bottom: 0.75rem;
+    }
+
+    .proceed-checkout-btn {
+        width: 100%;
+        border: none;
+        border-radius: 8px;
+        padding: 0.8rem 0.9rem;
+        background: linear-gradient(135deg, #d4af37, #f4e4c1);
+        color: #2c2c2c;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .proceed-checkout-btn[disabled] {
+        cursor: not-allowed;
+        opacity: 0.55;
+    }
+
+    .room-preview-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.62);
+        z-index: 1250;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .room-preview-modal.active {
+        display: flex;
+    }
+
+    .room-preview-card {
+        width: 100%;
+        max-width: 760px;
+        background: #fff;
+        border-radius: 12px;
+        overflow-y: auto;
+        max-height: min(92vh, 860px);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+
+    .room-preview-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        border: none;
+        background: rgba(20, 20, 20, 0.88);
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1rem;
+        cursor: pointer;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .room-preview-image {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        background: #f4f4f4;
+    }
+
+    .room-preview-thumbnails {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        padding: 0.75rem 1rem 0.1rem;
+    }
+
+    .room-preview-thumb {
+        width: 100%;
+        height: 74px;
+        border-radius: 8px;
+        object-fit: cover;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .room-preview-thumb.active {
+        border-color: #a17d16;
+    }
+
+    .room-preview-content {
+        padding: 1rem 1.2rem 1.2rem;
+    }
+
+    .room-preview-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin-bottom: 0.35rem;
+        color: #2c2c2c;
+    }
+
+    .room-preview-meta {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #a17d16;
+        margin-bottom: 0.65rem;
+    }
+
+    .room-preview-description {
+        font-size: 0.9rem;
+        line-height: 1.55;
+        color: #555;
+        margin-bottom: 0.65rem;
+    }
+
+    .room-preview-inclusions-wrap {
+        background: #fafafa;
+        border: 1px solid #ececec;
+        border-radius: 8px;
+        padding: 0.7rem;
+        margin-bottom: 0.9rem;
+    }
+
+    .room-preview-inclusions {
+        margin: 0;
+        padding-left: 1rem;
+        color: #555;
+        font-size: 0.86rem;
+        line-height: 1.45;
+    }
+
+    .room-preview-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .room-preview-price {
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: #d4af37;
+    }
     
     @media (max-width: 768px) {
         .content-section {
@@ -932,6 +1189,19 @@
         .calendar-grid {
             gap: 0.3rem;
         }
+
+        .room-preview-image {
+            height: 230px;
+        }
+
+        .room-preview-thumbnails {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .room-preview-footer {
+            flex-direction: column;
+            align-items: flex-start;
+        }
     }
 </style>
 
@@ -962,6 +1232,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextMonthBtn = document.getElementById('nextMonth');
     const calendarGrid = document.getElementById('calendarGrid');
     const calendarMonthYear = document.getElementById('calendarMonthYear');
+    const requiredRooms = Math.max(1, parseInt((document.getElementById('ctxRooms') || {}).value || '1', 10));
+    let selectedRoomIds = (document.getElementById('ctxSelectedRooms') || { value: '' }).value
+        .split(',')
+        .map((item) => Number(item.trim()))
+        .filter((item) => Number.isInteger(item) && item > 0)
+        .slice(0, requiredRooms);
 
     // roomsGrid and paginationWrapper may not exist if no rooms found yet
     let roomsGrid = document.getElementById('roomsGrid');
@@ -1018,21 +1294,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Pass booking context (check_in/check_out/guests) so Learn More links stay populated
-            const ctxCheckIn  = document.getElementById('ctxCheckIn').value;
-            const ctxCheckOut = document.getElementById('ctxCheckOut').value;
-            const ctxGuests   = document.getElementById('ctxGuests').value;
-            const ctxAdults   = document.getElementById('ctxAdults').value;
-            const ctxChildren = document.getElementById('ctxChildren').value;
-            const ctxRooms    = document.getElementById('ctxRooms').value;
-            const ctxSelectedRooms = document.getElementById('ctxSelectedRooms').value;
-            if (ctxCheckIn)  params.append('check_in', ctxCheckIn);
-            if (ctxCheckOut) params.append('check_out', ctxCheckOut);
-            // Use ctxGuests as fallback when no guests filter UI is present
-            if (!guests && ctxGuests) params.append('guests', ctxGuests);
-            if (ctxAdults) params.append('adults', ctxAdults);
-            if (ctxChildren !== '') params.append('children', ctxChildren);
+            const ctxRooms = document.getElementById('ctxRooms').value;
             if (ctxRooms) params.append('rooms', ctxRooms);
-            if (ctxSelectedRooms) params.append('selected_rooms', ctxSelectedRooms);
             
             if (amenityCheckboxes.length > 0) {
                 const selectedAmenities = Array.from(amenityCheckboxes)
@@ -1062,6 +1325,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Reattach pagination click handlers
                 attachPaginationHandlers();
+                bindRoomModalTriggers();
+                renderSelectedRoomsDrawer();
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -1255,6 +1520,357 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize pagination handlers on page load
     attachPaginationHandlers();
+
+    const selectedRoomsDrawer = document.getElementById('selectedRoomsDrawer');
+    const selectedRoomsList = document.getElementById('selectedRoomsList');
+    const selectedRoomIdsInputs = document.getElementById('selectedRoomIdsInputs');
+    const selectedRoomsProgressText = document.getElementById('selectedRoomsProgressText');
+    const proceedCheckoutButton = document.getElementById('proceedCheckoutButton');
+    const openSelectedRoomsDrawerButton = document.getElementById('openSelectedRoomsDrawer');
+    const closeSelectedRoomsDrawerButton = document.getElementById('closeSelectedRoomsDrawer');
+    const roomPreviewModal = document.getElementById('roomPreviewModal');
+    const roomPreviewClose = document.getElementById('roomPreviewClose');
+    const roomPreviewImage = document.getElementById('roomPreviewImage');
+    const roomPreviewTitle = document.getElementById('roomPreviewTitle');
+    const roomPreviewMeta = document.getElementById('roomPreviewMeta');
+    const roomPreviewDescription = document.getElementById('roomPreviewDescription');
+    const roomPreviewInclusions = document.getElementById('roomPreviewInclusions');
+    const roomPreviewPrice = document.getElementById('roomPreviewPrice');
+    const roomPreviewBackBtn = document.getElementById('roomPreviewBackBtn');
+    const roomPreviewThumbnails = document.getElementById('roomPreviewThumbnails');
+    const roomPreviewToggleSelectBtn = document.getElementById('roomPreviewToggleSelectBtn');
+    let roomPreviewImages = [];
+    let currentRoomPreviewImageIndex = 0;
+    let activeRoomPreviewId = null;
+    let activeRoomPreviewName = 'Room';
+
+    function getCsrfToken() {
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        return tokenMeta ? tokenMeta.getAttribute('content') : '';
+    }
+
+    function persistSelection() {
+        const endpoint = (document.getElementById('ctxSelectionUpdateUrl') || {}).value;
+        if (!endpoint) {
+            return Promise.resolve();
+        }
+
+        return fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken(),
+            },
+            body: JSON.stringify({
+                selected_rooms: selectedRoomIds,
+                rooms: requiredRooms,
+            }),
+        }).then((response) => {
+            if (!response.ok) {
+                throw new Error('Failed to persist room selection.');
+            }
+
+            return response.json();
+        }).then((payload) => {
+            if (Array.isArray(payload.selected_rooms)) {
+                selectedRoomIds = payload.selected_rooms
+                    .map((value) => Number(value))
+                    .filter((value) => Number.isInteger(value) && value > 0)
+                    .slice(0, requiredRooms);
+            }
+
+            const selectedRoomsInput = document.getElementById('ctxSelectedRooms');
+            if (selectedRoomsInput) {
+                selectedRoomsInput.value = selectedRoomIds.join(',');
+            }
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
+
+    function renderSelectedRoomsDrawer() {
+        if (!selectedRoomsList || !selectedRoomIdsInputs || !selectedRoomsProgressText || !proceedCheckoutButton) {
+            return;
+        }
+
+        selectedRoomsList.innerHTML = '';
+        selectedRoomIdsInputs.innerHTML = '';
+
+        const cards = Array.from(document.querySelectorAll('.room-card [data-open-room-modal]'));
+        const roomLookup = new Map();
+        cards.forEach((trigger) => {
+            const roomId = Number(trigger.getAttribute('data-room-id'));
+            if (!Number.isInteger(roomId) || roomId <= 0) {
+                return;
+            }
+
+            roomLookup.set(roomId, {
+                name: trigger.getAttribute('data-room-name') || `Room ${roomId}`,
+                price: trigger.getAttribute('data-room-price') || '0.00',
+            });
+        });
+
+        if (selectedRoomIds.length === 0) {
+            selectedRoomsList.innerHTML = '<p style="color:#666;">No rooms selected yet.</p>';
+        }
+
+        selectedRoomIds.forEach((roomId) => {
+            const roomData = roomLookup.get(roomId) || { name: `Room ${roomId}`, price: '0.00' };
+            const item = document.createElement('div');
+            item.className = 'selected-room-item';
+            item.innerHTML = `
+                <div>
+                    <div style="font-weight:700;">${roomData.name}</div>
+                    <div style="font-size:0.85rem;color:#666;">₱${roomData.price}/night</div>
+                </div>
+                <button type="button" data-remove-room-id="${roomId}">Remove</button>
+            `;
+            selectedRoomsList.appendChild(item);
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'room_ids[]';
+            input.value = String(roomId);
+            selectedRoomIdsInputs.appendChild(input);
+        });
+
+        const selectedCount = selectedRoomIds.length;
+        selectedRoomsProgressText.textContent = `Selected ${selectedCount} of ${requiredRooms} room(s).`;
+        proceedCheckoutButton.disabled = selectedCount < requiredRooms;
+
+        if (openSelectedRoomsDrawerButton) {
+            openSelectedRoomsDrawerButton.textContent = `View Selected Rooms (${selectedCount}/${requiredRooms})`;
+        }
+
+        selectedRoomsList.querySelectorAll('button[data-remove-room-id]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const roomId = Number(button.getAttribute('data-remove-room-id'));
+                selectedRoomIds = selectedRoomIds.filter((id) => id !== roomId);
+                persistSelection().finally(() => {
+                    renderSelectedRoomsDrawer();
+                    updateModalButtonState();
+                    markSelectedCards();
+                });
+            });
+        });
+    }
+
+    function markSelectedCards() {
+        const cards = Array.from(document.querySelectorAll('.room-card [data-open-room-modal]'));
+        cards.forEach((trigger) => {
+            const roomId = Number(trigger.getAttribute('data-room-id'));
+            const isSelected = selectedRoomIds.includes(roomId);
+            trigger.setAttribute('data-is-selected', isSelected ? '1' : '0');
+
+            const selectedBadge = trigger.closest('.room-card').querySelector('[data-selected-badge]');
+            if (selectedBadge) {
+                selectedBadge.remove();
+            }
+
+            if (isSelected) {
+                const badge = document.createElement('div');
+                badge.setAttribute('data-selected-badge', '1');
+                badge.style.cssText = 'position:absolute;top:10px;right:10px;background:#27ae60;color:#fff;padding:0.4rem 0.7rem;border-radius:6px;font-size:0.8rem;font-weight:700;';
+                badge.textContent = 'Selected';
+                const imageWrap = trigger.closest('.room-card').querySelector('.room-image');
+                if (imageWrap) {
+                    imageWrap.appendChild(badge);
+                }
+            }
+        });
+    }
+
+    function renderRoomPreviewImage(index) {
+        if (!roomPreviewImage || roomPreviewImages.length === 0) {
+            return;
+        }
+
+        currentRoomPreviewImageIndex = Math.max(0, Math.min(index, roomPreviewImages.length - 1));
+        roomPreviewImage.setAttribute('src', roomPreviewImages[currentRoomPreviewImageIndex]);
+
+        if (!roomPreviewThumbnails) {
+            return;
+        }
+
+        Array.from(roomPreviewThumbnails.children).forEach((thumb, thumbIndex) => {
+            thumb.classList.toggle('active', thumbIndex === currentRoomPreviewImageIndex);
+        });
+    }
+
+    function renderRoomPreviewThumbnails() {
+        if (!roomPreviewThumbnails) {
+            return;
+        }
+
+        roomPreviewThumbnails.innerHTML = '';
+        roomPreviewImages.forEach((imageUrl, index) => {
+            const thumbnail = document.createElement('img');
+            thumbnail.className = 'room-preview-thumb' + (index === currentRoomPreviewImageIndex ? ' active' : '');
+            thumbnail.setAttribute('src', imageUrl);
+            thumbnail.setAttribute('alt', `Room preview ${index + 1}`);
+            thumbnail.addEventListener('click', () => renderRoomPreviewImage(index));
+            roomPreviewThumbnails.appendChild(thumbnail);
+        });
+    }
+
+    function updateModalButtonState() {
+        if (!roomPreviewToggleSelectBtn || !activeRoomPreviewId) {
+            return;
+        }
+
+        const isSelected = selectedRoomIds.includes(activeRoomPreviewId);
+        roomPreviewToggleSelectBtn.textContent = isSelected ? 'Remove from Cart' : 'Add to Cart';
+    }
+
+    function openRoomPreviewModal(trigger) {
+        if (!roomPreviewModal || !trigger) {
+            return;
+        }
+
+        activeRoomPreviewId = Number(trigger.getAttribute('data-room-id'));
+        activeRoomPreviewName = trigger.getAttribute('data-room-name') || 'Room';
+        const roomPrice = trigger.getAttribute('data-room-price') || '0.00';
+        const roomCapacity = trigger.getAttribute('data-room-capacity') || '0';
+        const roomImage = trigger.getAttribute('data-room-image') || '';
+        const roomImagesRaw = (trigger.getAttribute('data-room-images') || '').trim();
+        const roomDescription = trigger.getAttribute('data-room-description') || '';
+        const roomInclusions = (trigger.getAttribute('data-room-inclusions') || '')
+            .split('|')
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+        roomPreviewImages = roomImagesRaw
+            .split('|')
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0)
+            .slice(0, 4);
+
+        if (roomPreviewImages.length === 0 && roomImage) {
+            roomPreviewImages = [roomImage];
+        }
+
+        if (roomPreviewImages.length === 0) {
+            roomPreviewImages = ['https://via.placeholder.com/760x300/d4af37/2c2c2c?text=Room'];
+        }
+
+        currentRoomPreviewImageIndex = 0;
+
+        roomPreviewTitle.textContent = activeRoomPreviewName;
+        roomPreviewMeta.textContent = `Can accommodate ${roomCapacity} adult${Number(roomCapacity) > 1 ? 's' : ''} + 1 child`;
+        roomPreviewDescription.textContent = roomDescription || 'Comfortable and modern accommodation.';
+        roomPreviewPrice.textContent = `₱${roomPrice}`;
+        renderRoomPreviewThumbnails();
+        renderRoomPreviewImage(0);
+
+        roomPreviewInclusions.innerHTML = '';
+        roomInclusions.forEach((item) => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            roomPreviewInclusions.appendChild(li);
+        });
+
+        updateModalButtonState();
+        roomPreviewModal.classList.add('active');
+        roomPreviewModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeRoomPreviewModal() {
+        if (!roomPreviewModal) {
+            return;
+        }
+
+        roomPreviewModal.classList.remove('active');
+        roomPreviewModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    function bindRoomModalTriggers() {
+        document.querySelectorAll('[data-open-room-modal]').forEach((trigger) => {
+            if (trigger.getAttribute('data-modal-bound') === '1') {
+                return;
+            }
+
+            trigger.setAttribute('data-modal-bound', '1');
+            trigger.addEventListener('click', (event) => {
+                event.preventDefault();
+                openRoomPreviewModal(trigger);
+            });
+        });
+    }
+
+    if (roomPreviewToggleSelectBtn) {
+        roomPreviewToggleSelectBtn.addEventListener('click', () => {
+            if (!Number.isInteger(activeRoomPreviewId) || activeRoomPreviewId <= 0) {
+                return;
+            }
+
+            const isSelected = selectedRoomIds.includes(activeRoomPreviewId);
+            if (isSelected) {
+                selectedRoomIds = selectedRoomIds.filter((id) => id !== activeRoomPreviewId);
+            } else if (selectedRoomIds.length < requiredRooms) {
+                selectedRoomIds = [...selectedRoomIds, activeRoomPreviewId];
+            } else {
+                alert(`You can only select ${requiredRooms} room(s). Remove one first to add another.`);
+                return;
+            }
+
+            persistSelection().finally(() => {
+                updateModalButtonState();
+                renderSelectedRoomsDrawer();
+                markSelectedCards();
+            });
+        });
+    }
+
+    if (openSelectedRoomsDrawerButton && selectedRoomsDrawer) {
+        openSelectedRoomsDrawerButton.addEventListener('click', () => {
+            selectedRoomsDrawer.classList.add('active');
+            selectedRoomsDrawer.setAttribute('aria-hidden', 'false');
+        });
+    }
+
+    if (closeSelectedRoomsDrawerButton && selectedRoomsDrawer) {
+        closeSelectedRoomsDrawerButton.addEventListener('click', () => {
+            selectedRoomsDrawer.classList.remove('active');
+            selectedRoomsDrawer.setAttribute('aria-hidden', 'true');
+        });
+    }
+
+    if (selectedRoomsDrawer) {
+        selectedRoomsDrawer.addEventListener('click', (event) => {
+            if (event.target === selectedRoomsDrawer) {
+                selectedRoomsDrawer.classList.remove('active');
+                selectedRoomsDrawer.setAttribute('aria-hidden', 'true');
+            }
+        });
+    }
+
+    if (roomPreviewClose) {
+        roomPreviewClose.addEventListener('click', closeRoomPreviewModal);
+    }
+
+    if (roomPreviewBackBtn) {
+        roomPreviewBackBtn.addEventListener('click', closeRoomPreviewModal);
+    }
+
+    if (roomPreviewModal) {
+        roomPreviewModal.addEventListener('click', (event) => {
+            if (event.target === roomPreviewModal) {
+                closeRoomPreviewModal();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && roomPreviewModal && roomPreviewModal.classList.contains('active')) {
+            closeRoomPreviewModal();
+        }
+    });
+
+    bindRoomModalTriggers();
+    renderSelectedRoomsDrawer();
+    markSelectedCards();
 
     // Auto-refresh calendar every 30 seconds if modal is open
     setInterval(() => {
