@@ -38,6 +38,7 @@ class Booking extends Model
         // Manual adjustments
         'manual_adjustment',
         'adjustment_reason',
+        'adjustment_items',
         // Cancellation
         'cancelled_at',
         'cancellation_reason',
@@ -59,6 +60,7 @@ class Booking extends Model
         'late_checkout_charge' => 'decimal:2',
         'pwd_senior_discount' => 'decimal:2',
         'manual_adjustment' => 'decimal:2',
+        'adjustment_items' => 'array',
         'has_pwd_senior' => 'boolean',
         'cancelled_at' => 'datetime',
         'rescheduled_at' => 'datetime',
