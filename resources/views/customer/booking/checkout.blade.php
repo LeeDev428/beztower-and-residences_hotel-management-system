@@ -770,7 +770,15 @@
                     
                     <!-- Booking Details -->
                     @php
-                        $isBookingDetailsLocked = request()->filled('check_in') && request()->filled('check_out') && (request()->filled('guests') || request()->filled('adults') || request()->filled('children'));
+                        $bookingContext = (array) ($bookingContext ?? []);
+                        $contextCheckIn = (string) ($bookingContext['check_in'] ?? '');
+                        $contextCheckOut = (string) ($bookingContext['check_out'] ?? '');
+                        $contextGuests = $bookingContext['guests'] ?? null;
+                        $contextAdults = $bookingContext['adults'] ?? null;
+                        $contextChildren = $bookingContext['children'] ?? null;
+                        $isBookingDetailsLocked = ($contextCheckIn !== '')
+                            && ($contextCheckOut !== '')
+                            && (!is_null($contextGuests) || !is_null($contextAdults) || !is_null($contextChildren));
                     @endphp
                     <div class="section-title-modal">
                         <i class="fas fa-calendar-alt"></i> Booking Details
@@ -786,7 +794,7 @@
                         <div>
                             <label class="form-label">Check-In Date <span class="required">*</span></label>
                             <input type="date" name="check_in_date" class="form-input" id="checkInDate" 
-                                   min="{{ date('Y-m-d') }}" value="{{ request('check_in') }}" required onchange="calculateCheckout()" {{ $isBookingDetailsLocked ? 'readonly' : '' }} style="{{ $isBookingDetailsLocked ? 'background:#f0f0f0;cursor:not-allowed;' : '' }}">
+                                   min="{{ date('Y-m-d') }}" value="{{ $contextCheckIn }}" required onchange="calculateCheckout()" {{ $isBookingDetailsLocked ? 'readonly' : '' }} style="{{ $isBookingDetailsLocked ? 'background:#f0f0f0;cursor:not-allowed;' : '' }}">
                         </div>
 
                         <div>
@@ -806,11 +814,11 @@
                             <select name="number_of_guests" class="form-select" id="guestCountSelect" required onchange="showGuestRecommendation()">
                                 @php
                                     $maxGuestsOption = max(1, (int) ($maxGuestCapacity ?? ($room->roomType->max_guests ?? 1)));
-                                    $adultsCount = (int) request('adults', 0);
-                                    $childrenCount = (int) request('children', 0);
+                                    $adultsCount = (int) ($contextAdults ?? 0);
+                                    $childrenCount = (int) ($contextChildren ?? 0);
                                     $computedGuests = $adultsCount > 0 || $childrenCount > 0
                                         ? ($adultsCount + intdiv(max(0, $childrenCount), 2))
-                                        : (int) request('guests', 1);
+                                        : (int) ($contextGuests ?? 1);
                                     $requestedGuests = max(1, $computedGuests);
                                     $requestedGuests = max(1, min($requestedGuests, $maxGuestsOption));
                                 @endphp
@@ -836,7 +844,7 @@
 
                         <div>
                             <label class="form-label">How Many Rooms <span class="required">*</span></label>
-                            <input type="number" name="number_of_rooms" id="numberOfRooms" class="form-input" min="1" max="12" value="{{ max(1, min(12, (int) ($requestedRooms ?? request('rooms', 1)))) }}" {{ isset($preselectedRooms) && $preselectedRooms->count() > 0 ? 'readonly' : '' }} required onchange="syncAutoSelectedRooms(); updateTotal();" style="{{ isset($preselectedRooms) && $preselectedRooms->count() > 0 ? 'background:#f0f0f0; cursor:not-allowed;' : '' }}">
+                            <input type="number" name="number_of_rooms" id="numberOfRooms" class="form-input" min="1" max="12" value="{{ max(1, min(12, (int) ($requestedRooms ?? ($bookingContext['rooms'] ?? 1)))) }}" {{ isset($preselectedRooms) && $preselectedRooms->count() > 0 ? 'readonly' : '' }} required onchange="syncAutoSelectedRooms(); updateTotal();" style="{{ isset($preselectedRooms) && $preselectedRooms->count() > 0 ? 'background:#f0f0f0; cursor:not-allowed;' : '' }}">
                         </div>
 
                         @php
@@ -1689,9 +1697,9 @@ Provided once only. Additional requests may incur a fee.`;
 
         // Initialize on page load - auto-fill if URL has check_in/check_out params
         (function init() {
-            @if(request('check_in') && request('check_out'))
-                document.getElementById('checkInDate').value = '{{ request('check_in') }}';
-                document.getElementById('checkOutDate').value = '{{ request('check_out') }}';
+            @if(!empty($bookingContext['check_in']) && !empty($bookingContext['check_out']))
+                document.getElementById('checkInDate').value = '{{ $bookingContext['check_in'] }}';
+                document.getElementById('checkOutDate').value = '{{ $bookingContext['check_out'] }}';
             @endif
             normalizeBookingDates();
             calculateCheckout();
