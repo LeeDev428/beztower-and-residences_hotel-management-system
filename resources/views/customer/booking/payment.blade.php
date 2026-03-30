@@ -547,25 +547,22 @@
 
                             <div class="form-group">
                                 <label class="form-label">Payment Method <span class="required">*</span></label>
-                                <select name="payment_method" class="form-select" required>
-                                    <option value="gcash" selected>GCash</option>
-                                    {{-- <option value="paymaya">PayMaya</option> --}}
-                                    {{-- <option value="bank_transfer">Bank Transfer</option> --}}
-                                </select>
+                                <input type="text" name="payment_method" class="form-input"
+                                       placeholder="Enter payment method (e.g. GCash, Bank Transfer)"
+                                       value="{{ old('payment_method', 'GCash') }}"
+                                       maxlength="100"
+                                       required>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">GCash Reference Number <span class="required">*</span></label>
+                                <label class="form-label">Payment Reference / Transaction ID <span class="required">*</span></label>
                                 <input type="text" name="payment_reference" id="paymentReferenceInput" class="form-input"
-                                       placeholder="Enter reference number (max 13 digits)"
-                                       pattern="\d{1,13}"
-                                       maxlength="13"
-                                       inputmode="numeric"
-                                       title="Please enter numbers only, up to 13 digits"
-                                       oninput="sanitizePaymentReference(this)"
+                                       placeholder="Enter transaction reference"
+                                       maxlength="60"
+                                       value="{{ old('payment_reference') }}"
                                        required>
                                 <small style="color: #666; font-size: 0.85rem;">
-                                    <i class="fas fa-info-circle"></i> Found in your GCash transaction details
+                                    <i class="fas fa-info-circle"></i> Letters and numbers are allowed
                                 </small>
                             </div>
 
@@ -636,21 +633,10 @@
             }
         }
 
-        function sanitizePaymentReference(input) {
-            if (!input) {
-                return;
-            }
-
-            input.value = String(input.value || '').replace(/\D/g, '').slice(0, 13);
-        }
-
         // Form validation
         const paymentForm = document.getElementById('paymentForm');
         if (paymentForm) {
             paymentForm.addEventListener('submit', function() {
-                const refInput = document.getElementById('paymentReferenceInput');
-                sanitizePaymentReference(refInput);
-
                 const submitBtn = document.getElementById('submitBtn');
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
