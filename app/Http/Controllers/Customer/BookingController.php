@@ -670,12 +670,12 @@ class BookingController extends Controller
     public function processPayment(Request $request, $reference)
     {
         $validated = $request->validate([
-            'payment_method' => 'required|in:gcash,paymaya,bank_transfer',
-            'payment_reference' => ['required', 'string', 'max:13', 'regex:/^\d{1,13}$/'],
+            'payment_method' => 'required|string|min:2|max:100',
+            'payment_reference' => ['required', 'string', 'max:60', 'regex:/^[A-Za-z0-9\-_]+$/'],
             'proof_of_payment' => 'required|image|mimes:jpeg,png,jpg|max:5120', // 5MB max
         ], [
-            'payment_reference.regex' => 'GCash reference must contain numbers only.',
-            'payment_reference.max' => 'GCash reference must not exceed 13 digits.',
+            'payment_reference.regex' => 'Payment reference can only contain letters, numbers, hyphens, and underscores.',
+            'payment_reference.max' => 'Payment reference must not exceed 60 characters.',
         ]);
 
         $booking = Booking::where('booking_reference', $reference)->firstOrFail();
@@ -706,8 +706,8 @@ class BookingController extends Controller
             Payment::create([
                 'booking_id' => $booking->id,
                 'payment_type' => $booking->payment_option,
-                'payment_method' => $validated['payment_method'],
-                'payment_reference' => $validated['payment_reference'],
+                'payment_method' => trim((string) $validated['payment_method']),
+                'payment_reference' => trim((string) $validated['payment_reference']),
                 'amount' => $paymentAmount,
                 'percentage' => $paymentPercentage,
                 'payment_status' => 'pending', // Will be verified by admin
