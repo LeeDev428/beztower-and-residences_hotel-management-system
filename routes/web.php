@@ -23,6 +23,7 @@ Route::get('/services', [HomeController::class, 'services'])->name('services');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 Route::post('/contact', [HomeController::class, 'sendContact'])->name('contact.send');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
+Route::post('/rooms/start', [RoomController::class, 'start'])->name('rooms.start');
 Route::get('/rooms/{room}', [RoomController::class, 'show'])->name('rooms.show');
 Route::get('/rooms/{room}/checkout', [BookingController::class, 'checkout'])->name('booking.checkout');
 Route::get('/api/calendar/availability', [RoomController::class, 'getAvailability'])->name('calendar.availability');
