@@ -176,6 +176,9 @@ class ReportController extends Controller
         // Daily revenue from payments
         $dailyRevenue = Payment::whereBetween('created_at', [$startDate, $endDate])
             ->whereIn('payment_status', ['verified', 'completed'])
+            ->whereHas('booking', function ($bookingQuery) {
+                $this->applyActiveRoomFilterToBookingQuery($bookingQuery);
+            })
             ->selectRaw('DATE(created_at) as date, SUM(amount) as revenue')
             ->groupBy('date')
             ->orderBy('date')
@@ -187,13 +190,16 @@ class ReportController extends Controller
             ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
             ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
             ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
+            ->whereNull('rooms.archived_at')
             ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
             ->groupBy('room_types.name')
             ->get();
 
         // Summary
         $totalRevenue = $dailyRevenue->sum('revenue');
-        $totalBookings = Booking::whereBetween('created_at', [$startDate, $endDate])->count();
+        $totalBookings = $this->applyActiveRoomFilterToBookingQuery(
+            Booking::whereBetween('created_at', [$startDate, $endDate])
+        )->count();
         $avgRevenuePerBooking = $totalBookings > 0 ? $totalRevenue / $totalBookings : 0;
 
         return view('admin.reports.revenue', compact(
@@ -212,17 +218,14 @@ class ReportController extends Controller
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth());
 
-        $totalRooms = Room::count();
+        $totalRooms = Room::query()->whereNull('archived_at')->count();
         
         // Calculate occupancy per day
         $occupancyData = [];
         $currentDate = Carbon::parse($startDate);
         
         while ($currentDate <= Carbon::parse($endDate)) {
-            $occupiedRooms = Booking::where('check_in_date', '<=', $currentDate)
-                ->where('check_out_date', '>', $currentDate)
-                ->where('status', 'confirmed')
-                ->count();
+            $occupiedRooms = $this->resolveOccupiedRoomsCountForDate($currentDate->copy());
             
             $occupancyRate = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100, 2) : 0;
             
