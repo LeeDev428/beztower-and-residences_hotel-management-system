@@ -85,7 +85,12 @@
                         </div>
                     @endif
                 </div>
-                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
+                <div class="room-card-actions">
+                    <div class="room-qty-control" aria-label="Room selection controls">
+                        <button type="button" class="room-qty-btn" data-room-remove="{{ (int) $room->id }}" {{ $isSelected ? '' : 'disabled' }}>-</button>
+                        <span class="room-qty-value" data-room-qty="{{ (int) $room->id }}">{{ $isSelected ? 1 : 0 }}</span>
+                        <button type="button" class="room-qty-btn" data-room-add="{{ (int) $room->id }}" {{ (!$isSelected && $selectedRoomIds->count() < $requestedRooms) ? '' : 'disabled' }}>+</button>
+                    </div>
                     <button
                         type="button"
                         class="book-btn"
@@ -93,6 +98,7 @@
                         data-room-id="{{ (int) $room->id }}"
                         data-room-name="{{ e($roomName) }}"
                         data-room-price="{{ number_format((float) $room->effective_price, 2) }}"
+                        data-room-price-value="{{ (float) $room->effective_price }}"
                         data-room-capacity="{{ (int) ($room->roomType->max_guests ?? 0) }}"
                         data-room-image="{{ e($roomImage) }}"
                         data-room-images="{{ e($roomImagesText) }}"
