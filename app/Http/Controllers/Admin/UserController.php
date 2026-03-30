@@ -10,9 +10,34 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::latest()->paginate(20);
+        $search = trim((string) $request->input('search', ''));
+        $role = trim((string) $request->input('role', ''));
+        $status = trim((string) $request->input('status', ''));
+
+        $allowedRoles = ['admin', 'manager', 'receptionist'];
+        $allowedStatuses = ['active', 'deactivated'];
+
+        $users = User::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($searchQuery) use ($search) {
+                    $searchQuery->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%');
+                });
+            })
+            ->when(in_array($role, $allowedRoles, true), fn ($query) => $query->where('role', $role))
+            ->when(in_array($status, $allowedStatuses, true), function ($query) use ($status) {
+                if ($status === 'active') {
+                    $query->whereNull('deactivated_at');
+                    return;
+                }
+
+                $query->whereNotNull('deactivated_at');
+            })
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
         
         $stats = [
             'admin' => User::where('role', 'admin')->count(),
@@ -20,7 +45,7 @@ class UserController extends Controller
             'receptionist' => User::where('role', 'receptionist')->count(),
         ];
 
-        return view('admin.users.index', compact('users', 'stats'));
+        return view('admin.users.index', compact('users', 'stats', 'search', 'role', 'status'));
     }
 
     public function create()
