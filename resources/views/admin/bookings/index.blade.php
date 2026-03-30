@@ -4,39 +4,39 @@
 @section('page-title', 'Booking Management')
 
 @section('content')
+@php
+    $activeStatus = (string) request('status', '');
+    $filterBase = request()->except(['status', 'page']);
+@endphp
 <!-- Stats -->
 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
-    <div style="background: linear-gradient(135deg, var(--warning) 0%, #d39e00 100%); color: white; padding: 1.25rem; border-radius: 12px;">
+    <a href="{{ route('admin.bookings.index', array_merge($filterBase, ['status' => 'pending'])) }}" style="background: linear-gradient(135deg, var(--warning) 0%, #d39e00 100%); color: white; padding: 1.25rem; border-radius: 12px; text-decoration: none; border: {{ $activeStatus === 'pending' ? '2px solid #2c2c2c' : '2px solid transparent' }};">
         <div style="font-size: 1.75rem; font-weight: 700;">{{ $stats['pending'] }}</div>
         <div style="opacity: 0.9; font-size: 0.875rem;">Pending</div>
-    </div>
-    <div style="background: linear-gradient(135deg, var(--success) 0%, #20873a 100%); color: white; padding: 1.25rem; border-radius: 12px;">
+    </a>
+    <a href="{{ route('admin.bookings.index', array_merge($filterBase, ['status' => 'confirmed'])) }}" style="background: linear-gradient(135deg, var(--success) 0%, #20873a 100%); color: white; padding: 1.25rem; border-radius: 12px; text-decoration: none; border: {{ $activeStatus === 'confirmed' ? '2px solid #2c2c2c' : '2px solid transparent' }};">
         <div style="font-size: 1.75rem; font-weight: 700;">{{ $stats['confirmed'] }}</div>
         <div style="opacity: 0.9; font-size: 0.875rem;">Confirmed</div>
-    </div>
-    <div style="background: linear-gradient(135deg, var(--info) 0%, #138496 100%); color: white; padding: 1.25rem; border-radius: 12px;">
+    </a>
+    <a href="{{ route('admin.bookings.index', array_merge($filterBase, ['status' => 'checked_in'])) }}" style="background: linear-gradient(135deg, var(--info) 0%, #138496 100%); color: white; padding: 1.25rem; border-radius: 12px; text-decoration: none; border: {{ $activeStatus === 'checked_in' ? '2px solid #2c2c2c' : '2px solid transparent' }};">
         <div style="font-size: 1.75rem; font-weight: 700;">{{ $stats['checked_in'] }}</div>
         <div style="opacity: 0.9; font-size: 0.875rem;">Checked In</div>
-    </div>
-    <div style="background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%); color: white; padding: 1.25rem; border-radius: 12px;">
+    </a>
+    <a href="{{ route('admin.bookings.index', $filterBase) }}" style="background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%); color: white; padding: 1.25rem; border-radius: 12px; text-decoration: none; border: {{ $activeStatus === '' ? '2px solid #2c2c2c' : '2px solid transparent' }};">
         <div style="font-size: 1.75rem; font-weight: 700;">{{ $bookings->total() }}</div>
-        <div style="opacity: 0.9; font-size: 0.875rem;">Total Bookings</div>
-    </div>
+        <div style="opacity: 0.9; font-size: 0.875rem;">All Bookings</div>
+    </a>
 </div>
 
 <!-- Filters -->
 <div style="margin-bottom: 1.5rem;">
-    <form method="GET" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;">
+    <form method="GET" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search..." style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
-        <select name="status" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
-            <option value="">All Status</option>
-            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-            <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-            <option value="checked_in" {{ request('status') == 'checked_in' ? 'selected' : '' }}>Checked In</option>
-            <option value="checked_out" {{ request('status') == 'checked_out' ? 'selected' : '' }}>Checked Out</option>
-            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
-        </select>
         <input type="date" name="date_from" value="{{ request('date_from') }}" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+        <input type="date" name="date_to" value="{{ request('date_to') }}" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+        @if($activeStatus !== '')
+            <input type="hidden" name="status" value="{{ $activeStatus }}">
+        @endif
         <x-admin.button type="primary">Filter</x-admin.button>
     </form>
 </div>
