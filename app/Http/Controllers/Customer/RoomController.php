@@ -148,7 +148,12 @@ class RoomController extends Controller
         // Filter by room type
         if ($request->filled('room_type')) {
             $roomTypeId = (int) $request->room_type;
-            $activeRoomTypeExists = RoomType::active()->whereKey($roomTypeId)->exists();
+            $activeRoomTypeExists = RoomType::active()
+                ->whereKey($roomTypeId)
+                ->whereHas('rooms', function ($roomQuery) {
+                    $roomQuery->whereNull('rooms.archived_at');
+                })
+                ->exists();
 
             if ($activeRoomTypeExists) {
                 $query->where('room_type_id', $roomTypeId);
@@ -384,7 +389,12 @@ class RoomController extends Controller
             ]
         );
 
-        $roomTypes = RoomType::active()->get();
+        $roomTypes = RoomType::active()
+            ->whereHas('rooms', function ($roomQuery) {
+                $roomQuery->whereNull('rooms.archived_at');
+            })
+            ->orderBy('name')
+            ->get();
         $amenities = Amenity::all();
         
         // If AJAX request, return JSON
