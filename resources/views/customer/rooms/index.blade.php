@@ -24,7 +24,7 @@
 
         .content-section {
             padding: 5rem 3rem;
-            max-width: 1200px;
+            max-width: 1320px;
             margin: 0 auto;
         }
 
@@ -167,7 +167,7 @@
 
     <!-- Results Counter -->
     <div class="results-info">
-        <span id="resultsCount">Showing {{ $rooms->count() }} of {{ $rooms->total() }} rooms</span>
+        <span id="resultsCount">Showing {{ $rooms->count() }} of {{ $rooms->total() }} room types</span>
         <div class="loading-spinner" id="loadingSpinner" style="display: none;">
             <i class="fas fa-spinner fa-spin"></i> Loading...
         </div>
@@ -212,9 +212,10 @@
                 <span>Total / night</span>
                 <strong id="selectedRoomsNightTotal">₱0.00</strong>
             </div>
+            <button type="button" id="addRoomSlotButton" class="add-room-slot-btn">+ Add Room</button>
             <form id="startCheckoutForm" method="POST" action="{{ route('booking.startCheckout') }}">
                 @csrf
-                <input type="hidden" name="rooms" value="{{ $requestedRooms }}">
+                <input type="hidden" id="ctxCheckoutRoomsInput" name="rooms" value="{{ $requestedRooms }}">
                 <div id="selectedRoomIdsInputs"></div>
                 <button type="submit" id="proceedCheckoutButton" class="proceed-checkout-btn" disabled>Checkout →</button>
             </form>
@@ -689,7 +690,7 @@
     .rooms-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
+        gap: 1.25rem;
         margin-top: 1rem;
     }
 
@@ -703,7 +704,7 @@
 
     .room-image {
         position: relative;
-        height: 190px;
+        height: 220px;
         overflow: hidden;
     }
 
@@ -714,11 +715,11 @@
     }
 
     .room-details {
-        padding: 0.75rem 0.9rem 0.9rem;
+        padding: 0.9rem 1rem 1rem;
     }
 
     .room-details h3 {
-        font-size: 1.25rem;
+        font-size: 1.32rem;
         color: #222;
         margin-bottom: 0.35rem;
         font-family: 'Georgia', serif;
@@ -729,8 +730,9 @@
         display: flex;
         gap: 1rem;
         margin-bottom: 0.55rem;
-        color: #6b6b6b;
-        font-size: 0.82rem;
+        color: #646464;
+        font-size: 0.86rem;
+        flex-wrap: wrap;
     }
 
     .room-info i {
@@ -742,7 +744,7 @@
         color: #6a6a6a;
         line-height: 1.45;
         margin-bottom: 0.6rem;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .room-amenities {
@@ -781,13 +783,13 @@
     }
 
     .price-label {
-        font-size: 0.7rem;
+        font-size: 0.74rem;
         color: #888;
         margin-bottom: 0.1rem;
     }
 
     .price-amount {
-        font-size: 1.65rem;
+        font-size: 1.82rem;
         font-weight: 700;
         color: #9e7b15;
         line-height: 1;
@@ -869,11 +871,11 @@
         background: linear-gradient(135deg, #d4af37, #f4e4c1);
         color: #2c2c2c;
         border: none;
-        padding: 0.48rem 0.86rem;
+        padding: 0.55rem 1rem;
         border-radius: 5px;
         text-decoration: none;
         font-weight: 700;
-        font-size: 0.73rem;
+        font-size: 0.8rem;
         cursor: pointer;
         transition: filter 0.25s ease;
     }
@@ -1113,6 +1115,24 @@
         margin-bottom: 0.6rem;
         font-size: 0.86rem;
         font-weight: 600;
+    }
+
+    .add-room-slot-btn {
+        width: 100%;
+        border: 1px solid #dcdcdc;
+        background: #fff;
+        color: #2c2c2c;
+        border-radius: 8px;
+        padding: 0.58rem 0.7rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        margin-bottom: 0.55rem;
+        cursor: pointer;
+    }
+
+    .add-room-slot-btn:hover {
+        border-color: #d4af37;
+        color: #9e7b15;
     }
 
     .proceed-checkout-btn {
@@ -1370,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextMonthBtn = document.getElementById('nextMonth');
     const calendarGrid = document.getElementById('calendarGrid');
     const calendarMonthYear = document.getElementById('calendarMonthYear');
-    const requiredRooms = Math.max(1, parseInt((document.getElementById('ctxRooms') || {}).value || '1', 10));
+    let requiredRooms = Math.max(1, parseInt((document.getElementById('ctxRooms') || {}).value || '1', 10));
     let selectedRoomIds = (document.getElementById('ctxSelectedRooms') || { value: '' }).value
         .split(',')
         .map((item) => Number(item.trim()))
@@ -1458,7 +1478,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const noRooms = document.getElementById('noRoomsMessage');
                 if (noRooms) noRooms.style.display = data.total > 0 ? 'none' : 'block';
                 roomsGrid.style.display = data.total > 0 ? '' : 'none';
-                resultsCount.textContent = `Showing ${data.total > 0 ? '1-' + Math.min(6, data.total) : 0} of ${data.total} rooms`;
+                const fromLabel = Number.isInteger(data.from) ? data.from : 0;
+                const toLabel = Number.isInteger(data.to) ? data.to : 0;
+                if (data.total > 0) {
+                    resultsCount.textContent = `Showing ${fromLabel}-${toLabel} of ${data.total} room types`;
+                } else {
+                    resultsCount.textContent = 'Showing 0 of 0 room types';
+                }
                 loadingSpinner.style.display = 'none';
                 
                 // Reattach pagination click handlers
@@ -1667,6 +1693,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedRoomsProgressText = document.getElementById('selectedRoomsProgressText');
     const selectedRoomsNightTotal = document.getElementById('selectedRoomsNightTotal');
     const proceedCheckoutButton = document.getElementById('proceedCheckoutButton');
+    const addRoomSlotButton = document.getElementById('addRoomSlotButton');
+    const checkoutRoomsInput = document.getElementById('ctxCheckoutRoomsInput');
     const openSelectedRoomsDrawerButton = document.getElementById('openSelectedRoomsDrawer');
     const closeSelectedRoomsDrawerButton = document.getElementById('closeSelectedRoomsDrawer');
     const roomPreviewModal = document.getElementById('roomPreviewModal');
@@ -1682,12 +1710,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const roomPreviewToggleSelectBtn = document.getElementById('roomPreviewToggleSelectBtn');
     let roomPreviewImages = [];
     let currentRoomPreviewImageIndex = 0;
-    let activeRoomPreviewId = null;
+    let activeRoomPreviewTypeId = null;
+    let activeRoomPreviewRoomIds = [];
     let activeRoomPreviewName = 'Room';
 
     function getCsrfToken() {
         const tokenMeta = document.querySelector('meta[name="csrf-token"]');
         return tokenMeta ? tokenMeta.getAttribute('content') : '';
+    }
+
+    function parseRoomIds(rawIds) {
+        return String(rawIds || '')
+            .split(',')
+            .map((value) => Number(value.trim()))
+            .filter((value) => Number.isInteger(value) && value > 0);
+    }
+
+    function getCardTriggerByType(roomTypeId) {
+        if (!Number.isInteger(roomTypeId) || roomTypeId <= 0) {
+            return null;
+        }
+
+        return document.querySelector(`[data-open-room-modal][data-room-type-id="${roomTypeId}"]`);
+    }
+
+    function getSelectedCountForType(roomIds) {
+        const idSet = new Set(roomIds);
+        return selectedRoomIds.filter((roomId) => idSet.has(roomId)).length;
     }
 
     function persistSelection() {
@@ -1741,17 +1790,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const cards = Array.from(document.querySelectorAll('.room-card [data-open-room-modal]'));
         const roomLookup = new Map();
         cards.forEach((trigger) => {
-            const roomId = Number(trigger.getAttribute('data-room-id'));
-            if (!Number.isInteger(roomId) || roomId <= 0) {
+            const roomIds = parseRoomIds(trigger.getAttribute('data-room-ids'));
+            if (roomIds.length === 0) {
                 return;
             }
 
-            roomLookup.set(roomId, {
-                name: trigger.getAttribute('data-room-name') || `Room ${roomId}`,
+            const roomData = {
+                name: trigger.getAttribute('data-room-name') || 'Room',
                 price: trigger.getAttribute('data-room-price') || '0.00',
                 priceValue: Number(trigger.getAttribute('data-room-price-value') || 0),
                 image: trigger.getAttribute('data-room-image') || 'https://via.placeholder.com/56x42/e8e8e8/666?text=Room',
                 capacity: Number(trigger.getAttribute('data-room-capacity') || 0),
+            };
+
+            roomIds.forEach((roomId) => {
+                roomLookup.set(roomId, roomData);
             });
         });
 
@@ -1817,21 +1870,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function addRoomToSelection(roomId) {
-        if (!Number.isInteger(roomId) || roomId <= 0) {
+    function addRoomToSelection(roomTypeId) {
+        if (!Number.isInteger(roomTypeId) || roomTypeId <= 0) {
             return;
         }
 
-        if (selectedRoomIds.includes(roomId)) {
+        const trigger = getCardTriggerByType(roomTypeId);
+        if (!trigger) {
+            return;
+        }
+
+        const roomIds = parseRoomIds(trigger.getAttribute('data-room-ids'));
+        if (roomIds.length === 0) {
+            return;
+        }
+
+        const selectedForType = getSelectedCountForType(roomIds);
+        if (selectedForType >= roomIds.length) {
+            alert(`You can only select up to ${roomIds.length} room(s) for this type.`);
             return;
         }
 
         if (selectedRoomIds.length >= requiredRooms) {
-            alert(`You can only select ${requiredRooms} room(s). Remove one first to add another.`);
+            alert(`You can only select ${requiredRooms} room(s). Click "Add Room" in the cart to increase slots.`);
             return;
         }
 
-        selectedRoomIds = [...selectedRoomIds, roomId];
+        const nextRoomId = roomIds.find((roomId) => !selectedRoomIds.includes(roomId));
+        if (!Number.isInteger(nextRoomId) || nextRoomId <= 0) {
+            return;
+        }
+
+        selectedRoomIds = [...selectedRoomIds, nextRoomId];
         persistSelection().finally(() => {
             renderSelectedRoomsDrawer();
             updateModalButtonState();
@@ -1839,16 +1909,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function removeRoomFromSelection(roomId) {
-        if (!Number.isInteger(roomId) || roomId <= 0) {
+    function removeRoomFromSelection(roomTypeId) {
+        if (!Number.isInteger(roomTypeId) || roomTypeId <= 0) {
             return;
         }
 
-        if (!selectedRoomIds.includes(roomId)) {
+        const trigger = getCardTriggerByType(roomTypeId);
+        if (!trigger) {
             return;
         }
 
-        selectedRoomIds = selectedRoomIds.filter((id) => id !== roomId);
+        const roomIds = parseRoomIds(trigger.getAttribute('data-room-ids'));
+        if (roomIds.length === 0) {
+            return;
+        }
+
+        const roomIdToRemove = [...selectedRoomIds]
+            .reverse()
+            .find((roomId) => roomIds.includes(roomId));
+
+        if (!Number.isInteger(roomIdToRemove) || roomIdToRemove <= 0) {
+            return;
+        }
+
+        let hasRemoved = false;
+        selectedRoomIds = selectedRoomIds.filter((roomId) => {
+            if (!hasRemoved && roomId === roomIdToRemove) {
+                hasRemoved = true;
+                return false;
+            }
+            return true;
+        });
+
         persistSelection().finally(() => {
             renderSelectedRoomsDrawer();
             updateModalButtonState();
@@ -1857,25 +1949,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function bindRoomQuantityControls() {
-        document.querySelectorAll('[data-room-add]').forEach((button) => {
+        document.querySelectorAll('[data-room-add-type]').forEach((button) => {
             if (button.getAttribute('data-room-add-bound') === '1') {
                 return;
             }
 
             button.setAttribute('data-room-add-bound', '1');
             button.addEventListener('click', () => {
-                addRoomToSelection(Number(button.getAttribute('data-room-add')));
+                addRoomToSelection(Number(button.getAttribute('data-room-add-type')));
             });
         });
 
-        document.querySelectorAll('[data-room-remove]').forEach((button) => {
+        document.querySelectorAll('[data-room-remove-type]').forEach((button) => {
             if (button.getAttribute('data-room-remove-bound') === '1') {
                 return;
             }
 
             button.setAttribute('data-room-remove-bound', '1');
             button.addEventListener('click', () => {
-                removeRoomFromSelection(Number(button.getAttribute('data-room-remove')));
+                removeRoomFromSelection(Number(button.getAttribute('data-room-remove-type')));
             });
         });
     }
@@ -1883,26 +1975,30 @@ document.addEventListener('DOMContentLoaded', function() {
     function markSelectedCards() {
         const cards = Array.from(document.querySelectorAll('.room-card [data-open-room-modal]'));
         cards.forEach((trigger) => {
-            const roomId = Number(trigger.getAttribute('data-room-id'));
-            const isSelected = selectedRoomIds.includes(roomId);
+            const roomTypeId = Number(trigger.getAttribute('data-room-type-id'));
+            const roomIds = parseRoomIds(trigger.getAttribute('data-room-ids'));
+            const selectedForType = getSelectedCountForType(roomIds);
+            const maxSelectableForType = roomIds.length;
+            const isSelected = selectedForType > 0;
             const hasReachedLimit = selectedRoomIds.length >= requiredRooms;
+
             trigger.setAttribute('data-is-selected', isSelected ? '1' : '0');
 
             const roomCard = trigger.closest('.room-card');
-            const qtyValue = roomCard ? roomCard.querySelector(`[data-room-qty="${roomId}"]`) : null;
-            const addBtn = roomCard ? roomCard.querySelector(`[data-room-add="${roomId}"]`) : null;
-            const removeBtn = roomCard ? roomCard.querySelector(`[data-room-remove="${roomId}"]`) : null;
+            const qtyValue = roomCard ? roomCard.querySelector(`[data-room-qty-type="${roomTypeId}"]`) : null;
+            const addBtn = roomCard ? roomCard.querySelector(`[data-room-add-type="${roomTypeId}"]`) : null;
+            const removeBtn = roomCard ? roomCard.querySelector(`[data-room-remove-type="${roomTypeId}"]`) : null;
 
             if (qtyValue) {
-                qtyValue.textContent = isSelected ? '1' : '0';
+                qtyValue.textContent = String(selectedForType);
             }
 
             if (addBtn) {
-                addBtn.disabled = isSelected || hasReachedLimit;
+                addBtn.disabled = selectedForType >= maxSelectableForType || hasReachedLimit;
             }
 
             if (removeBtn) {
-                removeBtn.disabled = !isSelected;
+                removeBtn.disabled = selectedForType <= 0;
             }
 
             const selectedBadge = trigger.closest('.room-card').querySelector('[data-selected-badge]');
@@ -1914,7 +2010,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const badge = document.createElement('div');
                 badge.setAttribute('data-selected-badge', '1');
                 badge.style.cssText = 'position:absolute;top:10px;right:10px;background:#27ae60;color:#fff;padding:0.4rem 0.7rem;border-radius:6px;font-size:0.8rem;font-weight:700;';
-                badge.textContent = 'Selected';
+                badge.textContent = `Selected ${selectedForType}/${maxSelectableForType}`;
                 const imageWrap = trigger.closest('.room-card').querySelector('.room-image');
                 if (imageWrap) {
                     imageWrap.appendChild(badge);
