@@ -39,8 +39,8 @@
                     <span>{{ \Carbon\Carbon::parse($booking->check_out_date)->format('F d, Y') }}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; padding:6px 0;">
-                    <span style="font-weight:600; color:#666;">Total Amount:</span>
-                    <span style="font-weight:700;">PHP {{ number_format($booking->total_amount, 2) }}</span>
+                    <span style="font-weight:600; color:#666;">Final Total Amount:</span>
+                    <span style="font-weight:700;">PHP {{ number_format((float) ($booking->final_total ?? $booking->total_amount), 2) }}</span>
                 </div>
             </div>
 
@@ -54,9 +54,34 @@
 
                 $manualAdjustment = (float) ($booking->manual_adjustment ?? 0);
                 $billingAdjustmentTotal = $manualAdjustment;
+
+                $itemizedAdjustments = collect($booking->adjustment_items ?? [])
+                    ->map(function ($item) {
+                        return [
+                            'amount' => round((float) data_get($item, 'amount', 0), 2),
+                            'note' => trim((string) data_get($item, 'note', '')),
+                        ];
+                    })
+                    ->filter(function ($item) {
+                        return abs((float) ($item['amount'] ?? 0)) > 0.00001 || ($item['note'] ?? '') !== '';
+                    })
+                    ->values();
+
+                if ($itemizedAdjustments->isEmpty() && abs($billingAdjustmentTotal) > 0.00001) {
+                    $fallbackItemizedNote = trim((string) ($booking->adjustment_reason ?? ''));
+                    $fallbackItemizedNote = preg_replace('/\s*Amenities\s*&\s*Services\s*:\s*.*$/mi', '', $fallbackItemizedNote ?? '') ?? '';
+                    $fallbackItemizedNote = preg_replace('/\s*Billing\s+GCash\s+Reference\s*:\s*.*$/mi', '', $fallbackItemizedNote ?? '') ?? '';
+                    $fallbackItemizedNote = preg_replace('/\s*Itemized\s+Adjustments\s*:\s*.*$/mi', '', $fallbackItemizedNote ?? '') ?? '';
+                    $fallbackItemizedNote = trim((string) $fallbackItemizedNote);
+
+                    $itemizedAdjustments = collect([[
+                        'amount' => $billingAdjustmentTotal,
+                        'note' => $fallbackItemizedNote,
+                    ]]);
+                }
             @endphp
 
-            @if($booking->extras_total > 0 || abs($billingAdjustmentTotal) > 0.00001 || $perRoomAdditionalCharge > 0)
+            @if($booking->extras_total > 0 || $itemizedAdjustments->isNotEmpty() || $perRoomAdditionalCharge > 0)
             <div style="background:#f9f9f9; border-left:4px solid #d4af37; border-radius:6px; padding:14px; margin:18px 0;">
                 <div style="font-weight:700; margin-bottom:8px; color:#2c2c2c;">Additional Charges Breakdown</div>
 
@@ -67,13 +92,25 @@
                 </div>
                 @endif
 
-                @if(abs($billingAdjustmentTotal) > 0.00001)
-                <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee;">
-                    <span style="font-weight:600; color:#666;">Billing Adjustment & Charges</span>
-                    <span style="font-weight:700; color: {{ $billingAdjustmentTotal < 0 ? '#2e7d32' : '#c62828' }};">
-                        {{ $billingAdjustmentTotal < 0 ? '-PHP ' : 'PHP ' }}{{ number_format(abs($billingAdjustmentTotal), 2) }}
-                    </span>
-                </div>
+                @if($itemizedAdjustments->isNotEmpty())
+                    @foreach($itemizedAdjustments as $adjustmentItem)
+                        @php
+                            $lineAmount = (float) ($adjustmentItem['amount'] ?? 0);
+                            $lineNote = trim((string) ($adjustmentItem['note'] ?? ''));
+                        @endphp
+                        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee; gap: 1rem;">
+                            <span style="font-weight:600; color:#666;">Adjustment: {{ $lineNote !== '' ? $lineNote : 'Adjustment item' }}</span>
+                            <span style="font-weight:700; color: {{ $lineAmount < 0 ? '#2e7d32' : '#c62828' }}; white-space: nowrap;">
+                                {{ $lineAmount < 0 ? '-PHP ' : 'PHP ' }}{{ number_format(abs($lineAmount), 2) }}
+                            </span>
+                        </div>
+                    @endforeach
+                    <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee;">
+                        <span style="font-weight:700; color:#666;">Itemized Adjustments Subtotal</span>
+                        <span style="font-weight:700; color: {{ $itemizedAdjustments->sum('amount') < 0 ? '#2e7d32' : '#c62828' }};">
+                            {{ $itemizedAdjustments->sum('amount') < 0 ? '-PHP ' : 'PHP ' }}{{ number_format(abs((float) $itemizedAdjustments->sum('amount')), 2) }}
+                        </span>
+                    </div>
                 @endif
 
                 @if($perRoomAdditionalCharge > 0)
