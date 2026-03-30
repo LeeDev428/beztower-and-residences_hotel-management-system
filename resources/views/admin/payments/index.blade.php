@@ -71,7 +71,7 @@
                         </div>
                         <div>
                             <div style="font-size: 0.875rem; color: var(--text-muted);">Payment Method</div>
-                            <div style="font-weight: 600;">{{ strtoupper($payment->payment_method) }}</div>
+                            <div style="font-weight: 600;">{{ $payment->payment_method }}</div>
                         </div>
                         @if($payment->payment_reference)
                         <div>
@@ -111,12 +111,14 @@
                 <div>
                     <div style="font-weight: 600; margin-bottom: 0.5rem;">Payment Proof</div>
                     @if($payment->proof_of_payment)
-                    <a href="{{ asset('storage/' . $payment->proof_of_payment) }}" target="_blank">
-                        <img src="{{ asset('storage/' . $payment->proof_of_payment) }}" alt="Payment Proof" class="admin-payment-proof-image" style="width: 100%; border-radius: 8px; border: 2px solid var(--border-gray); cursor: pointer; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                    </a>
+                    <div class="admin-payment-proof-frame">
+                        <a href="{{ asset('storage/' . $payment->proof_of_payment) }}" target="_blank" class="admin-payment-proof-link">
+                            <img src="{{ asset('storage/' . $payment->proof_of_payment) }}" alt="Payment Proof" class="admin-payment-proof-image">
+                        </a>
+                    </div>
                     <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">Click to enlarge</p>
                     @else
-                    <div style="padding: 2rem; background: var(--light-gray); border-radius: 8px; text-align: center; color: var(--text-muted);">
+                    <div class="admin-payment-proof-frame admin-payment-proof-empty">
                         No proof uploaded
                     </div>
                     @endif
@@ -136,6 +138,44 @@
 
 @push('styles')
 <style>
+    .admin-payment-proof-frame {
+        width: 260px;
+        height: 200px;
+        border-radius: 8px;
+        border: 2px solid var(--border-gray);
+        overflow: hidden;
+        background: var(--light-gray);
+        margin: 0 auto;
+    }
+
+    .admin-payment-proof-link {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .admin-payment-proof-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.3s;
+    }
+
+    .admin-payment-proof-link:hover .admin-payment-proof-image {
+        transform: scale(1.05);
+    }
+
+    .admin-payment-proof-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        padding: 1rem;
+    }
+
     @media (max-width: 1024px) {
         .admin-payment-layout {
             grid-template-columns: 1fr !important;
@@ -169,9 +209,9 @@
             flex-direction: column;
         }
 
-        .admin-payment-proof-image {
-            max-height: 320px;
-            object-fit: cover;
+        .admin-payment-proof-frame {
+            width: 100%;
+            max-width: 260px;
         }
     }
 </style>
