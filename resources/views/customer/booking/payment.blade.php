@@ -549,7 +549,6 @@
                                 <label class="form-label">Payment Method <span class="required">*</span></label>
                                 <input type="text" name="payment_method" class="form-input"
                                        placeholder="Enter payment method (e.g. GCash, Bank Transfer)"
-                                       value="{{ old('payment_method', 'GCash') }}"
                                        maxlength="100"
                                        required>
                             </div>
