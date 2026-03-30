@@ -2053,12 +2053,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateModalButtonState() {
-        if (!roomPreviewToggleSelectBtn || !activeRoomPreviewId) {
+        if (!roomPreviewToggleSelectBtn) {
             return;
         }
 
-        const isSelected = selectedRoomIds.includes(activeRoomPreviewId);
-        roomPreviewToggleSelectBtn.textContent = isSelected ? 'Remove from Cart' : 'Add to Cart';
+        if (!Number.isInteger(activeRoomPreviewTypeId) || activeRoomPreviewTypeId <= 0 || activeRoomPreviewRoomIds.length === 0) {
+            roomPreviewToggleSelectBtn.textContent = 'Add to Cart';
+            roomPreviewToggleSelectBtn.disabled = true;
+            return;
+        }
+
+        const selectedForType = getSelectedCountForType(activeRoomPreviewRoomIds);
+        const canRemove = selectedForType > 0;
+        const canAdd = selectedForType < activeRoomPreviewRoomIds.length && selectedRoomIds.length < requiredRooms;
+
+        roomPreviewToggleSelectBtn.textContent = canRemove ? 'Remove from Cart' : 'Add to Cart';
+        roomPreviewToggleSelectBtn.disabled = !canRemove && !canAdd;
     }
 
     function openRoomPreviewModal(trigger) {
@@ -2066,10 +2076,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        activeRoomPreviewId = Number(trigger.getAttribute('data-room-id'));
+        activeRoomPreviewTypeId = Number(trigger.getAttribute('data-room-type-id'));
+        activeRoomPreviewRoomIds = parseRoomIds(trigger.getAttribute('data-room-ids'));
         activeRoomPreviewName = trigger.getAttribute('data-room-name') || 'Room';
         const roomPrice = trigger.getAttribute('data-room-price') || '0.00';
         const roomCapacity = trigger.getAttribute('data-room-capacity') || '0';
+        const roomAvailableCount = Number(trigger.getAttribute('data-room-available-count') || activeRoomPreviewRoomIds.length || 0);
         const roomImage = trigger.getAttribute('data-room-image') || '';
         const roomImagesRaw = (trigger.getAttribute('data-room-images') || '').trim();
         const roomDescription = trigger.getAttribute('data-room-description') || '';
@@ -2094,7 +2106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentRoomPreviewImageIndex = 0;
 
         roomPreviewTitle.textContent = activeRoomPreviewName;
-        roomPreviewMeta.textContent = `Can accommodate ${roomCapacity} adult${Number(roomCapacity) > 1 ? 's' : ''} + 1 child`;
+    roomPreviewMeta.textContent = `Can accommodate ${roomCapacity} adult${Number(roomCapacity) > 1 ? 's' : ''} + 1 child • ${roomAvailableCount} room${roomAvailableCount === 1 ? '' : 's'} available`;
         roomPreviewDescription.textContent = roomDescription || 'Comfortable and modern accommodation.';
         roomPreviewPrice.textContent = `₱${roomPrice}`;
         renderRoomPreviewThumbnails();
@@ -2139,15 +2151,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (roomPreviewToggleSelectBtn) {
         roomPreviewToggleSelectBtn.addEventListener('click', () => {
-            if (!Number.isInteger(activeRoomPreviewId) || activeRoomPreviewId <= 0) {
+            if (!Number.isInteger(activeRoomPreviewTypeId) || activeRoomPreviewTypeId <= 0 || activeRoomPreviewRoomIds.length === 0) {
                 return;
             }
 
-            const isSelected = selectedRoomIds.includes(activeRoomPreviewId);
-            if (isSelected) {
-                removeRoomFromSelection(activeRoomPreviewId);
+            const selectedForType = getSelectedCountForType(activeRoomPreviewRoomIds);
+            if (selectedForType > 0) {
+                removeRoomFromSelection(activeRoomPreviewTypeId);
             } else {
-                addRoomToSelection(activeRoomPreviewId);
+                addRoomToSelection(activeRoomPreviewTypeId);
             }
         });
     }
