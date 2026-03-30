@@ -88,19 +88,19 @@
             <tr>
                 <td class="stat-box">
                     <div class="value">{{ $totalBookings }}</div>
-                    <div class="label">Bookings</div>
+                    <div class="label">Active Bookings</div>
                 </td>
                 <td class="stat-box">
                     <div class="value">{{ $totalGuests }}</div>
-                    <div class="label">New Guests</div>
+                    <div class="label">Active Guests</div>
                 </td>
                 <td class="stat-box">
                     <div class="value">{{ $totalRooms }}</div>
-                    <div class="label">Total Rooms</div>
+                    <div class="label">Active Rooms</div>
                 </td>
                 <td class="stat-box">
                     <div class="value" style="font-size: 18px;">PHP {{ number_format($totalRevenue, 0) }}</div>
-                    <div class="label">Revenue</div>
+                    <div class="label">Revenue (Active Rooms)</div>
                 </td>
             </tr>
         </table>
