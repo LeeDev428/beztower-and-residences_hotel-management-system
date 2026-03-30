@@ -9,7 +9,7 @@
     $filterBase = request()->except(['status', 'page']);
 @endphp
 <!-- Stats -->
-<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
     <a href="{{ route('admin.bookings.index', array_merge($filterBase, ['status' => 'pending'])) }}" style="background: linear-gradient(135deg, var(--warning) 0%, #d39e00 100%); color: white; padding: 1.25rem; border-radius: 12px; text-decoration: none; border: {{ $activeStatus === 'pending' ? '2px solid #2c2c2c' : '2px solid transparent' }};">
         <div style="font-size: 1.75rem; font-weight: 700;">{{ $stats['pending'] }}</div>
         <div style="opacity: 0.9; font-size: 0.875rem;">Pending</div>
@@ -21,6 +21,14 @@
     <a href="{{ route('admin.bookings.index', array_merge($filterBase, ['status' => 'checked_in'])) }}" style="background: linear-gradient(135deg, var(--info) 0%, #138496 100%); color: white; padding: 1.25rem; border-radius: 12px; text-decoration: none; border: {{ $activeStatus === 'checked_in' ? '2px solid #2c2c2c' : '2px solid transparent' }};">
         <div style="font-size: 1.75rem; font-weight: 700;">{{ $stats['checked_in'] }}</div>
         <div style="opacity: 0.9; font-size: 0.875rem;">Checked In</div>
+    </a>
+    <a href="{{ route('admin.bookings.index', array_merge($filterBase, ['status' => 'checked_out'])) }}" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; padding: 1.25rem; border-radius: 12px; text-decoration: none; border: {{ $activeStatus === 'checked_out' ? '2px solid #2c2c2c' : '2px solid transparent' }};">
+        <div style="font-size: 1.75rem; font-weight: 700;">{{ $stats['checked_out'] }}</div>
+        <div style="opacity: 0.9; font-size: 0.875rem;">Checked Out</div>
+    </a>
+    <a href="{{ route('admin.bookings.index', array_merge($filterBase, ['status' => 'cancelled'])) }}" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); color: white; padding: 1.25rem; border-radius: 12px; text-decoration: none; border: {{ $activeStatus === 'cancelled' ? '2px solid #2c2c2c' : '2px solid transparent' }};">
+        <div style="font-size: 1.75rem; font-weight: 700;">{{ $stats['cancelled'] }}</div>
+        <div style="opacity: 0.9; font-size: 0.875rem;">Cancelled</div>
     </a>
     <a href="{{ route('admin.bookings.index', $filterBase) }}" style="background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%); color: white; padding: 1.25rem; border-radius: 12px; text-decoration: none; border: {{ $activeStatus === '' ? '2px solid #2c2c2c' : '2px solid transparent' }};">
         <div style="font-size: 1.75rem; font-weight: 700;">{{ $bookings->total() }}</div>
