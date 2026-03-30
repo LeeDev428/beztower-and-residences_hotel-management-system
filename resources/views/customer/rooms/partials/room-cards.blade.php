@@ -43,7 +43,7 @@
             @endif
        
             @if($isSelected)
-                <div style="position:absolute;top:10px;right:10px;background:#27ae60;color:#fff;padding:0.4rem 0.7rem;border-radius:6px;font-size:0.8rem;font-weight:700;">Selected</div>
+                <div data-selected-badge="1" style="position:absolute;top:10px;right:10px;background:#27ae60;color:#fff;padding:0.4rem 0.7rem;border-radius:6px;font-size:0.8rem;font-weight:700;">Selected</div>
             @endif
         </div>
 
