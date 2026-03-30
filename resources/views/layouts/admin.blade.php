@@ -265,6 +265,12 @@
         .content {
             flex: 1;
             padding: 2rem;
+            min-width: 0;
+            width: 100%;
+        }
+
+        .content > * {
+            min-width: 0;
         }
 
         .sidebar-overlay {
@@ -319,6 +325,170 @@
 
             .content {
                 padding: 1.5rem 1rem;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .content [style*="grid-template-columns: 2fr 1fr"],
+            .content [style*="grid-template-columns: 1fr 2fr"],
+            .content [style*="grid-template-columns: repeat(4, 1fr)"],
+            .content [style*="grid-template-columns: repeat(3, 1fr)"],
+            .content [style*="grid-template-columns: repeat(2, 1fr)"],
+            .content [style*="grid-template-columns: 1fr 1fr"],
+            .content [style*="grid-template-columns: repeat(2,minmax(0,1fr))"],
+            .content [style*="grid-template-columns: repeat(2, minmax(0, 1fr))"],
+            .content [style*="grid-template-columns: repeat(2, minmax(180px, 1fr))"] {
+                grid-template-columns: 1fr !important;
+            }
+
+            .content form[style*="display: flex"] {
+                flex-wrap: wrap !important;
+            }
+
+            .content form[style*="display: flex"] > * {
+                flex: 1 1 220px;
+                min-width: 0;
+            }
+
+            .content [style*="overflow-x: auto"] {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .content table {
+                min-width: 680px;
+            }
+
+            .content img {
+                max-width: 100%;
+                height: auto;
+            }
+
+            .content [style*="justify-content: flex-end"] {
+                justify-content: flex-start !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: min(88vw, 320px);
+            }
+
+            .sidebar-header {
+                padding: 1.15rem 1rem;
+            }
+
+            .sidebar-logo {
+                font-size: 1.05rem;
+                line-height: 1.3;
+            }
+
+            .nav-section-title {
+                padding: 0.45rem 1rem;
+            }
+
+            .nav-link {
+                padding: 0.8rem 1rem;
+            }
+
+            .topbar {
+                padding: 0.75rem 0.85rem;
+                gap: 0.75rem;
+                align-items: flex-start;
+            }
+
+            .topbar-left {
+                min-width: 0;
+                gap: 0.5rem;
+                flex: 1;
+            }
+
+            .page-title {
+                font-size: 1rem;
+                line-height: 1.2;
+                max-width: 10rem;
+                word-break: break-word;
+            }
+
+            .topbar-right {
+                gap: 0.4rem;
+                flex-shrink: 0;
+            }
+
+            .notification-btn {
+                padding: 0.35rem;
+            }
+
+            .user-menu {
+                padding: 0.25rem;
+            }
+
+            .user-info {
+                display: none;
+            }
+
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 0.75rem;
+            }
+
+            .content {
+                padding: 0.9rem 0.65rem;
+            }
+
+            .content form[style*="display: grid"],
+            .content form[style*="display:grid"] {
+                grid-template-columns: 1fr !important;
+            }
+
+            .content [style*="display: flex; justify-content: space-between"] {
+                flex-wrap: wrap !important;
+                gap: 0.75rem !important;
+            }
+
+            .content table {
+                min-width: 560px;
+            }
+
+            .content th,
+            .content td {
+                word-break: break-word;
+            }
+
+            #toastContainer {
+                left: 0.7rem !important;
+                right: 0.7rem !important;
+                top: 0.7rem !important;
+                max-width: none !important;
+            }
+
+            #adminBackToTopBtn {
+                right: 0.75rem !important;
+                bottom: 0.75rem !important;
+                width: 46px !important;
+                height: 46px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-title {
+                max-width: 8rem;
+                font-size: 0.95rem;
+            }
+
+            .notification-btn svg,
+            #adminLogoutForm button svg {
+                width: 18px !important;
+                height: 18px !important;
+            }
+
+            .content {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .content table {
+                min-width: 520px;
             }
         }
 
