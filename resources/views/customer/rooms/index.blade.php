@@ -135,7 +135,7 @@
         $selectedRoomSummary = $selectedRoomSummary->values();
     @endphp
 
-    @if($requestedRooms > 1)
+    {{-- @if($requestedRooms > 1)
         <div style="margin-bottom: 1rem; padding: 0.9rem 1rem; background: #fff9e6; border: 1px solid #f1dfab; border-radius: 8px; display:flex; justify-content:space-between; gap:0.8rem; align-items:center; flex-wrap: wrap;">
             <div style="font-size: 0.92rem; color:#5f4b1b; display:flex; flex-direction:column; gap:0.2rem;">
                 <div>
@@ -163,7 +163,7 @@
                 @endif
             </div>
         </div>
-    @endif
+    @endif --}}
 
     <!-- Results Counter -->
     <div class="results-info">
