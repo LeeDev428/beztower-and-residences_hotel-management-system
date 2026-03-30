@@ -4,8 +4,8 @@
 @section('page-title', 'Rooms Management')
 
 @section('content')
-<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-    <form method="GET" style="display: flex; gap: 1rem; flex: 1;">
+<div class="admin-rooms-toolbar" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+    <form method="GET" class="admin-rooms-filter-form" style="display: flex; gap: 1rem; flex: 1;">
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search rooms..." style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
         <select name="type" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
             <option value="">All Types</option>
@@ -28,7 +28,7 @@
 </div>
 
 <x-admin.card title="All Rooms ({{ $rooms->total() }})">
-    <div style="overflow-x: auto;">
+    <div class="admin-table-wrap" style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="border-bottom: 2px solid var(--border-gray);">
@@ -100,6 +100,7 @@
 <!-- Floating Add Button -->
 @if(auth()->user()->role === 'admin')
 <a href="{{ route('admin.rooms.create') }}" 
+   class="admin-rooms-fab"
    style="position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; text-decoration: none; box-shadow: 0 4px 20px rgba(201, 169, 97, 0.4); transition: all 0.3s ease; z-index: 999;"
    onmouseover="this.style.transform='scale(1.1) rotate(90deg)'; this.style.boxShadow='0 6px 25px rgba(201, 169, 97, 0.6)';"
    onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='0 4px 20px rgba(201, 169, 97, 0.4)';"
@@ -107,4 +108,42 @@
     +
 </a>
 @endif
+
+@push('styles')
+<style>
+    @media (max-width: 1024px) {
+        .admin-rooms-filter-form {
+            flex-wrap: wrap;
+        }
+
+        .admin-rooms-filter-form > * {
+            flex: 1 1 220px;
+            min-width: 0;
+        }
+
+        .admin-rooms-filter-form button,
+        .admin-rooms-filter-form a {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .admin-rooms-toolbar {
+            margin-bottom: 1rem !important;
+        }
+
+        .admin-rooms-filter-form {
+            gap: 0.6rem !important;
+        }
+
+        .admin-rooms-fab {
+            width: 52px !important;
+            height: 52px !important;
+            font-size: 1.6rem !important;
+            bottom: 0.9rem !important;
+            right: 0.9rem !important;
+        }
+    }
+</style>
+@endpush
 @endsection
