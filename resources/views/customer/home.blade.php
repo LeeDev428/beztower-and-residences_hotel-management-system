@@ -1191,7 +1191,7 @@
                 </div>
                 <div class="form-group-contact">
                     <label>Message</label>
-                    <textarea name="message" placeholder="Your message..." required>{{ old('message') }}</textarea>
+                    <textarea name="message" rows="5" placeholder="Your message..." required>{{ old('message') }}</textarea>
                 </div>
                 <button type="submit" class="submit-btn">Send Message</button>
             </form>
