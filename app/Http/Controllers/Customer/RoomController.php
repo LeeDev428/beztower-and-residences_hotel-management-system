@@ -10,6 +10,7 @@ use App\Models\Amenity;
 use App\Models\BlockDate;
 use App\Support\BookingAutoCancelService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 class RoomController extends Controller
@@ -296,7 +297,93 @@ class RoomController extends Controller
             }
         }
         
-        $rooms = $query->paginate(6)->withQueryString();
+        $filteredRooms = $query->get();
+
+        $roomTypeCards = $filteredRooms
+            ->groupBy('room_type_id')
+            ->map(function (Collection $groupedRooms) {
+                /** @var Room|null $firstRoom */
+                $firstRoom = $groupedRooms->first();
+                if (!$firstRoom) {
+                    return null;
+                }
+
+                $sortedRooms = $groupedRooms
+                    ->sortBy(fn (Room $room) => (string) $room->room_number)
+                    ->values();
+
+                $primaryRoom = $sortedRooms->first();
+                $roomType = $firstRoom->roomType;
+                $roomTypeName = (string) ($roomType->name ?? 'Room');
+
+                $primaryImage = $primaryRoom && $primaryRoom->photos->isNotEmpty()
+                    ? asset('storage/' . $primaryRoom->photos->first()->photo_path)
+                    : 'https://via.placeholder.com/400x300/d4af37/2c2c2c?text=' . urlencode($roomTypeName);
+
+                $galleryImages = $sortedRooms
+                    ->flatMap(function (Room $room) {
+                        return $room->photos
+                            ->pluck('photo_path')
+                            ->filter();
+                    })
+                    ->unique()
+                    ->take(4)
+                    ->map(fn ($photoPath) => asset('storage/' . $photoPath))
+                    ->values();
+
+                if ($galleryImages->isEmpty()) {
+                    $galleryImages = collect([$primaryImage]);
+                }
+
+                $amenities = $sortedRooms
+                    ->flatMap(fn (Room $room) => $room->amenities)
+                    ->unique('id')
+                    ->values();
+
+                $lowestPrice = (float) $sortedRooms->min(fn (Room $room) => (float) ($room->effective_price ?? 0));
+                $roomIds = $sortedRooms
+                    ->pluck('id')
+                    ->map(fn ($id) => (int) $id)
+                    ->values();
+
+                $features = collect(preg_split('/\r\n|\r|\n/', (string) ($roomType->features_text ?? '')))
+                    ->map(fn ($line) => trim((string) $line))
+                    ->filter()
+                    ->values();
+
+                return [
+                    'room_type_id' => (int) ($roomType->id ?? 0),
+                    'name' => $roomTypeName,
+                    'description' => (string) ($roomType->description ?? ''),
+                    'bed_type' => (string) ($roomType->bed_type ?? ''),
+                    'max_guests' => (int) ($roomType->max_guests ?? 0),
+                    'price' => $lowestPrice,
+                    'base_price' => (float) ($roomType->base_price ?? $lowestPrice),
+                    'discount_percentage' => (float) ($roomType->discount_percentage ?? 0),
+                    'room_ids' => $roomIds,
+                    'available_count' => $roomIds->count(),
+                    'primary_image' => $primaryImage,
+                    'gallery_images' => $galleryImages,
+                    'amenities' => $amenities,
+                    'features' => $features,
+                ];
+            })
+            ->filter()
+            ->values();
+
+        $perPage = 6;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $rooms = new LengthAwarePaginator(
+            $roomTypeCards->forPage($currentPage, $perPage)->values(),
+            $roomTypeCards->count(),
+            $perPage,
+            $currentPage,
+            [
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+                'query' => $request->query(),
+            ]
+        );
+
         $roomTypes = RoomType::active()->get();
         $amenities = Amenity::all();
         
@@ -310,7 +397,9 @@ class RoomController extends Controller
                     'selectedRoomIds' => $selectedRoomIds,
                 ])->render(),
                 'pagination' => view('customer.rooms.partials.pagination', compact('rooms'))->render(),
-                'total' => $rooms->total()
+                'total' => $rooms->total(),
+                'from' => $rooms->firstItem(),
+                'to' => $rooms->lastItem(),
             ]);
         }
 
