@@ -172,8 +172,13 @@ class ReportController extends Controller
 
     private function buildRevenueByRoomType(string $startDate, string $endDate)
     {
+        $paymentRelations = ['booking.room.roomType'];
+        if (Schema::hasTable('booking_rooms')) {
+            $paymentRelations[] = 'booking.rooms.roomType';
+        }
+
         $payments = Payment::query()
-            ->with(['booking.room.roomType', 'booking.rooms.roomType'])
+            ->with($paymentRelations)
             ->whereIn('payment_status', ['verified', 'completed'])
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereHas('booking', function ($bookingQuery) {
@@ -196,7 +201,7 @@ class ReportController extends Controller
 
             $activeRooms = collect();
 
-            if ($booking->rooms && $booking->rooms->isNotEmpty()) {
+            if (Schema::hasTable('booking_rooms') && $booking->relationLoaded('rooms') && $booking->rooms && $booking->rooms->isNotEmpty()) {
                 $activeRooms = $booking->rooms->filter(function ($room) {
                     return is_null($room->archived_at);
                 })->values();
