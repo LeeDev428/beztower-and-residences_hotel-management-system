@@ -5,14 +5,14 @@
 
 @section('content')
 <div style="margin-bottom: 1.5rem;">
-    <form method="GET" style="display: flex; gap: 1rem;">
+    <form method="GET" class="admin-guests-filter-form" style="display: flex; gap: 1rem;">
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search guests..." style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
         <x-admin.button type="primary">Search</x-admin.button>
     </form>
 </div>
 
 <x-admin.card title="All Guests ({{ $guests->total() }})">
-    <div style="overflow-x: auto;">
+    <div class="admin-table-wrap" style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="border-bottom: 2px solid var(--border-gray);">
@@ -58,4 +58,19 @@
         {{ $guests->links() }}
     </div>
 </x-admin.card>
+
+@push('styles')
+<style>
+    @media (max-width: 680px) {
+        .admin-guests-filter-form {
+            flex-wrap: wrap;
+            gap: 0.6rem !important;
+        }
+
+        .admin-guests-filter-form > * {
+            flex: 1 1 100%;
+        }
+    }
+</style>
+@endpush
 @endsection
