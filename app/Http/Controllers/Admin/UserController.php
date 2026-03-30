@@ -86,7 +86,7 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        if ($user->id === auth()->id() && $validated['role'] !== 'admin') {
+        if ($user->id === auth()->user()?->id && $validated['role'] !== 'admin') {
             return back()->withErrors([
                 'role' => 'You cannot change your own role from Admin.',
             ])->withInput();
@@ -125,7 +125,7 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        if ($user->id === auth()->id()) {
+        if ($user->id === auth()->user()?->id) {
             return back()->with('error', 'You cannot deactivate your own account!');
         }
 
