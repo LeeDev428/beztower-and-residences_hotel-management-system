@@ -62,33 +62,147 @@
 
 </div>
 
+<!-- Management Analytics -->
+<div style="margin-top: 2rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem;">
+    <x-admin.card title="Most Frequently Booked Rooms">
+        <div class="admin-table-wrap" style="overflow-x: auto;">
+            <table style="width: 100%; min-width: 420px; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-gray);">
+                        <th style="text-align: left; padding: 0.6rem; color: var(--text-muted); font-size: 0.82rem;">Room</th>
+                        <th style="text-align: right; padding: 0.6rem; color: var(--text-muted); font-size: 0.82rem;">Bookings</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($mostBookedRooms as $room)
+                        <tr style="border-bottom: 1px solid var(--border-gray);">
+                            <td style="padding: 0.6rem;">Room {{ $room->room_number }} <span style="color: var(--text-muted);">({{ $room->room_type_name ?? 'N/A' }})</span></td>
+                            <td style="padding: 0.6rem; text-align: right; font-weight: 700; color: var(--primary-gold);">{{ (int) $room->booking_count }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="2" style="padding: 1rem; text-align: center; color: var(--text-muted);">No booking data available.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </x-admin.card>
+
+    <x-admin.card title="Least Booked Rooms">
+        <div class="admin-table-wrap" style="overflow-x: auto;">
+            <table style="width: 100%; min-width: 420px; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-gray);">
+                        <th style="text-align: left; padding: 0.6rem; color: var(--text-muted); font-size: 0.82rem;">Room</th>
+                        <th style="text-align: right; padding: 0.6rem; color: var(--text-muted); font-size: 0.82rem;">Bookings</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($leastBookedRooms as $room)
+                        <tr style="border-bottom: 1px solid var(--border-gray);">
+                            <td style="padding: 0.6rem;">Room {{ $room->room_number }} <span style="color: var(--text-muted);">({{ $room->room_type_name ?? 'N/A' }})</span></td>
+                            <td style="padding: 0.6rem; text-align: right; font-weight: 700; color: #8d8d8d;">{{ (int) $room->booking_count }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="2" style="padding: 1rem; text-align: center; color: var(--text-muted);">No booking data available.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </x-admin.card>
+</div>
+
+<div style="margin-top: 2rem;">
+    <x-admin.card title="Room Occupancy Trends (Last 6 Months)">
+        <div style="display: grid; gap: 0.8rem;">
+            @forelse($occupancyTrend as $trend)
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.86rem; margin-bottom: 0.25rem;">
+                        <span style="font-weight: 600;">{{ $trend['label'] }}</span>
+                        <span style="color: var(--text-muted);">{{ number_format((float) $trend['occupancy_rate'], 2) }}%</span>
+                    </div>
+                    <div style="width: 100%; height: 12px; border-radius: 999px; background: #ededed; overflow: hidden;">
+                        <div style="height: 100%; width: {{ min(100, max(0, (float) $trend['occupancy_rate'])) }}%; background: linear-gradient(135deg, #d4af37, #b8941f);"></div>
+                    </div>
+                </div>
+            @empty
+                <p style="color: var(--text-muted);">No occupancy trend data available.</p>
+            @endforelse
+        </div>
+    </x-admin.card>
+</div>
+
+<div style="margin-top: 2rem;">
+    <x-admin.card title="Booking Frequency Per Room">
+        <div class="admin-table-wrap" style="overflow-x: auto;">
+            <table style="width: 100%; min-width: 520px; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-gray);">
+                        <th style="text-align: left; padding: 0.65rem; color: var(--text-muted); font-size: 0.82rem;">Room</th>
+                        <th style="text-align: left; padding: 0.65rem; color: var(--text-muted); font-size: 0.82rem;">Type</th>
+                        <th style="text-align: right; padding: 0.65rem; color: var(--text-muted); font-size: 0.82rem;">Bookings</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($roomFrequency->sortByDesc('booking_count') as $room)
+                        <tr style="border-bottom: 1px solid var(--border-gray);">
+                            <td style="padding: 0.65rem; font-weight: 600;">Room {{ $room->room_number }}</td>
+                            <td style="padding: 0.65rem; color: var(--text-muted);">{{ $room->room_type_name ?? 'N/A' }}</td>
+                            <td style="padding: 0.65rem; text-align: right; font-weight: 700;">{{ (int) $room->booking_count }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" style="padding: 1rem; text-align: center; color: var(--text-muted);">No booking frequency data available.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </x-admin.card>
+</div>
+
 <!-- Quick Stats -->
 <div style="margin-top: 2rem;">
     <x-admin.card title="Quick Overview">
-        <div class="admin-reports-quick-stats" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; padding: 1rem 0;">
+        <div class="admin-reports-quick-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; padding: 1rem 0;">
             <div style="text-align: center;">
                 <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary-gold);">
-                    {{ \App\Models\Booking::count() }}
+                    {{ $quickOverview['active_bookings'] ?? 0 }}
                 </div>
-                <div style="color: var(--text-muted); margin-top: 0.5rem;">Total Bookings</div>
+                <div style="color: var(--text-muted); margin-top: 0.5rem;">Active Bookings</div>
             </div>
             <div style="text-align: center;">
                 <div style="font-size: 2.5rem; font-weight: 700; color: var(--success);">
-                    {{ \App\Models\Room::count() }}
+                    {{ $quickOverview['active_rooms'] ?? 0 }}
                 </div>
-                <div style="color: var(--text-muted); margin-top: 0.5rem;">Total Rooms</div>
+                <div style="color: var(--text-muted); margin-top: 0.5rem;">Active Rooms</div>
             </div>
             <div style="text-align: center;">
                 <div style="font-size: 2.5rem; font-weight: 700; color: var(--info);">
-                    {{ \App\Models\Guest::count() }}
+                    {{ $quickOverview['active_guests'] ?? 0 }}
                 </div>
-                <div style="color: var(--text-muted); margin-top: 0.5rem;">Total Guests</div>
+                <div style="color: var(--text-muted); margin-top: 0.5rem;">Active Guests</div>
             </div>
             <div style="text-align: center;">
-                <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary-gold);">
-                    ₱{{ number_format(\App\Models\Payment::whereIn('payment_status', ['verified', 'completed'])->sum('amount'), 0) }}
+                <div style="font-size: 2.25rem; font-weight: 700; color: var(--primary-gold);">
+                    ₱{{ number_format((float) ($quickOverview['total_revenue'] ?? 0), 0) }}
                 </div>
-                <div style="color: var(--text-muted); margin-top: 0.5rem;">Total Revenue</div>
+                <div style="color: var(--text-muted); margin-top: 0.5rem;">Revenue (Active Rooms)</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700; color: var(--warning);">
+                    {{ $quickOverview['verified_payments_count'] ?? 0 }}
+                </div>
+                <div style="color: var(--text-muted); margin-top: 0.5rem;">Verified Payments</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700; color: #1976d2;">
+                    {{ $quickOverview['occupied_today'] ?? 0 }}
+                </div>
+                <div style="color: var(--text-muted); margin-top: 0.5rem;">Occupied Today</div>
             </div>
         </div>
     </x-admin.card>
@@ -98,6 +212,10 @@
 <style>
     @media (max-width: 1024px) {
         .admin-reports-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .admin-reports-grid + div[style*="grid-template-columns: repeat(2"] {
             grid-template-columns: 1fr !important;
         }
 
