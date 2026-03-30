@@ -5,7 +5,7 @@
 
 @section('content')
 <!-- Stats -->
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+<div class="admin-messages-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
     <div style="background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%); color: white; padding: 1.25rem; border-radius: 12px;">
         <div style="font-size: 1.75rem; font-weight: 700;">{{ $stats['total'] }}</div>
         <div style="opacity: 0.9; font-size: 0.875rem;">Total Messages</div>
@@ -27,7 +27,7 @@
 @endif
 
 <!-- Filters -->
-<form method="GET" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 1rem; margin-bottom: 1.5rem; align-items: end;">
+<form method="GET" class="admin-messages-filter-form" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 1rem; margin-bottom: 1.5rem; align-items: end;">
     <div>
         <label style="font-size:0.8rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Search</label>
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Name, email, subject, message..."
@@ -67,7 +67,7 @@
     @else
         <div style="display:flex;flex-direction:column;gap:0;">
             @foreach($messages as $msg)
-            <div style="padding:1.25rem 1rem;border-bottom:1px solid var(--border-gray);display:flex;gap:1rem;align-items:flex-start;
+            <div class="admin-message-row" style="padding:1.25rem 1rem;border-bottom:1px solid var(--border-gray);display:flex;gap:1rem;align-items:flex-start;
                         {{ !$msg->is_read ? 'background:#fffbeb;' : '' }}">
                 <!-- Left: icon -->
                 <div style="flex-shrink:0;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
@@ -102,7 +102,7 @@
                 </div>
 
                 <!-- Right: timestamp + actions -->
-                <div style="flex-shrink:0;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
+                <div class="admin-message-meta" style="flex-shrink:0;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
                     <span style="font-size:0.8rem;color:var(--text-muted);white-space:nowrap;">{{ $msg->created_at->format('M d, Y g:i A') }}</span>
                     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end;">
                         @if(!$msg->is_read)
@@ -144,6 +144,49 @@
         @endif
     @endif
 </x-admin.card>
+
+@push('styles')
+<style>
+    @media (max-width: 1024px) {
+        .admin-messages-filter-form {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 0.75rem !important;
+        }
+
+        .admin-messages-stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 0.9rem !important;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .admin-messages-filter-form {
+            grid-template-columns: 1fr !important;
+        }
+
+        .admin-messages-stats {
+            grid-template-columns: 1fr 1fr !important;
+        }
+
+        .admin-message-row {
+            flex-direction: column;
+            gap: 0.7rem !important;
+        }
+
+        .admin-message-meta {
+            width: 100%;
+            align-items: flex-start !important;
+            text-align: left !important;
+        }
+    }
+
+    @media (max-width: 500px) {
+        .admin-messages-stats {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+@endpush
 
 <script>
     function toggleMessage(id) {
