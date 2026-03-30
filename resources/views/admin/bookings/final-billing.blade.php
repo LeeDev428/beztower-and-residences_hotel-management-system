@@ -514,34 +514,49 @@
                                 </div>
                             @endforeach
                         </div>
-                        <input type="hidden" name="manual_adjustment" id="manualAdjustment" value="{{ $initialManualAdjustment }}">
                         <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.55rem;">Each room has independent additional charges and discounts. Grand total is automatically combined at the bottom.</p>
                     </div>
-                    <div style="margin-bottom: 1.25rem;">
-                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Overall Total Adjustment (All Rooms)</label>
-                        <div style="display: flex; align-items: center; border: 1px solid var(--border-gray); border-radius: 8px; overflow: hidden;">
-                            <span style="padding: 0.65rem 0.85rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.9rem;">₱</span>
-                            <input type="number" name="overall_manual_adjustment" id="overallManualAdjustment"
-                                value="{{ $initialOverallManualAdjustment }}" step="0.01"
-                                style="flex: 1; border: none; outline: none; padding: 0.65rem 0.85rem; font-size: 0.9rem;"
-                                onchange="calculateTotal()">
-                        </div>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">Use this for whole-booking adjustments (e.g., manual down payment recorded outside system).</p>
-                    </div>
-                @else
-                    <div style="margin-bottom: 1.25rem;">
-                        <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Adjustment Amount</label>
-                        <div style="display: flex; align-items: center; border: 1px solid var(--border-gray); border-radius: 8px; overflow: hidden;">
-                            <span style="padding: 0.65rem 0.85rem; background: var(--light-gray); color: var(--text-muted); font-weight: 600; border-right: 1px solid var(--border-gray); font-size: 0.9rem;">₱</span>
-                            <input type="number" name="manual_adjustment" id="manualAdjustment"
-                                value="{{ $initialManualAdjustment }}" step="0.01"
-                                style="flex: 1; border: none; outline: none; padding: 0.65rem 0.85rem; font-size: 0.9rem;"
-                                onchange="calculateTotal()">
-                        </div>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">Positive for additional charges, negative for discounts</p>
-                    </div>
-                    <input type="hidden" name="overall_manual_adjustment" id="overallManualAdjustment" value="0">
                 @endif
+
+                <div style="margin-bottom: 1.25rem; border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.85rem; background: #fcfcfc;">
+                    <label style="display: block; font-weight: 700; font-size: 0.86rem; margin-bottom: 0.6rem;">Itemized Adjustment Breakdown</label>
+                    <div id="adjustmentItemsContainer" style="display: flex; flex-direction: column; gap: 0.55rem;">
+                        @foreach($existingAdjustmentItems as $adjustmentItem)
+                            <div class="adjustment-item-row" style="display: grid; grid-template-columns: minmax(130px, 150px) 1fr auto; gap: 0.45rem; align-items: center;">
+                                <div style="display:flex; align-items:center; border:1px solid var(--border-gray); border-radius:8px; overflow:hidden; background:#fff;">
+                                    <span style="padding:0.5rem 0.6rem; background:var(--light-gray); color:var(--text-muted); font-weight:600; border-right:1px solid var(--border-gray); font-size:0.85rem;">₱</span>
+                                    <input
+                                        type="number"
+                                        name="adjustment_item_amounts[]"
+                                        class="adjustment-item-amount"
+                                        value="{{ (float) ($adjustmentItem['amount'] ?? 0) }}"
+                                        step="0.01"
+                                        style="width:100%; border:none; outline:none; padding:0.5rem 0.6rem; font-size:0.85rem;"
+                                        oninput="calculateTotal()"
+                                    >
+                                </div>
+                                <input
+                                    type="text"
+                                    name="adjustment_item_notes[]"
+                                    class="adjustment-item-note"
+                                    maxlength="255"
+                                    placeholder="Notes (e.g. trash, damaged towel, etc.)"
+                                    value="{{ $adjustmentItem['note'] ?? '' }}"
+                                    style="width:100%; border:1px solid var(--border-gray); border-radius:8px; outline:none; padding:0.5rem 0.6rem; font-size:0.84rem;"
+                                    oninput="calculateTotal()"
+                                >
+                                <button type="button" class="adjustment-item-remove" onclick="removeAdjustmentItemRow(this)" style="border:none; background:#f8d7da; color:#721c24; padding:0.45rem 0.6rem; border-radius:6px; cursor:pointer; font-weight:700;">✕</button>
+                            </div>
+                        @endforeach
+                    </div>
+                    <button type="button" onclick="addAdjustmentItemRow()" style="margin-top:0.55rem; border:none; background:#eef4ff; color:#0b63ce; padding:0.5rem 0.7rem; border-radius:6px; cursor:pointer; font-size:0.82rem; font-weight:700;">
+                        <i class="fas fa-plus-circle"></i> Add Adjustment Item
+                    </button>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.45rem;">Each adjustment must include amount and notes for transparency and SOA tracking.</p>
+                </div>
+
+                <input type="hidden" name="manual_adjustment" id="manualAdjustment" value="{{ number_format((float) $itemizedAdjustmentTotal, 2, '.', '') }}">
+                <input type="hidden" name="overall_manual_adjustment" id="overallManualAdjustment" value="{{ number_format((float) $itemizedAdjustmentTotal, 2, '.', '') }}">
                 {{-- <div>
                     <label style="display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">Gcash Payment</label>
                     <div style="width: 100%; padding: 0.65rem 0.85rem; border: 1px solid var(--border-gray); border-radius: 8px; font-size: 0.9rem; background: #f9f9f9; color: var(--text-muted); min-height: 120px; line-height: 1.5;">
