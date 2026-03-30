@@ -57,8 +57,9 @@ class ReportController extends Controller
             $totalBookings = (clone $activeBookingsInRange)->count();
             $totalGuests = (clone $activeBookingsInRange)->distinct('guest_id')->count('guest_id');
             $totalRooms = Room::query()->whereNull('archived_at')->count();
-            $revenueByType = $this->buildRevenueByRoomType($startDate, $endDate);
-            $totalRevenue = (float) round($revenueByType->sum('revenue'), 2);
+            $stayRevenueSummary = $this->buildStayRevenueSummary($startDate, $endDate);
+            $revenueByType = $stayRevenueSummary['revenue_by_type'];
+            $totalRevenue = $stayRevenueSummary['total_revenue'];
 
             // Bookings breakdown by status
             $bookingsByStatus = collect();
@@ -138,25 +139,13 @@ class ReportController extends Controller
         $startDate = $request->input('start_date', Carbon::now()->startOfMonth());
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth());
 
-        // Daily revenue from payments
-        $dailyRevenue = Payment::whereBetween('created_at', [$startDate, $endDate])
-            ->whereIn('payment_status', ['verified', 'completed'])
-            ->whereHas('booking', function ($bookingQuery) {
-                $this->applyActiveRoomFilterToBookingQuery($bookingQuery);
-            })
-            ->selectRaw('DATE(created_at) as date, SUM(amount) as revenue')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        // Revenue by room type
-        $revenueByType = $this->buildRevenueByRoomType((string) $startDate, (string) $endDate);
+        $stayRevenueSummary = $this->buildStayRevenueSummary((string) $startDate, (string) $endDate);
+        $dailyRevenue = $stayRevenueSummary['daily_revenue'];
+        $revenueByType = $stayRevenueSummary['revenue_by_type'];
 
         // Summary
-        $totalRevenue = $dailyRevenue->sum('revenue');
-        $totalBookings = $this->applyActiveRoomFilterToBookingQuery(
-            Booking::whereBetween('created_at', [$startDate, $endDate])
-        )->count();
+        $totalRevenue = $stayRevenueSummary['total_revenue'];
+        $totalBookings = $stayRevenueSummary['bookings_count'];
         $avgRevenuePerBooking = $totalBookings > 0 ? $totalRevenue / $totalBookings : 0;
 
         return view('admin.reports.revenue', compact(
@@ -172,41 +161,75 @@ class ReportController extends Controller
 
     private function buildRevenueByRoomType(string $startDate, string $endDate)
     {
-        $paymentRelations = ['booking.room.roomType'];
-        if (Schema::hasTable('booking_rooms')) {
-            $paymentRelations[] = 'booking.rooms.roomType';
+        return $this->buildStayRevenueSummary($startDate, $endDate)['revenue_by_type'];
+    }
+
+    private function buildStayRevenueSummary(string $startDate, string $endDate): array
+    {
+        $periodStart = Carbon::parse($startDate)->startOfDay();
+        $periodEnd = Carbon::parse($endDate)->endOfDay();
+        $periodEndDate = $periodEnd->copy()->startOfDay();
+        $periodEndExclusive = $periodEndDate->copy()->addDay();
+
+        $dailyRevenueMap = [];
+        $iterDate = $periodStart->copy();
+        while ($iterDate <= $periodEndDate) {
+            $dailyRevenueMap[$iterDate->toDateString()] = 0.0;
+            $iterDate->addDay();
         }
 
-        $payments = Payment::query()
-            ->with($paymentRelations)
-            ->whereIn('payment_status', ['verified', 'completed'])
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->whereHas('booking', function ($bookingQuery) {
-                $this->applyActiveRoomFilterToBookingQuery($bookingQuery);
-            })
-            ->get();
+        $bookings = $this->applyActiveRoomFilterToBookingQuery(
+            Booking::with(['room.roomType', 'rooms.roomType'])
+                ->whereIn('status', ['checked_in', 'checked_out'])
+                ->whereDate('check_in_date', '<=', $periodEndDate->toDateString())
+                ->whereDate('check_out_date', '>=', $periodStart->toDateString())
+        )->get();
 
-        $revenueTotals = [];
+        $revenueByType = [];
 
-        foreach ($payments as $payment) {
-            $amount = (float) ($payment->amount ?? 0);
-            if ($amount <= 0) {
+        foreach ($bookings as $booking) {
+            $checkInDate = Carbon::parse($booking->check_in_date)->startOfDay();
+            $checkOutDate = Carbon::parse($booking->check_out_date)->startOfDay();
+
+            if ($checkOutDate->lessThanOrEqualTo($checkInDate)) {
+                $checkOutDate = $checkInDate->copy()->addDay();
+            }
+
+            $effectiveStart = $checkInDate->greaterThan($periodStart) ? $checkInDate->copy() : $periodStart->copy();
+            $effectiveEnd = $checkOutDate->lessThan($periodEndExclusive) ? $checkOutDate->copy() : $periodEndExclusive->copy();
+            $overlapNights = $effectiveStart->diffInDays($effectiveEnd, false);
+
+            if ($overlapNights <= 0) {
                 continue;
             }
 
-            $booking = $payment->booking;
-            if (!$booking) {
+            $bookingTotal = (float) ($booking->final_total ?? $booking->total_amount ?? 0);
+            if ($bookingTotal <= 0) {
                 continue;
+            }
+
+            $bookingNights = (int) ($booking->total_nights ?? 0);
+            if ($bookingNights <= 0) {
+                $bookingNights = max(1, $checkInDate->diffInDays($checkOutDate));
+            }
+
+            $dailyShare = $bookingTotal / max(1, $bookingNights);
+
+            $revenueDate = $effectiveStart->copy();
+            while ($revenueDate < $effectiveEnd) {
+                $key = $revenueDate->toDateString();
+                if (array_key_exists($key, $dailyRevenueMap)) {
+                    $dailyRevenueMap[$key] += $dailyShare;
+                }
+                $revenueDate->addDay();
             }
 
             $activeRooms = collect();
-
-            if (Schema::hasTable('booking_rooms') && $booking->relationLoaded('rooms') && $booking->rooms && $booking->rooms->isNotEmpty()) {
+            if (Schema::hasTable('booking_rooms') && $booking->rooms && $booking->rooms->isNotEmpty()) {
                 $activeRooms = $booking->rooms->filter(function ($room) {
                     return is_null($room->archived_at);
                 })->values();
             }
-
             if ($activeRooms->isEmpty() && $booking->room && is_null($booking->room->archived_at)) {
                 $activeRooms = collect([$booking->room]);
             }
@@ -215,23 +238,40 @@ class ReportController extends Controller
                 continue;
             }
 
-            $share = $amount / max(1, $activeRooms->count());
+            $perRoomDailyShare = $dailyShare / max(1, $activeRooms->count());
+            $roomRevenueForPeriod = $perRoomDailyShare * $overlapNights;
 
             foreach ($activeRooms as $room) {
                 $roomTypeName = (string) (optional($room->roomType)->name ?? 'Unknown Room Type');
-                $revenueTotals[$roomTypeName] = ($revenueTotals[$roomTypeName] ?? 0) + $share;
+                $revenueByType[$roomTypeName] = ($revenueByType[$roomTypeName] ?? 0) + $roomRevenueForPeriod;
             }
         }
 
-        return collect($revenueTotals)
-            ->map(function ($revenue, $roomTypeName) {
+        $dailyRevenue = collect($dailyRevenueMap)
+            ->map(function ($revenue, $date) {
                 return (object) [
-                    'name' => (string) $roomTypeName,
+                    'date' => (string) $date,
+                    'revenue' => (float) round((float) $revenue, 2),
+                ];
+            })
+            ->values();
+
+        $revenueByTypeCollection = collect($revenueByType)
+            ->map(function ($revenue, $name) {
+                return (object) [
+                    'name' => (string) $name,
                     'revenue' => (float) round((float) $revenue, 2),
                 ];
             })
             ->sortByDesc('revenue')
             ->values();
+
+        return [
+            'daily_revenue' => $dailyRevenue,
+            'revenue_by_type' => $revenueByTypeCollection,
+            'total_revenue' => (float) round((float) $dailyRevenue->sum('revenue'), 2),
+            'bookings_count' => (int) $bookings->count(),
+        ];
     }
 
     public function occupancy(Request $request)
