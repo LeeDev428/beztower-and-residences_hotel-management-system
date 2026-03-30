@@ -4,7 +4,7 @@
 @section('page-title', 'Reports')
 
 @section('content')
-<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+<div class="admin-reports-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
     <!-- Revenue Report -->
     {{-- <x-admin.card title="Revenue Report">
         <div style="text-align: center; padding: 2rem 0;">
@@ -65,7 +65,7 @@
 <!-- Quick Stats -->
 <div style="margin-top: 2rem;">
     <x-admin.card title="Quick Overview">
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; padding: 1rem 0;">
+        <div class="admin-reports-quick-stats" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; padding: 1rem 0;">
             <div style="text-align: center;">
                 <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary-gold);">
                     {{ \App\Models\Booking::count() }}
@@ -93,4 +93,26 @@
         </div>
     </x-admin.card>
 </div>
+
+@push('styles')
+<style>
+    @media (max-width: 1024px) {
+        .admin-reports-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .admin-reports-quick-stats {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 1rem !important;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .admin-reports-quick-stats {
+            grid-template-columns: 1fr !important;
+            gap: 0.8rem !important;
+        }
+    }
+</style>
+@endpush
 @endsection
