@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    private const STRONG_PASSWORD_REGEX = '/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/';
+
     public function index(Request $request)
     {
         $search = trim((string) $request->input('search', ''));
@@ -59,18 +61,17 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:admin,manager,receptionist',
         ]);
 
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make('password'),
             'role' => $validated['role'],
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'User created successfully!');
+        return redirect()->route('admin.users.index')->with('success', 'User created successfully! Default password is "password".');
     }
 
     public function edit(User $user)
@@ -84,7 +85,9 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => 'required|in:admin,manager,receptionist',
-            'password' => 'nullable|string|min:8|confirmed',
+            'password' => ['nullable', 'string', 'min:8', 'confirmed', 'regex:' . self::STRONG_PASSWORD_REGEX],
+        ], [
+            'password.regex' => 'The password is too weak. Use at least 1 capital letter, 1 number, 1 special character, and minimum 8 characters.',
         ]);
 
         if ($user->id === Auth::id() && $validated['role'] !== 'admin') {
@@ -122,6 +125,46 @@ class UserController extends Controller
         );
 
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully!');
+    }
+
+    public function profileEdit(Request $request)
+    {
+        $user = $request->user();
+
+        return view('admin.users.profile', compact('user'));
+    }
+
+    public function profileUpdate(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => ['nullable', 'string', 'min:8', 'confirmed', 'regex:' . self::STRONG_PASSWORD_REGEX],
+        ], [
+            'password.regex' => 'The password is too weak. Use at least 1 capital letter, 1 number, 1 special character, and minimum 8 characters.',
+        ]);
+
+        $data = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($data);
+
+        ActivityLog::log(
+            'profile_update',
+            'Updated own profile: ' . $user->name,
+            User::class,
+            $user->id
+        );
+
+        return redirect()->route('admin.profile.edit')->with('success', 'Profile updated successfully!');
     }
 
     public function destroy(User $user)
