@@ -5,7 +5,7 @@
 
 @section('content')
 <div style="margin-bottom: 1.5rem;">
-    <form method="GET" style="display: flex; gap: 1rem;">
+    <form method="GET" class="admin-activity-filter-form" style="display: flex; gap: 1rem;">
         <select name="action" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
             <option value="">All Actions</option>
             <option value="login" {{ request('action') == 'login' ? 'selected' : '' }}>Logins</option>
@@ -30,7 +30,7 @@
 </div>
 
 <x-admin.card title="Activity History">
-    <div style="overflow-x: auto;">
+    <div class="admin-table-wrap" style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="border-bottom: 2px solid var(--border-gray);">
@@ -78,4 +78,26 @@
         {{ $logs->links() }}
     </div>
 </x-admin.card>
+
+@push('styles')
+<style>
+    @media (max-width: 900px) {
+        .admin-activity-filter-form {
+            flex-wrap: wrap;
+            gap: 0.65rem !important;
+        }
+
+        .admin-activity-filter-form > * {
+            flex: 1 1 220px;
+            min-width: 0;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .admin-activity-filter-form > * {
+            flex-basis: 100%;
+        }
+    }
+</style>
+@endpush
 @endsection
