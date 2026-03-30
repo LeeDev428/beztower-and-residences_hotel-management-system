@@ -17,7 +17,11 @@ class CheckoutThankYou extends Mailable
 
     public function __construct(Booking $booking)
     {
-        $this->booking = $booking;
+        $this->booking = $booking->loadMissing([
+            'guest',
+            'room.roomType',
+            'rooms.roomType',
+        ]);
     }
 
     public function envelope(): Envelope
