@@ -11,6 +11,7 @@ use App\Models\Extra;
 use App\Models\Payment;
 use App\Mail\BookingAcknowledgement;
 use App\Mail\PaymentConfirmation;
+use App\Support\BookingAutoCancelService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -26,11 +27,21 @@ class BookingController extends Controller
 {
     public function checkout(Request $request, Room $room)
     {
+        app(BookingAutoCancelService::class)->cancelExpiredWithoutProofIfDue();
+
         $room->load(['roomType', 'photos']);
         $vatPercentage = AppSetting::getVatPercentage();
         $vatInclusiveFraction = AppSetting::getVatFractionFromInclusive();
 
-        $roomIdsInput = $request->input('room_ids', []);
+        $bookingContext = (array) $request->session()->get('booking_room_flow', []);
+        $contextKeys = ['check_in', 'check_out', 'guests', 'adults', 'children', 'rooms'];
+        foreach ($contextKeys as $contextKey) {
+            if ($request->has($contextKey)) {
+                $bookingContext[$contextKey] = $request->input($contextKey);
+            }
+        }
+
+        $roomIdsInput = $request->input('room_ids', $bookingContext['selected_rooms'] ?? []);
         $preselectedRoomIds = collect();
 
         if (is_array($roomIdsInput)) {
@@ -49,6 +60,8 @@ class BookingController extends Controller
         if ($request->filled('selected_rooms')) {
             $selectedRoomsFromQuery = collect(explode(',', (string) $request->input('selected_rooms')));
             $preselectedRoomIds = $preselectedRoomIds->merge($selectedRoomsFromQuery);
+        } elseif (!empty($bookingContext['selected_rooms']) && is_array($bookingContext['selected_rooms'])) {
+            $preselectedRoomIds = $preselectedRoomIds->merge($bookingContext['selected_rooms']);
         }
 
         $preselectedRoomIds = $preselectedRoomIds
@@ -85,7 +98,7 @@ class BookingController extends Controller
             ->unique()
             ->values();
 
-        $requestedRooms = (int) $request->integer('rooms', $preselectedRooms->count() ?: 1);
+        $requestedRooms = (int) $request->integer('rooms', (int) ($bookingContext['rooms'] ?? ($preselectedRooms->count() ?: 1)));
         $requestedRooms = max(1, min(12, $requestedRooms));
 
         // For multi-room bookings, force explicit room-by-room selection first.
@@ -95,15 +108,12 @@ class BookingController extends Controller
 
             $remainingRooms = max($requestedRooms - $selectedForFlow->count(), 0);
 
-            return redirect()->route('rooms.index', [
-                'check_in' => $request->input('check_in'),
-                'check_out' => $request->input('check_out'),
-                'guests' => $request->input('guests'),
-                'adults' => $request->input('adults'),
-                'children' => $request->input('children'),
-                'rooms' => $requestedRooms,
-                'selected_rooms' => $selectedForFlow->implode(','),
-            ])->with('warning', 'Please select ' . $remainingRooms . ' more room(s) before checkout.');
+            $bookingContext['rooms'] = $requestedRooms;
+            $bookingContext['selected_rooms'] = $selectedForFlow->all();
+            $request->session()->put('booking_room_flow', $bookingContext);
+
+            return redirect()->route('rooms.index')
+                ->with('warning', 'Please select ' . $remainingRooms . ' more room(s) before checkout.');
         }
 
         $maxGuestCapacity = (int) $preselectedRooms->sum(fn ($selectedRoom) => (int) ($selectedRoom->roomType?->max_guests ?? 0));
@@ -119,11 +129,16 @@ class BookingController extends Controller
         $termsAndConditionsText = (string) ($policySettings['terms_and_conditions'] ?? '');
         $bookingPoliciesText = (string) ($policySettings['booking_policies'] ?? '');
 
+        $bookingContext['rooms'] = $requestedRooms;
+        $bookingContext['selected_rooms'] = $resolvedPreselectedIds->all();
+        $request->session()->put('booking_room_flow', $bookingContext);
+
         return view('customer.booking.checkout', compact(
             'room',
             'preselectedRooms',
             'requestedRooms',
             'maxGuestCapacity',
+            'bookingContext',
             'termsAndConditionsText',
             'bookingPoliciesText',
             'vatPercentage',
@@ -386,6 +401,34 @@ class BookingController extends Controller
         }
     }
 
+    public function startCheckout(Request $request)
+    {
+        $validated = $request->validate([
+            'room_ids' => 'required|array|min:1|max:12',
+            'room_ids.*' => 'distinct|exists:rooms,id',
+            'rooms' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        $selectedRoomIds = collect($validated['room_ids'])
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($selectedRoomIds->isEmpty()) {
+            return back()->withErrors([
+                'room_ids' => 'Select at least one room before proceeding to checkout.',
+            ]);
+        }
+
+        $bookingContext = (array) $request->session()->get('booking_room_flow', []);
+        $bookingContext['rooms'] = max(1, min(12, (int) ($validated['rooms'] ?? ($bookingContext['rooms'] ?? $selectedRoomIds->count()))));
+        $bookingContext['selected_rooms'] = $selectedRoomIds->take($bookingContext['rooms'])->values()->all();
+        $request->session()->put('booking_room_flow', $bookingContext);
+
+        return redirect()->route('booking.checkout', ['room' => $selectedRoomIds->first()]);
+    }
+
     public function getAvailableRooms(Request $request)
     {
         $validated = $request->validate([
@@ -601,6 +644,8 @@ class BookingController extends Controller
 
     public function payment($reference)
     {
+        app(BookingAutoCancelService::class)->cancelExpiredWithoutProofIfDue();
+
         $booking = Booking::with(['guest', 'room.roomType', 'rooms.roomType', 'extras'])
             ->where('booking_reference', $reference)
             ->firstOrFail();
