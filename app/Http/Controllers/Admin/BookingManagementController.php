@@ -578,6 +578,10 @@ class BookingManagementController extends Controller
             'room_manual_adjustments.*' => 'nullable|numeric',
             'services_total_adjustment' => 'nullable|numeric|min:0',
             'services_breakdown' => 'nullable|string|max:1000',
+            'adjustment_item_amounts' => 'nullable|array',
+            'adjustment_item_amounts.*' => 'nullable|numeric',
+            'adjustment_item_notes' => 'nullable|array',
+            'adjustment_item_notes.*' => 'nullable|string|max:255',
             'adjustment_reason' => 'nullable|string|max:500',
             'payment_method' => 'nullable|in:cash,gcash',
             'payment_reference' => 'nullable|required_if:payment_method,gcash|regex:/^\d{1,13}$/',
@@ -589,6 +593,27 @@ class BookingManagementController extends Controller
         $overallManualAdjustment = (float) ($validated['overall_manual_adjustment'] ?? 0);
         $servicesTotalAdjustment = (float) ($validated['services_total_adjustment'] ?? 0);
         $servicesBreakdown = trim((string) ($validated['services_breakdown'] ?? ''));
+        $adjustmentItemAmounts = $validated['adjustment_item_amounts'] ?? [];
+        $adjustmentItemNotes = $validated['adjustment_item_notes'] ?? [];
+        $itemizedAdjustmentItems = [];
+        $itemizedAdjustmentTotal = 0.0;
+
+        foreach ($adjustmentItemAmounts as $index => $rawAmount) {
+            $amount = round((float) ($rawAmount ?? 0), 2);
+            $note = trim((string) ($adjustmentItemNotes[$index] ?? ''));
+
+            if (abs($amount) <= 0.00001 && $note === '') {
+                continue;
+            }
+
+            $itemizedAdjustmentItems[] = [
+                'amount' => $amount,
+                'note' => $note,
+            ];
+            $itemizedAdjustmentTotal += $amount;
+        }
+
+        $itemizedAdjustmentTotal = round($itemizedAdjustmentTotal, 2);
         $isMultiRoom = $booking->rooms->isNotEmpty() && $booking->rooms->count() > 1;
         $totalPwdSeniorDiscount = 0.0;
         $hasAnyPwdSeniorDiscount = false;
@@ -653,6 +678,7 @@ class BookingManagementController extends Controller
             }
         }
 
+        $overallManualAdjustment = $itemizedAdjustmentTotal;
         $manualAdjustment += $overallManualAdjustment;
         $manualAdjustment += $servicesTotalAdjustment;
 
@@ -703,6 +729,26 @@ class BookingManagementController extends Controller
         }
 
         $adjustmentReason = trim((string) ($validated['adjustment_reason'] ?? ''));
+
+        if (!empty($itemizedAdjustmentItems)) {
+            $itemizedLineItems = collect($itemizedAdjustmentItems)
+                ->map(function (array $item) {
+                    $amount = (float) ($item['amount'] ?? 0);
+                    $note = trim((string) ($item['note'] ?? ''));
+                    $formattedAmount = ($amount < 0 ? '-PHP ' : 'PHP ') . number_format(abs($amount), 2);
+
+                    return $formattedAmount . ($note !== '' ? (' - ' . $note) : '');
+                })
+                ->implode('; ');
+
+            $itemizedLine = 'Itemized Adjustments: ' . $itemizedLineItems;
+            if ($adjustmentReason === '') {
+                $adjustmentReason = $itemizedLine;
+            } elseif (stripos($adjustmentReason, 'Itemized Adjustments:') === false) {
+                $adjustmentReason .= "\n" . $itemizedLine;
+            }
+        }
+
         if ($servicesBreakdown !== '') {
             $servicesLine = 'Amenities & Services: ' . $servicesBreakdown;
             if ($adjustmentReason === '') {
@@ -724,7 +770,7 @@ class BookingManagementController extends Controller
         }
 
         // Update booking with validated data
-        $booking->update([
+        $updatePayload = [
             'early_checkin_hours' => $earlyCheckinHours,
             'early_checkin_charge' => $earlyCheckinCharge,
             'late_checkout_hours' => $lateCheckoutHours,
@@ -734,7 +780,13 @@ class BookingManagementController extends Controller
             'pwd_senior_discount' => $pwdSeniorDiscount,
             'manual_adjustment' => $manualAdjustment,
             'adjustment_reason' => $adjustmentReason,
-        ]);
+        ];
+
+        if (Schema::hasColumn('bookings', 'adjustment_items')) {
+            $updatePayload['adjustment_items'] = $itemizedAdjustmentItems;
+        }
+
+        $booking->update($updatePayload);
 
         // Log the activity
         ActivityLog::log(
@@ -747,6 +799,7 @@ class BookingManagementController extends Controller
                 'late_checkout' => $validated['late_checkout_hours'] ?? 0,
                 'pwd_senior_discount' => $validated['pwd_senior_discount'] ?? 0,
                 'manual_adjustment' => $manualAdjustment,
+                'itemized_adjustments_count' => count($itemizedAdjustmentItems),
                 'payment_method' => $validated['payment_method'] ?? null,
                 'payment_reference' => $validated['payment_reference'] ?? null,
                 'final_total' => $booking->final_total,
