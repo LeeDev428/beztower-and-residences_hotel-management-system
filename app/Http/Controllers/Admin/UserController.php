@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -86,7 +87,7 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        if ($user->id === auth()->user()?->id && $validated['role'] !== 'admin') {
+        if ($user->id === Auth::id() && $validated['role'] !== 'admin') {
             return back()->withErrors([
                 'role' => 'You cannot change your own role from Admin.',
             ])->withInput();
@@ -125,7 +126,7 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        if ($user->id === auth()->user()?->id) {
+        if ($user->id === Auth::id()) {
             return back()->with('error', 'You cannot deactivate your own account!');
         }
 
