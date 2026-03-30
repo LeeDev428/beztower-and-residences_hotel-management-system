@@ -98,12 +98,12 @@
                 @if($arrivalsToday->count() > 0)
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                     @foreach($arrivalsToday as $arrival)
-                    <div style="padding: 0.75rem; background: var(--light-gray); border-radius: 8px;">
+                    <a href="{{ route('admin.bookings.show', $arrival) }}" style="padding: 0.75rem; background: var(--light-gray); border-radius: 8px; text-decoration: none; color: inherit; border: 1px solid transparent; transition: all 0.2s ease; display: block;">
                         <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ optional($arrival->guest)->name ?? 'Guest not available' }}</div>
                         <div style="font-size: 0.875rem; color: var(--text-muted);">
                             Room {{ optional($arrival->room)->room_number ?? 'N/A' }}
                         </div>
-                    </div>
+                    </a>
                     @endforeach
                 </div>
                 @else
