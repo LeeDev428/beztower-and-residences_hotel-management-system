@@ -1142,13 +1142,14 @@
 
     .remove-room-slot-btn {
         width: 100%;
-        border: 1px solid #f0c6c6;
-        background: #fff6f6;
+        border: 1px solid #dcdcdc;
+        background: #fff;
         color: #b94b4b;
         border-radius: 8px;
         padding: 0.58rem 0.7rem;
         font-size: 0.78rem;
         font-weight: 700;
+        margin-bottom: 0.55rem;
         cursor: pointer;
     }
 
