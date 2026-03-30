@@ -45,18 +45,28 @@ class ReportController extends Controller
             $generatedBy = $this->resolveGeneratedByLabel($user?->role, $user?->name);
             $generatedByDisplay = $this->resolveGeneratedByDisplay($user?->name, $user?->role);
 
-            // Stats
-            $totalBookings  = Booking::whereBetween('created_at', [$startDate, $endDate])->count();
-            $totalGuests    = Guest::whereBetween('created_at', [$startDate, $endDate])->count();
-            $totalRooms     = Room::count();
-            $totalRevenue   = Payment::whereIn('payment_status', ['verified', 'completed'])
-                                ->whereBetween('created_at', [$startDate, $endDate])
-                                ->sum('amount');
+            // Stats (active rooms only)
+            $filteredBookings = $this->applyActiveRoomFilterToBookingQuery(
+                Booking::whereBetween('created_at', [$startDate, $endDate])
+            );
+
+            $totalBookings = (clone $filteredBookings)->count();
+            $totalGuests = (clone $filteredBookings)->distinct('guest_id')->count('guest_id');
+            $totalRooms = Room::query()->whereNull('archived_at')->count();
+            $totalRevenue = Payment::query()
+                ->whereIn('payment_status', ['verified', 'completed'])
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->whereHas('booking', function ($bookingQuery) {
+                    $this->applyActiveRoomFilterToBookingQuery($bookingQuery);
+                })
+                ->sum('amount');
 
             // Bookings breakdown by status
             $bookingsByStatus = collect();
             try {
-                $bookingsByStatus = Booking::whereBetween('created_at', [$startDate, $endDate])
+                $bookingsByStatus = $this->applyActiveRoomFilterToBookingQuery(
+                    Booking::whereBetween('created_at', [$startDate, $endDate])
+                )
                     ->select('status', DB::raw('count(*) as count'))
                     ->groupBy('status')
                     ->get()
@@ -71,8 +81,10 @@ class ReportController extends Controller
             // Payments in range
             $recentBookings = collect();
             try {
-                $recentBookings = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
-                    ->whereBetween('created_at', [$startDate, $endDate])
+                $recentBookings = $this->applyActiveRoomFilterToBookingQuery(
+                    Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
+                        ->whereBetween('created_at', [$startDate, $endDate])
+                )
                     ->latest()
                     ->take(50)
                     ->get();
@@ -93,6 +105,7 @@ class ReportController extends Controller
                     ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
                     ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
                     ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
+                    ->whereNull('rooms.archived_at')
                     ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
                     ->groupBy('room_types.name')
                     ->get();
@@ -105,6 +118,7 @@ class ReportController extends Controller
                         ->join('booking_rooms', 'bookings.id', '=', 'booking_rooms.booking_id')
                         ->join('rooms', 'booking_rooms.room_id', '=', 'rooms.id')
                         ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
+                        ->whereNull('rooms.archived_at')
                         ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
                         ->groupBy('room_types.name')
                         ->get();
