@@ -4,14 +4,14 @@
 @section('page-title', 'User Management')
 
 @section('content')
-<div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
+<div class="admin-users-toolbar" style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
     <x-admin.button type="primary" href="{{ route('admin.users.create') }}">
         + Add New User
     </x-admin.button>
 </div>
 
 <x-admin.card title="All Users ({{ $users->total() }})">
-    <div style="overflow-x: auto;">
+    <div class="admin-table-wrap" style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="border-bottom: 2px solid var(--border-gray);">
@@ -92,4 +92,23 @@
     </div>
     @endif
 </x-admin.card>
+
+@push('styles')
+<style>
+    @media (max-width: 680px) {
+        .admin-users-toolbar {
+            justify-content: stretch !important;
+        }
+
+        .admin-users-toolbar a {
+            width: 100%;
+        }
+
+        .admin-users-toolbar a,
+        .admin-users-toolbar button {
+            text-align: center;
+        }
+    }
+</style>
+@endpush
 @endsection
