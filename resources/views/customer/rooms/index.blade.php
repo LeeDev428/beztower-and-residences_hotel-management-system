@@ -212,7 +212,10 @@
                 <span>Total / night</span>
                 <strong id="selectedRoomsNightTotal">₱0.00</strong>
             </div>
-            <button type="button" id="addRoomSlotButton" class="add-room-slot-btn">+ Add Room</button>
+            <div class="room-slot-actions">
+                <button type="button" id="removeRoomSlotButton" class="remove-room-slot-btn">- Remove Room</button>
+                <button type="button" id="addRoomSlotButton" class="add-room-slot-btn">+ Add Room</button>
+            </div>
             <form id="startCheckoutForm" method="POST" action="{{ route('booking.startCheckout') }}">
                 @csrf
                 <input type="hidden" id="ctxCheckoutRoomsInput" name="rooms" value="{{ $requestedRooms }}">
@@ -1130,9 +1133,39 @@
         cursor: pointer;
     }
 
+    .room-slot-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .remove-room-slot-btn {
+        width: 100%;
+        border: 1px solid #f0c6c6;
+        background: #fff6f6;
+        color: #b94b4b;
+        border-radius: 8px;
+        padding: 0.58rem 0.7rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
     .add-room-slot-btn:hover {
         border-color: #d4af37;
         color: #9e7b15;
+    }
+
+    .remove-room-slot-btn:hover {
+        border-color: #e59f9f;
+        color: #9e3f3f;
+    }
+
+    .remove-room-slot-btn:disabled,
+    .add-room-slot-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
     }
 
     .proceed-checkout-btn {
@@ -1693,6 +1726,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedRoomsProgressText = document.getElementById('selectedRoomsProgressText');
     const selectedRoomsNightTotal = document.getElementById('selectedRoomsNightTotal');
     const proceedCheckoutButton = document.getElementById('proceedCheckoutButton');
+    const removeRoomSlotButton = document.getElementById('removeRoomSlotButton');
     const addRoomSlotButton = document.getElementById('addRoomSlotButton');
     const checkoutRoomsInput = document.getElementById('ctxCheckoutRoomsInput');
     const openSelectedRoomsDrawerButton = document.getElementById('openSelectedRoomsDrawer');
@@ -1859,6 +1893,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedCount = selectedRoomIds.length;
         selectedRoomsProgressText.textContent = `Selected ${selectedCount} of ${requiredRooms} room(s).`;
         proceedCheckoutButton.disabled = selectedCount < requiredRooms;
+
+        if (removeRoomSlotButton) {
+            removeRoomSlotButton.disabled = requiredRooms <= 1;
+        }
 
         if (selectedRoomsNightTotal) {
             selectedRoomsNightTotal.textContent = `₱${totalPerNight.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -2178,6 +2216,26 @@ document.addEventListener('DOMContentLoaded', function() {
     if (addRoomSlotButton) {
         addRoomSlotButton.addEventListener('click', () => {
             requiredRooms += 1;
+            syncRequiredRoomsContext();
+            persistSelection().finally(() => {
+                renderSelectedRoomsDrawer();
+                updateModalButtonState();
+                markSelectedCards();
+            });
+        });
+    }
+
+    if (removeRoomSlotButton) {
+        removeRoomSlotButton.addEventListener('click', () => {
+            if (requiredRooms <= 1) {
+                return;
+            }
+
+            requiredRooms -= 1;
+            if (selectedRoomIds.length > requiredRooms) {
+                selectedRoomIds = selectedRoomIds.slice(0, requiredRooms);
+            }
+
             syncRequiredRoomsContext();
             persistSelection().finally(() => {
                 renderSelectedRoomsDrawer();
