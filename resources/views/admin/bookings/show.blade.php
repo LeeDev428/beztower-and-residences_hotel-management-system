@@ -17,7 +17,7 @@
     <x-admin.button type="outline" href="{{ route('admin.bookings.index') }}">← Back to Bookings</x-admin.button>
 </div>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+<div class="admin-booking-show-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
     <div>
         <x-admin.card title="Booking Information">
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
@@ -207,8 +207,8 @@
     </div>
 </div>
 
-<div id="rescheduleModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
-    <div style="position: relative; max-width: 500px; margin: 5% auto; background: white; padding: 2rem; border-radius: 12px;">
+<div id="rescheduleModal" class="admin-booking-show-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
+    <div class="admin-booking-show-modal-card" style="position: relative; max-width: 500px; margin: 5% auto; background: white; padding: 2rem; border-radius: 12px;">
         <h3 style="margin-bottom: 1.5rem;">Reschedule Booking</h3>
         <form method="POST" action="{{ route('admin.bookings.reschedule', $booking) }}">
             @csrf
@@ -227,6 +227,28 @@
         </form>
     </div>
 </div>
+
+@push('styles')
+<style>
+    @media (max-width: 1024px) {
+        .admin-booking-show-layout {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .admin-booking-show-modal-card {
+            width: calc(100% - 1rem);
+            margin: 8% auto !important;
+            padding: 1.2rem !important;
+        }
+
+        .admin-booking-show-modal-card [style*="display: flex; gap: 1rem;"] {
+            flex-direction: column;
+        }
+    }
+</style>
+@endpush
 
 <script>
 function showRescheduleModal() {
