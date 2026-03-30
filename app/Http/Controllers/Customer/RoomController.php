@@ -8,6 +8,7 @@ use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\Amenity;
 use App\Models\BlockDate;
+use App\Support\BookingAutoCancelService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
@@ -15,6 +16,43 @@ class RoomController extends Controller
 {
     public function index(Request $request)
     {
+        app(BookingAutoCancelService::class)->cancelExpiredWithoutProofIfDue();
+
+        $contextKeys = ['check_in', 'check_out', 'guests', 'adults', 'children', 'rooms'];
+        $shouldPersistContext = !$request->ajax() && ($request->hasAny($contextKeys) || $request->has('selected_rooms'));
+
+        if ($shouldPersistContext) {
+            $bookingContext = (array) $request->session()->get('booking_room_flow', []);
+
+            foreach ($contextKeys as $contextKey) {
+                if ($request->has($contextKey)) {
+                    $bookingContext[$contextKey] = $request->input($contextKey);
+                }
+            }
+
+            if ($request->has('selected_rooms')) {
+                $bookingContext['selected_rooms'] = $this->parseSelectedRoomIds((string) $request->input('selected_rooms', ''))
+                    ->values()
+                    ->all();
+            }
+
+            if (array_key_exists('rooms', $bookingContext)) {
+                $bookingContext['rooms'] = max(1, min(12, (int) $bookingContext['rooms']));
+            }
+
+            $request->session()->put('booking_room_flow', $bookingContext);
+
+            $preservedFilters = $request->only(['search', 'room_type', 'sort', 'min_price', 'max_price', 'page']);
+            $amenities = $request->input('amenities');
+            if (!is_null($amenities)) {
+                $preservedFilters['amenities'] = $amenities;
+            }
+
+            return redirect()->route('rooms.index', $preservedFilters);
+        }
+
+        $bookingContext = (array) $request->session()->get('booking_room_flow', []);
+
         $query = Room::with(['roomType', 'amenities', 'photos'])
             ->whereIn('rooms.status', ['available', 'dirty', 'occupied'])
             ->whereNull('rooms.archived_at')
@@ -22,9 +60,26 @@ class RoomController extends Controller
                 $q->whereNull('room_types.archived_at');
             }); // Only show active, bookable rooms with active room type
 
-        $requestedRooms = max(1, min(12, (int) $request->input('rooms', 1)));
-        $requestedGuests = $this->resolveRequestedGuests($request);
-        $selectedRoomIds = $this->parseSelectedRoomIds((string) $request->input('selected_rooms', ''));
+        $requestedRooms = max(1, min(12, (int) ($bookingContext['rooms'] ?? $request->input('rooms', 1))));
+        $requestedGuests = $this->resolveRequestedGuests($request, $bookingContext);
+
+        $selectedRoomIdsFromContext = collect($bookingContext['selected_rooms'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        $selectedRoomIds = $selectedRoomIdsFromContext;
+        if ($selectedRoomIds->isEmpty()) {
+            $selectedRoomIds = $this->parseSelectedRoomIds((string) $request->input('selected_rooms', ''));
+        }
+
+        if ($selectedRoomIds->count() > $requestedRooms) {
+            $selectedRoomIds = $selectedRoomIds->take($requestedRooms)->values();
+            $bookingContext['selected_rooms'] = $selectedRoomIds->all();
+            $request->session()->put('booking_room_flow', $bookingContext);
+        }
+
         $selectedCapacity = 0;
         $selectedRooms = collect();
 
@@ -112,9 +167,12 @@ class RoomController extends Controller
         }
         
         // Filter by availability dates
-        if ($request->filled('check_in') && $request->filled('check_out')) {
-            $checkIn = $request->check_in;
-            $checkOut = $request->check_out;
+        $activeCheckIn = trim((string) ($bookingContext['check_in'] ?? ''));
+        $activeCheckOut = trim((string) ($bookingContext['check_out'] ?? ''));
+
+        if ($activeCheckIn !== '' && $activeCheckOut !== '') {
+            $checkIn = $activeCheckIn;
+            $checkOut = $activeCheckOut;
             
             // Exclude rooms with conflicting bookings
             $query->whereDoesntHave('bookings', function($q) use ($checkIn, $checkOut) {
@@ -219,7 +277,12 @@ class RoomController extends Controller
         // If AJAX request, return JSON
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('customer.rooms.partials.room-cards', compact('rooms'))->render(),
+                'html' => view('customer.rooms.partials.room-cards', [
+                    'rooms' => $rooms,
+                    'bookingContext' => $bookingContext,
+                    'requestedRooms' => $requestedRooms,
+                    'selectedRoomIds' => $selectedRoomIds,
+                ])->render(),
                 'pagination' => view('customer.rooms.partials.pagination', compact('rooms'))->render(),
                 'total' => $rooms->total()
             ]);
@@ -244,7 +307,36 @@ class RoomController extends Controller
                 ->all(),
         ];
         
-        return view('customer.rooms.index', compact('rooms', 'roomTypes', 'amenities', 'selectionMeta'));
+        return view('customer.rooms.index', compact('rooms', 'roomTypes', 'amenities', 'selectionMeta', 'bookingContext', 'requestedRooms', 'selectedRoomIds'));
+    }
+
+    public function updateSelection(Request $request)
+    {
+        $validated = $request->validate([
+            'selected_rooms' => 'nullable|array|max:12',
+            'selected_rooms.*' => 'integer|exists:rooms,id',
+            'rooms' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        $roomLimit = max(1, min(12, (int) ($validated['rooms'] ?? ((int) $request->session()->get('booking_room_flow.rooms', 1)))));
+        $selectedRooms = collect($validated['selected_rooms'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->take($roomLimit)
+            ->values()
+            ->all();
+
+        $bookingContext = (array) $request->session()->get('booking_room_flow', []);
+        $bookingContext['rooms'] = $roomLimit;
+        $bookingContext['selected_rooms'] = $selectedRooms;
+        $request->session()->put('booking_room_flow', $bookingContext);
+
+        return response()->json([
+            'selected_rooms' => $selectedRooms,
+            'count' => count($selectedRooms),
+            'required' => $roomLimit,
+        ]);
     }
 
     private function parseSelectedRoomIds(string $rawIds): Collection
@@ -256,11 +348,17 @@ class RoomController extends Controller
             ->values();
     }
 
-    private function resolveRequestedGuests(Request $request): int
+    private function resolveRequestedGuests(Request $request, array $bookingContext = []): int
     {
-        $fallbackGuests = is_numeric($request->input('guests')) ? (int) $request->input('guests') : 0;
-        $adults = is_numeric($request->input('adults')) ? (int) $request->input('adults') : 0;
-        $children = is_numeric($request->input('children')) ? (int) $request->input('children') : 0;
+        $fallbackGuests = is_numeric($bookingContext['guests'] ?? null)
+            ? (int) $bookingContext['guests']
+            : (is_numeric($request->input('guests')) ? (int) $request->input('guests') : 0);
+        $adults = is_numeric($bookingContext['adults'] ?? null)
+            ? (int) $bookingContext['adults']
+            : (is_numeric($request->input('adults')) ? (int) $request->input('adults') : 0);
+        $children = is_numeric($bookingContext['children'] ?? null)
+            ? (int) $bookingContext['children']
+            : (is_numeric($request->input('children')) ? (int) $request->input('children') : 0);
 
         if ($adults <= 0 && $children <= 0) {
             return max(0, $fallbackGuests);
