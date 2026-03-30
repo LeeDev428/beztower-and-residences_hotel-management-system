@@ -43,7 +43,7 @@
 
 <x-admin.card title="All Users ({{ $users->total() }})">
     <div class="admin-table-wrap" style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse;">
+        <table class="admin-users-table" style="width: 100%; min-width: 920px; border-collapse: collapse; table-layout: auto;">
             <thead>
                 <tr style="border-bottom: 2px solid var(--border-gray);">
                     <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text-muted); font-size: 0.875rem;">Name</th>
@@ -126,6 +126,13 @@
 
 @push('styles')
 <style>
+    .admin-users-table th,
+    .admin-users-table td {
+        white-space: nowrap;
+        word-break: normal;
+        overflow-wrap: normal;
+    }
+
     @media (max-width: 680px) {
         .admin-users-toolbar {
             justify-content: stretch !important;
