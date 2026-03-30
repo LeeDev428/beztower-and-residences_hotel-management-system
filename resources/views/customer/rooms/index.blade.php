@@ -162,9 +162,6 @@
                     </div>
                 @endif
             </div>
-            <button type="button" id="openSelectedRoomsDrawer" style="text-decoration:none; border:none; background: linear-gradient(135deg, #d4af37, #f4e4c1); color:#2c2c2c; padding:0.55rem 0.9rem; border-radius:6px; font-weight:700; font-size:0.85rem; cursor:pointer;">
-                View Selected Rooms ({{ $selectedRoomIds->count() }}/{{ $requestedRooms }})
-            </button>
         </div>
     @endif
 
@@ -197,6 +194,11 @@
     @endif
 </section>
 
+<button type="button" id="openSelectedRoomsDrawer" class="floating-selected-cart">
+    <i class="fas fa-shopping-cart"></i>
+    <span>View Selected Rooms ({{ $selectedRoomIds->count() }}/{{ $requestedRooms }})</span>
+</button>
+
 <div id="selectedRoomsDrawer" class="selected-rooms-drawer" aria-hidden="true">
     <div class="selected-rooms-panel">
         <div class="selected-rooms-header">
@@ -206,11 +208,15 @@
         <div id="selectedRoomsList" class="selected-rooms-list"></div>
         <div class="selected-rooms-footer">
             <div id="selectedRoomsProgressText" class="selected-rooms-progress"></div>
+            <div class="selected-rooms-total">
+                <span>Total / night</span>
+                <strong id="selectedRoomsNightTotal">₱0.00</strong>
+            </div>
             <form id="startCheckoutForm" method="POST" action="{{ route('booking.startCheckout') }}">
                 @csrf
                 <input type="hidden" name="rooms" value="{{ $requestedRooms }}">
                 <div id="selectedRoomIdsInputs"></div>
-                <button type="submit" id="proceedCheckoutButton" class="proceed-checkout-btn" disabled>Proceed to Billing Details</button>
+                <button type="submit" id="proceedCheckoutButton" class="proceed-checkout-btn" disabled>Checkout →</button>
             </form>
         </div>
     </div>
@@ -682,120 +688,156 @@
     }
     .rooms-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 2.5rem;
-        margin-top: 3rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
     }
-    
+
     .room-card {
-        background: white;
+        background: #fff;
         border-radius: 10px;
         overflow: hidden;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s, box-shadow 0.3s;
+        border: 1px solid #e8e8e8;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
-    
-    .room-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-    }
-    
+
     .room-image {
         position: relative;
-        height: 250px;
+        height: 190px;
         overflow: hidden;
     }
-    
+
     .room-image img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: transform 0.3s;
     }
-    
-    .room-card:hover .room-image img {
-        transform: scale(1.1);
-    }
-    
-  
-    
+
     .room-details {
-        padding: 1.5rem;
+        padding: 0.75rem 0.9rem 0.9rem;
     }
-    
+
     .room-details h3 {
-        font-size: 1.5rem;
-        color: #2c2c2c;
-        margin-bottom: 0.5rem;
+        font-size: 1.25rem;
+        color: #222;
+        margin-bottom: 0.35rem;
         font-family: 'Georgia', serif;
+        font-weight: 700;
     }
-    
+
     .room-info {
         display: flex;
-        gap: 1.5rem;
-        margin-bottom: 1rem;
-        color: #666;
-        font-size: 0.9rem;
+        gap: 1rem;
+        margin-bottom: 0.55rem;
+        color: #6b6b6b;
+        font-size: 0.82rem;
     }
-    
+
     .room-info i {
         color: #d4af37;
-        margin-right: 0.3rem;
+        margin-right: 0.22rem;
     }
-    
+
     .room-description {
-        color: #666;
-        line-height: 1.6;
-        margin-bottom: 1rem;
+        color: #6a6a6a;
+        line-height: 1.45;
+        margin-bottom: 0.6rem;
+        font-size: 0.8rem;
     }
-    
+
     .room-amenities {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
+        gap: 0.35rem;
+        margin-bottom: 0.75rem;
     }
-    
+
     .amenity-tag {
-        background: #f9f9f9;
-        padding: 0.4rem 0.8rem;
-        border-radius: 5px;
-        font-size: 0.85rem;
-        color: #666;
+        background: #f3f3f3;
+        padding: 0.22rem 0.45rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        color: #5d5d5d;
+        border: 1px solid #ececec;
     }
-    
+
     .amenity-tag i {
         color: #d4af37;
-        margin-right: 0.3rem;
+        margin-right: 0.18rem;
     }
-    
+
     .room-footer {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        padding-top: 1.5rem;
-        border-top: 1px solid #eee;
+        align-items: flex-end;
+        gap: 0.7rem;
+        padding-top: 0.6rem;
+        border-top: 1px solid #f0f0f0;
     }
-    
+
     .room-price {
         display: flex;
         flex-direction: column;
     }
-    
+
     .price-label {
-        font-size: 0.85rem;
-        color: #999;
+        font-size: 0.7rem;
+        color: #888;
+        margin-bottom: 0.1rem;
     }
-    
+
     .price-amount {
-        font-size: 1.8rem;
-        font-weight: 600;
-        color: #d4af37;
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: #9e7b15;
+        line-height: 1;
     }
-    
+
     .price-period {
-        font-size: 0.85rem;
+        font-size: 0.66rem;
         color: #666;
+    }
+
+    .room-card-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-wrap: nowrap;
+    }
+
+    .room-qty-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: #f7f7f7;
+        border: 1px solid #ececec;
+        border-radius: 999px;
+        padding: 0.18rem;
+    }
+
+    .room-qty-btn {
+        width: 26px;
+        height: 26px;
+        border: none;
+        border-radius: 50%;
+        background: #efefef;
+        color: #2c2c2c;
+        font-weight: 700;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .room-qty-btn[disabled] {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .room-qty-value {
+        min-width: 20px;
+        text-align: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #4a4a4a;
     }
     
     .discount-badge {
@@ -823,18 +865,21 @@
         color: #dc3545 !important;
     }
     
-    .book-btn {
+    .room-card .book-btn {
         background: linear-gradient(135deg, #d4af37, #f4e4c1);
         color: #2c2c2c;
-        padding: 0.8rem 1.5rem;
+        border: none;
+        padding: 0.48rem 0.86rem;
         border-radius: 5px;
         text-decoration: none;
-        font-weight: 600;
-        transition: transform 0.3s;
+        font-weight: 700;
+        font-size: 0.73rem;
+        cursor: pointer;
+        transition: filter 0.25s ease;
     }
-    
-    .book-btn:hover {
-        transform: translateY(-2px);
+
+    .room-card .book-btn:hover {
+        filter: brightness(0.96);
     }
     
     .no-rooms {
@@ -924,11 +969,34 @@
         border-color: #e0e0e0;
     }
 
+    .floating-selected-cart {
+        position: fixed;
+        left: 1.1rem;
+        bottom: 1.25rem;
+        border: none;
+        border-radius: 999px;
+        background: #111;
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.78rem 1rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        z-index: 1260;
+    }
+
+    .floating-selected-cart i {
+        color: #d4af37;
+    }
+
     .selected-rooms-drawer {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.55);
-        z-index: 1200;
+        background: rgba(0, 0, 0, 0.52);
+        z-index: 1300;
         display: none;
         justify-content: flex-end;
     }
@@ -939,79 +1007,126 @@
 
     .selected-rooms-panel {
         width: 100%;
-        max-width: 430px;
+        max-width: 365px;
         background: #fff;
         height: 100%;
         display: flex;
         flex-direction: column;
-        box-shadow: -10px 0 35px rgba(0, 0, 0, 0.2);
+        box-shadow: -14px 0 34px rgba(0, 0, 0, 0.18);
     }
 
     .selected-rooms-header {
-        padding: 1rem 1.2rem;
-        border-bottom: 1px solid #eee;
+        padding: 0.9rem 1rem;
+        border-bottom: 1px solid #efefef;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
+    .selected-rooms-header h3 {
+        font-size: 1rem;
+        margin: 0;
+    }
+
     .selected-rooms-close {
         border: none;
-        background: transparent;
-        font-size: 1.6rem;
+        background: #f5f5f5;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        font-size: 1rem;
         line-height: 1;
         cursor: pointer;
-        color: #666;
+        color: #777;
     }
 
     .selected-rooms-list {
         flex: 1;
         overflow-y: auto;
-        padding: 0.85rem 1.2rem;
+        padding: 0.85rem 0.8rem;
         display: flex;
         flex-direction: column;
-        gap: 0.7rem;
+        gap: 0.6rem;
     }
 
     .selected-room-item {
-        border: 1px solid #e5e5e5;
-        border-radius: 8px;
-        padding: 0.75rem;
-        display: flex;
-        justify-content: space-between;
+        border: 1px solid #ececec;
+        border-radius: 9px;
+        padding: 0.5rem;
+        display: grid;
+        grid-template-columns: 56px 1fr auto;
         align-items: center;
-        gap: 0.75rem;
+        gap: 0.55rem;
     }
 
-    .selected-room-item button {
-        border: none;
-        background: #f44336;
-        color: #fff;
+    .selected-room-thumb {
+        width: 56px;
+        height: 42px;
+        object-fit: cover;
         border-radius: 6px;
-        padding: 0.35rem 0.55rem;
+        background: #f3f3f3;
+    }
+
+    .selected-room-name {
+        font-size: 0.78rem;
+        font-weight: 700;
+        line-height: 1.25;
+        color: #2c2c2c;
+    }
+
+    .selected-room-meta {
+        font-size: 0.67rem;
+        color: #6f6f6f;
+    }
+
+    .selected-room-price {
+        font-size: 0.78rem;
+        color: #9e7b15;
+        font-weight: 700;
+    }
+
+    .selected-room-remove {
+        border: none;
+        background: #fff1f1;
+        color: #d32f2f;
+        border-radius: 999px;
+        padding: 0.28rem 0.55rem;
+        font-size: 0.65rem;
+        font-weight: 700;
         cursor: pointer;
     }
 
     .selected-rooms-footer {
         border-top: 1px solid #eee;
-        padding: 0.9rem 1.2rem 1rem;
+        padding: 0.9rem;
     }
 
     .selected-rooms-progress {
-        font-size: 0.88rem;
-        color: #5f4b1b;
-        margin-bottom: 0.75rem;
+        font-size: 0.8rem;
+        color: #333;
+        margin-bottom: 0.7rem;
+    }
+
+    .selected-rooms-total {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.6rem;
+        font-size: 0.86rem;
+        font-weight: 600;
     }
 
     .proceed-checkout-btn {
         width: 100%;
         border: none;
         border-radius: 8px;
-        padding: 0.8rem 0.9rem;
-        background: linear-gradient(135deg, #d4af37, #f4e4c1);
-        color: #2c2c2c;
+        padding: 0.74rem 0.9rem;
+        background: #1a1a1a;
+        color: #fff;
         font-weight: 700;
+        letter-spacing: 0.4px;
         cursor: pointer;
+        text-transform: uppercase;
+        font-size: 0.76rem;
     }
 
     .proceed-checkout-btn[disabled] {
@@ -1144,6 +1259,17 @@
         font-weight: 700;
         color: #d4af37;
     }
+
+    .room-preview-footer .book-btn {
+        background: linear-gradient(135deg, #d4af37, #f4e4c1);
+        color: #2c2c2c;
+        border: none;
+        padding: 0.55rem 0.9rem;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
     
     @media (max-width: 768px) {
         .content-section {
@@ -1164,12 +1290,17 @@
         
         .room-footer {
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.75rem;
             align-items: flex-start;
         }
-        
-        .book-btn {
+
+        .room-card-actions {
             width: 100%;
+            justify-content: space-between;
+        }
+
+        .room-card .book-btn {
+            width: auto;
             text-align: center;
         }
 
@@ -1202,6 +1333,12 @@
         .room-preview-footer {
             flex-direction: column;
             align-items: flex-start;
+        }
+
+        .floating-selected-cart {
+            left: 0.8rem;
+            right: 0.8rem;
+            justify-content: center;
         }
     }
 </style>
@@ -1327,7 +1464,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Reattach pagination click handlers
                 attachPaginationHandlers();
                 bindRoomModalTriggers();
+                bindRoomQuantityControls();
                 renderSelectedRoomsDrawer();
+                markSelectedCards();
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -1526,6 +1665,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedRoomsList = document.getElementById('selectedRoomsList');
     const selectedRoomIdsInputs = document.getElementById('selectedRoomIdsInputs');
     const selectedRoomsProgressText = document.getElementById('selectedRoomsProgressText');
+    const selectedRoomsNightTotal = document.getElementById('selectedRoomsNightTotal');
     const proceedCheckoutButton = document.getElementById('proceedCheckoutButton');
     const openSelectedRoomsDrawerButton = document.getElementById('openSelectedRoomsDrawer');
     const closeSelectedRoomsDrawerButton = document.getElementById('closeSelectedRoomsDrawer');
@@ -1609,23 +1749,39 @@ document.addEventListener('DOMContentLoaded', function() {
             roomLookup.set(roomId, {
                 name: trigger.getAttribute('data-room-name') || `Room ${roomId}`,
                 price: trigger.getAttribute('data-room-price') || '0.00',
+                priceValue: Number(trigger.getAttribute('data-room-price-value') || 0),
+                image: trigger.getAttribute('data-room-image') || 'https://via.placeholder.com/56x42/e8e8e8/666?text=Room',
+                capacity: Number(trigger.getAttribute('data-room-capacity') || 0),
             });
         });
 
         if (selectedRoomIds.length === 0) {
-            selectedRoomsList.innerHTML = '<p style="color:#666;">No rooms selected yet.</p>';
+            selectedRoomsList.innerHTML = '<p style="color:#666;font-size:0.85rem;">No rooms selected yet.</p>';
         }
 
+        let totalPerNight = 0;
+
         selectedRoomIds.forEach((roomId) => {
-            const roomData = roomLookup.get(roomId) || { name: `Room ${roomId}`, price: '0.00' };
+            const roomData = roomLookup.get(roomId) || {
+                name: `Room ${roomId}`,
+                price: '0.00',
+                priceValue: 0,
+                image: 'https://via.placeholder.com/56x42/e8e8e8/666?text=Room',
+                capacity: 0,
+            };
+
+            totalPerNight += Number.isFinite(roomData.priceValue) ? roomData.priceValue : 0;
+
             const item = document.createElement('div');
             item.className = 'selected-room-item';
             item.innerHTML = `
+                <img class="selected-room-thumb" src="${roomData.image}" alt="${roomData.name}">
                 <div>
-                    <div style="font-weight:700;">${roomData.name}</div>
-                    <div style="font-size:0.85rem;color:#666;">₱${roomData.price}/night</div>
+                    <div class="selected-room-name">${roomData.name}</div>
+                    <div class="selected-room-meta">Qty: 1${roomData.capacity > 0 ? ` · ${roomData.capacity} pax covered` : ''}</div>
+                    <div class="selected-room-price">₱${roomData.price}/night</div>
                 </div>
-                <button type="button" data-remove-room-id="${roomId}">Remove</button>
+                <button type="button" class="selected-room-remove" data-remove-room-id="${roomId}">✕ Remove</button>
             `;
             selectedRoomsList.appendChild(item);
 
@@ -1640,8 +1796,12 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedRoomsProgressText.textContent = `Selected ${selectedCount} of ${requiredRooms} room(s).`;
         proceedCheckoutButton.disabled = selectedCount < requiredRooms;
 
+        if (selectedRoomsNightTotal) {
+            selectedRoomsNightTotal.textContent = `₱${totalPerNight.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
         if (openSelectedRoomsDrawerButton) {
-            openSelectedRoomsDrawerButton.textContent = `View Selected Rooms (${selectedCount}/${requiredRooms})`;
+            openSelectedRoomsDrawerButton.innerHTML = `<i class="fas fa-shopping-cart"></i><span>View Selected Rooms (${selectedCount}/${requiredRooms})</span>`;
         }
 
         selectedRoomsList.querySelectorAll('button[data-remove-room-id]').forEach((button) => {
@@ -1657,12 +1817,93 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function addRoomToSelection(roomId) {
+        if (!Number.isInteger(roomId) || roomId <= 0) {
+            return;
+        }
+
+        if (selectedRoomIds.includes(roomId)) {
+            return;
+        }
+
+        if (selectedRoomIds.length >= requiredRooms) {
+            alert(`You can only select ${requiredRooms} room(s). Remove one first to add another.`);
+            return;
+        }
+
+        selectedRoomIds = [...selectedRoomIds, roomId];
+        persistSelection().finally(() => {
+            renderSelectedRoomsDrawer();
+            updateModalButtonState();
+            markSelectedCards();
+        });
+    }
+
+    function removeRoomFromSelection(roomId) {
+        if (!Number.isInteger(roomId) || roomId <= 0) {
+            return;
+        }
+
+        if (!selectedRoomIds.includes(roomId)) {
+            return;
+        }
+
+        selectedRoomIds = selectedRoomIds.filter((id) => id !== roomId);
+        persistSelection().finally(() => {
+            renderSelectedRoomsDrawer();
+            updateModalButtonState();
+            markSelectedCards();
+        });
+    }
+
+    function bindRoomQuantityControls() {
+        document.querySelectorAll('[data-room-add]').forEach((button) => {
+            if (button.getAttribute('data-room-add-bound') === '1') {
+                return;
+            }
+
+            button.setAttribute('data-room-add-bound', '1');
+            button.addEventListener('click', () => {
+                addRoomToSelection(Number(button.getAttribute('data-room-add')));
+            });
+        });
+
+        document.querySelectorAll('[data-room-remove]').forEach((button) => {
+            if (button.getAttribute('data-room-remove-bound') === '1') {
+                return;
+            }
+
+            button.setAttribute('data-room-remove-bound', '1');
+            button.addEventListener('click', () => {
+                removeRoomFromSelection(Number(button.getAttribute('data-room-remove')));
+            });
+        });
+    }
+
     function markSelectedCards() {
         const cards = Array.from(document.querySelectorAll('.room-card [data-open-room-modal]'));
         cards.forEach((trigger) => {
             const roomId = Number(trigger.getAttribute('data-room-id'));
             const isSelected = selectedRoomIds.includes(roomId);
+            const hasReachedLimit = selectedRoomIds.length >= requiredRooms;
             trigger.setAttribute('data-is-selected', isSelected ? '1' : '0');
+
+            const roomCard = trigger.closest('.room-card');
+            const qtyValue = roomCard ? roomCard.querySelector(`[data-room-qty="${roomId}"]`) : null;
+            const addBtn = roomCard ? roomCard.querySelector(`[data-room-add="${roomId}"]`) : null;
+            const removeBtn = roomCard ? roomCard.querySelector(`[data-room-remove="${roomId}"]`) : null;
+
+            if (qtyValue) {
+                qtyValue.textContent = isSelected ? '1' : '0';
+            }
+
+            if (addBtn) {
+                addBtn.disabled = isSelected || hasReachedLimit;
+            }
+
+            if (removeBtn) {
+                removeBtn.disabled = !isSelected;
+            }
 
             const selectedBadge = trigger.closest('.room-card').querySelector('[data-selected-badge]');
             if (selectedBadge) {
@@ -1808,19 +2049,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const isSelected = selectedRoomIds.includes(activeRoomPreviewId);
             if (isSelected) {
-                selectedRoomIds = selectedRoomIds.filter((id) => id !== activeRoomPreviewId);
-            } else if (selectedRoomIds.length < requiredRooms) {
-                selectedRoomIds = [...selectedRoomIds, activeRoomPreviewId];
+                removeRoomFromSelection(activeRoomPreviewId);
             } else {
-                alert(`You can only select ${requiredRooms} room(s). Remove one first to add another.`);
-                return;
+                addRoomToSelection(activeRoomPreviewId);
             }
-
-            persistSelection().finally(() => {
-                updateModalButtonState();
-                renderSelectedRoomsDrawer();
-                markSelectedCards();
-            });
         });
     }
 
@@ -1870,6 +2102,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     bindRoomModalTriggers();
+    bindRoomQuantityControls();
     renderSelectedRoomsDrawer();
     markSelectedCards();
 
