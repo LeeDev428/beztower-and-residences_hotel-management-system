@@ -53,7 +53,7 @@
             <div class="room-info">
                 <span><i class="fas fa-users"></i> Up to {{ (int) ($roomCard['max_guests'] ?? 0) }} adults + 1 child</span>
                 <span><i class="fas fa-bed"></i> {{ (string) ($roomCard['bed_type'] ?? 'Standard Bed') }}</span>
-                <span><i class="fas fa-door-open"></i> {{ $availableCount }} room{{ $availableCount === 1 ? '' : 's' }}</span>
+                {{-- <span><i class="fas fa-door-open"></i> {{ $availableCount }} room{{ $availableCount === 1 ? '' : 's' }}</span> --}}
             </div>
 
             <p class="room-description">{{ Str::limit($roomDescription, 100) }}</p>
