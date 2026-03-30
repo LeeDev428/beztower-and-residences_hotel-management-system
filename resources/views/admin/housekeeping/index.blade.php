@@ -5,7 +5,7 @@
 
 @section('content')
 <!-- Stats Cards -->
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+<div class="admin-housekeeping-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
     <div style="background: linear-gradient(135deg, var(--success) 0%, #20873a 100%); color: white; padding: 1.5rem; border-radius: 12px;">
         <div style="font-size: 2rem; font-weight: 700;">{{ $stats['clean'] }}</div>
         <div style="opacity: 0.9; margin-top: 0.5rem;">Clean Rooms</div>
@@ -22,7 +22,7 @@
 
 <!-- Filters -->
 <div style="margin-bottom: 1.5rem;">
-    <form method="GET" style="display: flex; gap: 1rem;">
+    <form method="GET" class="admin-housekeeping-filter-form" style="display: flex; gap: 1rem;">
         <select name="status" style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" onchange="this.form.submit()">
             <option value="">All Status</option>
             <option value="clean" {{ request('status') == 'clean' ? 'selected' : '' }}>Clean</option>
@@ -39,7 +39,7 @@
 </div>
 
 <x-admin.card title="Rooms ({{ $housekeeping->total() }})">
-    <div style="overflow-x: auto;">
+    <div class="admin-table-wrap" style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="border-bottom: 2px solid var(--border-gray);">
@@ -90,7 +90,7 @@
 </x-admin.card>
 
 <!-- Status Update Modal -->
-<div id="statusModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+<div id="statusModal" class="admin-housekeeping-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
     <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
         <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 600;">Update Housekeeping Status</h3>
         <form id="statusForm" method="POST">
@@ -115,6 +115,37 @@
         </form>
     </div>
 </div>
+
+@push('styles')
+<style>
+    @media (max-width: 900px) {
+        .admin-housekeeping-stats {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 0.9rem !important;
+        }
+
+        .admin-housekeeping-filter-form {
+            flex-wrap: wrap;
+            gap: 0.65rem !important;
+        }
+
+        .admin-housekeeping-filter-form > * {
+            flex: 1 1 100%;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .admin-housekeeping-stats {
+            grid-template-columns: 1fr !important;
+        }
+
+        .admin-housekeeping-modal > div {
+            padding: 1.2rem !important;
+            width: calc(100% - 1.2rem) !important;
+        }
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>
