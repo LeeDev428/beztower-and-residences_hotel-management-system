@@ -9,7 +9,7 @@
     $filterBase = request()->except(['status', 'page']);
 @endphp
 <!-- Stats -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+<div class="admin-bookings-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
     <a href="{{ route('admin.bookings.index', array_merge($filterBase, ['status' => 'pending'])) }}" style="background: linear-gradient(135deg, var(--warning) 0%, #d39e00 100%); color: white; padding: 1.25rem; border-radius: 12px; text-decoration: none; border: {{ $activeStatus === 'pending' ? '2px solid #2c2c2c' : '2px solid transparent' }};">
         <div style="font-size: 1.75rem; font-weight: 700;">{{ $stats['pending'] }}</div>
         <div style="opacity: 0.9; font-size: 0.875rem;">Pending</div>
@@ -37,8 +37,8 @@
 </div>
 
 <!-- Filters -->
-<div style="margin-bottom: 1.5rem;">
-    <form method="GET" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+<div class="admin-bookings-filters" style="margin-bottom: 1.5rem;">
+    <form method="GET" class="admin-bookings-filter-form" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search..." style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
         <input type="date" name="date_from" value="{{ request('date_from') }}" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
         <input type="date" name="date_to" value="{{ request('date_to') }}" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
@@ -50,7 +50,7 @@
 </div>
 
 <x-admin.card title="All Bookings ({{ $bookings->total() }})">
-    <div style="overflow-x: auto;">
+    <div class="admin-table-wrap" style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr style="border-bottom: 2px solid var(--border-gray);">
@@ -128,4 +128,34 @@
         {{ $bookings->appends(request()->query())->links() }}
     </div>
 </x-admin.card>
+
+@push('styles')
+<style>
+    @media (max-width: 1024px) {
+        .admin-bookings-stats {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 0.9rem !important;
+        }
+
+        .admin-bookings-filter-form {
+            grid-template-columns: 1fr 1fr !important;
+        }
+    }
+
+    @media (max-width: 680px) {
+        .admin-bookings-stats {
+            grid-template-columns: 1fr 1fr !important;
+        }
+
+        .admin-bookings-stats > a {
+            padding: 0.95rem !important;
+        }
+
+        .admin-bookings-filter-form {
+            grid-template-columns: 1fr !important;
+            gap: 0.6rem !important;
+        }
+    }
+</style>
+@endpush
 @endsection
