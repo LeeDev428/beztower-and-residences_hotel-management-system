@@ -4,9 +4,9 @@
 @section('page-title', 'Dashboard')
 
 @section('content')
-<div style="display: grid; gap: 1.5rem;">
+<div class="admin-dashboard-page" style="display: grid; gap: 1.5rem;">
     <!-- Statistics Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+    <div class="admin-dashboard-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
         <x-admin.stat-card 
             title="Total Revenue (Today)"
             :value="'₱' . number_format($revenueToday, 2)"
@@ -43,7 +43,7 @@
     </div>
 
     <!-- Two Column Layout -->
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <div class="admin-dashboard-main" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
         <!-- Recent Bookings -->
         <x-admin.card title="Recent Bookings">
             <x-slot name="action">
@@ -53,7 +53,7 @@
             </x-slot>
 
             @if($recentBookings->count() > 0)
-            <div style="overflow-x: auto;">
+            <div class="admin-table-wrap" style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="border-bottom: 2px solid var(--border-gray);">
@@ -92,7 +92,7 @@
         </x-admin.card>
 
         <!-- Quick Stats -->
-        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="admin-dashboard-side" style="display: flex; flex-direction: column; gap: 1.5rem;">
             <!-- Arrivals Today -->
             <x-admin.card title="Arrivals Today ({{ $arrivalsToday->count() }})">
                 @if($arrivalsToday->count() > 0)
@@ -126,6 +126,45 @@
         </x-admin.card> --}}
     </div>
 </div>
+
+@push('styles')
+<style>
+    @media (max-width: 992px) {
+        .admin-dashboard-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .admin-dashboard-main {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .admin-dashboard-stats {
+            grid-template-columns: 1fr !important;
+            gap: 0.9rem !important;
+        }
+
+        .admin-dashboard-page {
+            gap: 1rem !important;
+        }
+
+        .admin-dashboard-page .stat-card {
+            padding: 1rem !important;
+        }
+
+        .admin-dashboard-page .stat-card [style*="font-size: 2rem"] {
+            font-size: 1.7rem !important;
+        }
+
+        .admin-dashboard-page .stat-card [style*="font-size: 3rem"],
+        .admin-dashboard-page .stat-card [style*="width: 48px"] {
+            transform: scale(0.85);
+            transform-origin: top right;
+        }
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
