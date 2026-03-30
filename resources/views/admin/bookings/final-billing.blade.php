@@ -679,11 +679,15 @@ function syncItemizedAdjustmentSummary(items, total) {
         summaryList.innerHTML = items.map(function (item) {
             const amount = item.amount || 0;
             const note = item.note || 'Adjustment item';
+            const safeNote = note
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
             const amountText = (amount < 0 ? '-₱' : '₱') + Math.abs(amount).toLocaleString('en-PH', {minimumFractionDigits: 2});
             const amountColor = amount < 0 ? 'var(--success)' : '#2c2c2c';
 
             return '<div style="display:flex; justify-content:space-between; gap:0.7rem; color:#555;">'
-                + '<span>' + note.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>'
+                + '<span>' + safeNote + '</span>'
                 + '<span style="font-weight:700; color:' + amountColor + ';">' + amountText + '</span>'
                 + '</div>';
         }).join('');
