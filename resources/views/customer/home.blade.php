@@ -933,7 +933,8 @@
         
         <!-- Booking Form -->
         <div class="booking-form">
-            <form action="{{ route('rooms.index') }}" method="GET" id="heroBookingForm">
+            <form action="{{ route('rooms.start') }}" method="POST" id="heroBookingForm">
+                @csrf
                 <div class="booking-grid">
                     <div class="form-group">
                         <label><i class="far fa-calendar"></i> Check-In Date *</label>
