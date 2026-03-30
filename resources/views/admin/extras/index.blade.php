@@ -4,7 +4,7 @@
 @section('page-title', 'Extras Management')
 
 @section('content')
-<div style="display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 1.25rem; align-items: start;">
+<div class="admin-extras-layout" style="display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 1.25rem; align-items: start;">
     <x-admin.card :title="$editExtra ? 'Edit Extra' : 'Add New Extra'">
         @if($editExtra)
             <form method="POST" action="{{ route('admin.extras.update', $editExtra) }}">
@@ -48,7 +48,7 @@
     </x-admin.card>
 
     <x-admin.card title="Extras List">
-        <form method="GET" style="display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap;">
+        <form method="GET" class="admin-extras-filter-form" style="display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap;">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="Search extras..." style="min-width: 240px; flex: 1; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
             <select name="status" style="padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
                 <option value="">All Status</option>
@@ -58,7 +58,7 @@
             <x-admin.button type="primary">Filter</x-admin.button>
         </form>
 
-        <div style="overflow-x: auto;">
+        <div class="admin-table-wrap" style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; min-width: 720px;">
                 <thead>
                     <tr style="border-bottom: 2px solid var(--border-gray);">
@@ -116,4 +116,30 @@
         </div>
     </x-admin.card>
 </div>
+
+@push('styles')
+<style>
+    @media (max-width: 1100px) {
+        .admin-extras-layout {
+            grid-template-columns: 1fr !important;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .admin-extras-filter-form {
+            gap: 0.6rem !important;
+        }
+
+        .admin-extras-filter-form > * {
+            flex: 1 1 100%;
+            min-width: 0;
+        }
+
+        .admin-extras-layout [style*="display: inline-flex; gap: 0.4rem; align-items: center;"] {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+    }
+</style>
+@endpush
 @endsection
