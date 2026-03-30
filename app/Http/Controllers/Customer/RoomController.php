@@ -14,6 +14,32 @@ use Illuminate\Support\Collection;
 
 class RoomController extends Controller
 {
+    public function start(Request $request)
+    {
+        $validated = $request->validate([
+            'check_in' => 'required|date|after_or_equal:today',
+            'check_out' => 'required|date|after:check_in',
+            'rooms' => 'required|integer|min:1|max:12',
+            'guests' => 'nullable|integer|min:1|max:50',
+            'adults' => 'nullable|integer|min:1|max:50',
+            'children' => 'nullable|integer|min:0|max:50',
+        ]);
+
+        $bookingContext = [
+            'check_in' => (string) $validated['check_in'],
+            'check_out' => (string) $validated['check_out'],
+            'rooms' => max(1, min(12, (int) $validated['rooms'])),
+            'guests' => isset($validated['guests']) ? (int) $validated['guests'] : null,
+            'adults' => isset($validated['adults']) ? (int) $validated['adults'] : null,
+            'children' => isset($validated['children']) ? (int) $validated['children'] : null,
+            'selected_rooms' => [],
+        ];
+
+        $request->session()->put('booking_room_flow', $bookingContext);
+
+        return redirect()->route('rooms.index');
+    }
+
     public function index(Request $request)
     {
         app(BookingAutoCancelService::class)->cancelExpiredWithoutProofIfDue();
