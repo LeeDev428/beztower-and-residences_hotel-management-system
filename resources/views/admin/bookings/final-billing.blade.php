@@ -665,7 +665,138 @@ function calculatePerRoomNetAdjustmentTotal() {
     return netTotal;
 }
 
+function syncItemizedAdjustmentSummary(items, total) {
+    const summaryList = document.getElementById('itemizedAdjustmentsSummaryList');
+    const subtotalDisplay = document.getElementById('itemizedAdjustmentTotalDisplay');
+
+    if (!summaryList || !subtotalDisplay) {
+        return;
+    }
+
+    if (items.length === 0) {
+        summaryList.innerHTML = '<div style="color:#777; font-size:0.82rem;">No itemized adjustments yet.</div>';
+    } else {
+        summaryList.innerHTML = items.map(function (item) {
+            const amount = item.amount || 0;
+            const note = item.note || 'Adjustment item';
+            const amountText = (amount < 0 ? '-₱' : '₱') + Math.abs(amount).toLocaleString('en-PH', {minimumFractionDigits: 2});
+            const amountColor = amount < 0 ? 'var(--success)' : '#2c2c2c';
+
+            return '<div style="display:flex; justify-content:space-between; gap:0.7rem; color:#555;">'
+                + '<span>' + note.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>'
+                + '<span style="font-weight:700; color:' + amountColor + ';">' + amountText + '</span>'
+                + '</div>';
+        }).join('');
+    }
+
+    subtotalDisplay.textContent = '₱' + total.toLocaleString('en-PH', {minimumFractionDigits: 2});
+}
+
+function addAdjustmentItemRow(amount = '', note = '') {
+    const container = document.getElementById('adjustmentItemsContainer');
+    if (!container) {
+        return;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'adjustment-item-row';
+    row.style.cssText = 'display:grid; grid-template-columns:minmax(130px, 150px) 1fr auto; gap:0.45rem; align-items:center;';
+    row.innerHTML = ''
+        + '<div style="display:flex; align-items:center; border:1px solid var(--border-gray); border-radius:8px; overflow:hidden; background:#fff;">'
+        + '  <span style="padding:0.5rem 0.6rem; background:var(--light-gray); color:var(--text-muted); font-weight:600; border-right:1px solid var(--border-gray); font-size:0.85rem;">₱</span>'
+        + '  <input type="number" name="adjustment_item_amounts[]" class="adjustment-item-amount" step="0.01" style="width:100%; border:none; outline:none; padding:0.5rem 0.6rem; font-size:0.85rem;">'
+        + '</div>'
+        + '<input type="text" name="adjustment_item_notes[]" class="adjustment-item-note" maxlength="255" placeholder="Notes (e.g. trash, damaged towel, etc.)" style="width:100%; border:1px solid var(--border-gray); border-radius:8px; outline:none; padding:0.5rem 0.6rem; font-size:0.84rem;">'
+        + '<button type="button" class="adjustment-item-remove" style="border:none; background:#f8d7da; color:#721c24; padding:0.45rem 0.6rem; border-radius:6px; cursor:pointer; font-weight:700;">✕</button>';
+
+    const amountInput = row.querySelector('.adjustment-item-amount');
+    const noteInput = row.querySelector('.adjustment-item-note');
+    const removeBtn = row.querySelector('.adjustment-item-remove');
+
+    if (amountInput) {
+        amountInput.value = amount;
+        amountInput.addEventListener('input', calculateTotal);
+    }
+
+    if (noteInput) {
+        noteInput.value = note;
+        noteInput.addEventListener('input', calculateTotal);
+    }
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function () {
+            removeAdjustmentItemRow(removeBtn);
+        });
+    }
+
+    container.appendChild(row);
+    calculateTotal();
+}
+
+function removeAdjustmentItemRow(buttonElement) {
+    const container = document.getElementById('adjustmentItemsContainer');
+    if (!container) {
+        return;
+    }
+
+    const rows = container.querySelectorAll('.adjustment-item-row');
+    if (rows.length <= 1) {
+        const amountInput = rows[0]?.querySelector('.adjustment-item-amount');
+        const noteInput = rows[0]?.querySelector('.adjustment-item-note');
+        if (amountInput) {
+            amountInput.value = '';
+        }
+        if (noteInput) {
+            noteInput.value = '';
+        }
+        calculateTotal();
+        return;
+    }
+
+    const row = buttonElement ? buttonElement.closest('.adjustment-item-row') : null;
+    if (row) {
+        row.remove();
+    }
+
+    calculateTotal();
+}
+
 function getManualAdjustmentTotal() {
+    const itemRows = document.querySelectorAll('.adjustment-item-row');
+
+    if (itemRows.length > 0) {
+        let sum = 0;
+        const itemizedSummaryItems = [];
+
+        itemRows.forEach(function (row) {
+            const amountInput = row.querySelector('.adjustment-item-amount');
+            const noteInput = row.querySelector('.adjustment-item-note');
+            const amount = parseFloat(amountInput?.value || '0') || 0;
+            const note = (noteInput?.value || '').trim();
+
+            if (Math.abs(amount) > 0.00001 || note !== '') {
+                itemizedSummaryItems.push({ amount: amount, note: note || 'Adjustment item' });
+            }
+
+            sum += amount;
+        });
+
+        const roundedSum = Math.round(sum * 100) / 100;
+        const aggregateInput = document.getElementById('manualAdjustment');
+        const overallInput = document.getElementById('overallManualAdjustment');
+
+        if (aggregateInput) {
+            aggregateInput.value = roundedSum.toFixed(2);
+        }
+
+        if (overallInput) {
+            overallInput.value = roundedSum.toFixed(2);
+        }
+
+        syncItemizedAdjustmentSummary(itemizedSummaryItems, roundedSum);
+        return roundedSum;
+    }
+
     const perRoomNet = calculatePerRoomNetAdjustmentTotal();
     if (perRoomNet !== null) {
         return perRoomNet;
@@ -889,6 +1020,7 @@ function calculatePwdDiscount() {
 function calculateTotal() {
     const hasPerRoomBilling = document.querySelectorAll('[data-room-row="1"]').length > 0;
     const perRoomNetAdjustment = hasPerRoomBilling ? (calculatePerRoomNetAdjustmentTotal() || 0) : null;
+    const itemizedAdjustmentTotal = getManualAdjustmentTotal();
     const earlyCheckin = parseFloat(document.getElementById('earlyCheckinChargeInput').value) || 0;
     const lateCheckout = parseFloat(document.getElementById('lateCheckoutChargeInput').value) || 0;
     const pwdDiscountInput = document.getElementById('pwdSeniorDiscountInput');
@@ -897,21 +1029,12 @@ function calculateTotal() {
     const servicesAdjustment = parseFloat(document.getElementById('servicesTotalAdjustmentInput')?.value || '0') || 0;
     const manualAdjust = hasPerRoomBilling
         ? (perRoomNetAdjustment + overallManualAdjust + servicesAdjustment)
-        : (getManualAdjustmentTotal() + servicesAdjustment);
+        : (itemizedAdjustmentTotal + servicesAdjustment);
 
     const grossTotal = roomTotal + earlyCheckin + lateCheckout - pwdDiscount + manualAdjust;
     const balanceDue = Math.max(grossTotal - verifiedPaymentsTotal, 0);
 
     document.getElementById('grandTotal').textContent = '₱' + balanceDue.toLocaleString('en-PH', {minimumFractionDigits: 2});
-    const manualAdjustmentDisplay = document.getElementById('manualAdjustmentDisplay');
-    if (manualAdjustmentDisplay) {
-        manualAdjustmentDisplay.textContent = '₱' + manualAdjust.toLocaleString('en-PH', {minimumFractionDigits: 2});
-    }
-
-    const overallManualAdjustmentDisplay = document.getElementById('overallManualAdjustmentDisplay');
-    if (overallManualAdjustmentDisplay) {
-        overallManualAdjustmentDisplay.textContent = '₱' + overallManualAdjust.toLocaleString('en-PH', {minimumFractionDigits: 2});
-    }
 }
 
 function toggleGcashQR() {
