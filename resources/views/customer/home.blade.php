@@ -839,6 +839,12 @@
             font-family: inherit;
         }
 
+        .form-group-contact textarea {
+            min-height: 140px;
+            max-height: 140px;
+            resize: none;
+        }
+
         .form-group-contact input:focus,
         .form-group-contact textarea:focus {
             outline: none;
