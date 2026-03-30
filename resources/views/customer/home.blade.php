@@ -2061,20 +2061,39 @@
         // Date validation
         var heroCheckIn = document.getElementById('heroCheckIn');
         var heroCheckOut = document.getElementById('heroCheckOut');
+
+        function formatDateLocal(dateValue) {
+            var year = dateValue.getFullYear();
+            var month = String(dateValue.getMonth() + 1).padStart(2, '0');
+            var day = String(dateValue.getDate()).padStart(2, '0');
+
+            return year + '-' + month + '-' + day;
+        }
+
+        function applyCheckoutConstraint() {
+            if (!heroCheckIn || !heroCheckOut || !heroCheckIn.value) {
+                return;
+            }
+
+            var checkIn = new Date(heroCheckIn.value + 'T00:00:00');
+            if (Number.isNaN(checkIn.getTime())) {
+                return;
+            }
+
+            var minCheckoutDate = new Date(checkIn);
+            minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
+            var minCheckoutString = formatDateLocal(minCheckoutDate);
+
+            heroCheckOut.min = minCheckoutString;
+
+            if (!heroCheckOut.value || heroCheckOut.value < minCheckoutString) {
+                heroCheckOut.value = minCheckoutString;
+            }
+        }
         
         if (heroCheckIn && heroCheckOut) {
-            heroCheckIn.addEventListener('change', function() {
-                var checkIn = new Date(this.value);
-                var minCheckoutDate = new Date(checkIn);
-                minCheckoutDate.setDate(minCheckoutDate.getDate() + 1);
-                var minCheckoutString = minCheckoutDate.toISOString().split('T')[0];
-
-                heroCheckOut.min = minCheckoutString;
-
-                if (heroCheckOut.value && new Date(heroCheckOut.value) <= checkIn) {
-                    heroCheckOut.value = minCheckoutString;
-                }
-            });
+            heroCheckIn.addEventListener('change', applyCheckoutConstraint);
+            applyCheckoutConstraint();
         }
     </script>
     @if(session('success') || session('warning') || $errors->any())
