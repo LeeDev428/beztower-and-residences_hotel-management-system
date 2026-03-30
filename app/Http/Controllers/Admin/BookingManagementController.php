@@ -164,7 +164,8 @@ class BookingManagementController extends Controller
     {
         $booking->load(['guest', 'room.roomType', 'roomType', 'rooms.roomType']);
 
-        $allowedStatuses = $this->getAllowedStatusTransitions($booking->status);
+        $normalizedStatus = $this->normalizeStatusValue((string) $booking->status);
+        $allowedStatuses = $this->getAllowedStatusTransitions($normalizedStatus);
         $today = now()->toDateString();
         $checkInDate = optional($booking->check_in_date)->toDateString();
 
@@ -172,8 +173,8 @@ class BookingManagementController extends Controller
             $allowedStatuses = array_values(array_filter($allowedStatuses, fn ($status) => $status !== 'checked_in'));
         }
 
-        $statusLocked = in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true);
-        $billingLocked = in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true);
+        $statusLocked = in_array($normalizedStatus, ['checked_out', 'cancelled', 'rejected_payment'], true);
+        $billingLocked = in_array($normalizedStatus, ['checked_out', 'cancelled', 'rejected_payment'], true);
 
         $verifiedPaymentsTotal = $booking->payments()
             ->whereIn('payment_status', ['verified', 'completed'])
@@ -216,7 +217,7 @@ class BookingManagementController extends Controller
             'cancellation_reason' => 'nullable|string|max:500|required_if:status,cancelled',
         ]);
 
-        $currentStatus = $booking->status;
+        $currentStatus = $this->normalizeStatusValue((string) $booking->status);
         $targetStatus = $validated['status'];
 
         if (in_array($currentStatus, ['checked_out', 'cancelled', 'rejected_payment'], true)) {
@@ -370,6 +371,8 @@ class BookingManagementController extends Controller
 
     private function getAllowedStatusTransitions(string $currentStatus): array
     {
+        $currentStatus = $this->normalizeStatusValue($currentStatus);
+
         $map = [
             'pending' => ['confirmed', 'cancelled'],
             'confirmed' => ['checked_in', 'rescheduled', 'cancelled'],
@@ -381,6 +384,11 @@ class BookingManagementController extends Controller
         ];
 
         return $map[$currentStatus] ?? [];
+    }
+
+    private function normalizeStatusValue(string $status): string
+    {
+        return str_replace(' ', '_', strtolower(trim($status)));
     }
 
     /**
