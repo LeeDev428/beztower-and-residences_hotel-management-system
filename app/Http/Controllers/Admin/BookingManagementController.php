@@ -153,6 +153,8 @@ class BookingManagementController extends Controller
             'pending' => Booking::where('status', 'pending')->count(),
             'confirmed' => Booking::where('status', 'confirmed')->count(),
             'checked_in' => Booking::where('status', 'checked_in')->count(),
+            'checked_out' => Booking::where('status', 'checked_out')->count(),
+            'cancelled' => Booking::where('status', 'cancelled')->count(),
         ];
 
         return view('admin.bookings.index', compact('bookings', 'stats'));
