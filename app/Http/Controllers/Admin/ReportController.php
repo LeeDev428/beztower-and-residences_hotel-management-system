@@ -277,6 +277,9 @@ class ReportController extends Controller
         $payments = Payment::with(['booking.guest', 'booking.room', 'booking.rooms'])
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereIn('payment_status', ['verified', 'completed'])
+            ->whereHas('booking', function ($bookingQuery) {
+                $this->applyActiveRoomFilterToBookingQuery($bookingQuery);
+            })
             ->get();
 
         $filename = 'revenue_report_' . Carbon::now()->format('Y-m-d_His') . '.xlsx';
@@ -341,7 +344,7 @@ class ReportController extends Controller
 
     private function exportOccupancy($startDate, $endDate)
     {
-        $totalRooms = Room::count();
+        $totalRooms = Room::query()->whereNull('archived_at')->count();
         $filename = 'occupancy_report_' . Carbon::now()->format('Y-m-d_His') . '.xlsx';
         
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -365,10 +368,7 @@ class ReportController extends Controller
         $row = 2;
         
         while ($currentDate <= Carbon::parse($endDate)) {
-            $occupiedRooms = Booking::where('check_in_date', '<=', $currentDate)
-                ->where('check_out_date', '>', $currentDate)
-                ->where('status', 'confirmed')
-                ->count();
+            $occupiedRooms = $this->resolveOccupiedRoomsCountForDate($currentDate->copy());
             
             $occupancyRate = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100, 2) : 0;
 
@@ -399,8 +399,10 @@ class ReportController extends Controller
 
     private function exportBookings($startDate, $endDate)
     {
-        $bookings = Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
-            ->whereBetween('created_at', [$startDate, $endDate])
+        $bookings = $this->applyActiveRoomFilterToBookingQuery(
+            Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
+                ->whereBetween('created_at', [$startDate, $endDate])
+        )
             ->get();
 
         $filename = 'bookings_report_' . Carbon::now()->format('Y-m-d_His') . '.xlsx';
@@ -575,5 +577,185 @@ class ReportController extends Controller
         } catch (\Throwable $e) {
             return '-';
         }
+    }
+
+    private function applyActiveRoomFilterToBookingQuery($query)
+    {
+        return $query->where(function ($bookingQuery) {
+            $bookingQuery->whereHas('rooms', function ($roomQuery) {
+                $roomQuery->whereNull('rooms.archived_at');
+            })->orWhereHas('room', function ($roomQuery) {
+                $roomQuery->whereNull('rooms.archived_at');
+            });
+        });
+    }
+
+    private function buildQuickOverviewStats(): array
+    {
+        $activeBookingsQuery = $this->applyActiveRoomFilterToBookingQuery(
+            Booking::query()->whereIn('status', ['pending', 'confirmed', 'checked_in', 'rescheduled'])
+        );
+
+        $activeBookings = (clone $activeBookingsQuery)->count();
+        $activeGuests = (clone $activeBookingsQuery)->distinct('guest_id')->count('guest_id');
+        $activeRooms = Room::query()->whereNull('archived_at')->count();
+
+        $verifiedPayments = Payment::query()
+            ->whereIn('payment_status', ['verified', 'completed'])
+            ->whereHas('booking', function ($bookingQuery) {
+                $this->applyActiveRoomFilterToBookingQuery($bookingQuery);
+            });
+
+        $today = Carbon::today();
+
+        return [
+            'active_bookings' => $activeBookings,
+            'active_rooms' => $activeRooms,
+            'active_guests' => $activeGuests,
+            'verified_payments_count' => (clone $verifiedPayments)->count(),
+            'total_revenue' => (clone $verifiedPayments)->sum('amount'),
+            'occupied_today' => $this->resolveOccupiedRoomsCountForDate($today),
+        ];
+    }
+
+    private function buildRoomBookingFrequency()
+    {
+        $bookedStatuses = ['confirmed', 'checked_in', 'checked_out', 'rescheduled'];
+
+        if (Schema::hasTable('booking_rooms')) {
+            return DB::table('rooms')
+                ->leftJoin('room_types', 'rooms.room_type_id', '=', 'room_types.id')
+                ->leftJoin('booking_rooms', 'rooms.id', '=', 'booking_rooms.room_id')
+                ->leftJoin('bookings', function ($join) use ($bookedStatuses) {
+                    $join->on('booking_rooms.booking_id', '=', 'bookings.id')
+                        ->whereIn('bookings.status', $bookedStatuses);
+                })
+                ->whereNull('rooms.archived_at')
+                ->select(
+                    'rooms.id',
+                    'rooms.room_number',
+                    'room_types.name as room_type_name',
+                    DB::raw('COUNT(DISTINCT bookings.id) as booking_count')
+                )
+                ->groupBy('rooms.id', 'rooms.room_number', 'room_types.name')
+                ->get();
+        }
+
+        return DB::table('rooms')
+            ->leftJoin('room_types', 'rooms.room_type_id', '=', 'room_types.id')
+            ->leftJoin('bookings', function ($join) use ($bookedStatuses) {
+                $join->on('rooms.id', '=', 'bookings.room_id')
+                    ->whereIn('bookings.status', $bookedStatuses);
+            })
+            ->whereNull('rooms.archived_at')
+            ->select(
+                'rooms.id',
+                'rooms.room_number',
+                'room_types.name as room_type_name',
+                DB::raw('COUNT(DISTINCT bookings.id) as booking_count')
+            )
+            ->groupBy('rooms.id', 'rooms.room_number', 'room_types.name')
+            ->get();
+    }
+
+    private function buildRoomOccupancyTrend()
+    {
+        $activeRoomCount = Room::query()->whereNull('archived_at')->count();
+        $trendRows = collect();
+
+        for ($offset = 5; $offset >= 0; $offset--) {
+            $monthStart = Carbon::now()->subMonths($offset)->startOfMonth();
+            $monthEnd = $monthStart->copy()->endOfMonth();
+            $daysInMonth = (int) $monthStart->daysInMonth;
+            $availableRoomNights = max($activeRoomCount * $daysInMonth, 0);
+            $occupiedRoomNights = $this->calculateOccupiedRoomNights($monthStart, $monthEnd);
+
+            $occupancyRate = $availableRoomNights > 0
+                ? round(($occupiedRoomNights / $availableRoomNights) * 100, 2)
+                : 0.0;
+
+            $trendRows->push([
+                'label' => $monthStart->format('M Y'),
+                'occupied_room_nights' => (int) $occupiedRoomNights,
+                'available_room_nights' => (int) $availableRoomNights,
+                'occupancy_rate' => $occupancyRate,
+            ]);
+        }
+
+        return $trendRows;
+    }
+
+    private function resolveOccupiedRoomsCountForDate(Carbon $date): int
+    {
+        $dateString = $date->toDateString();
+        $activeStatuses = ['confirmed', 'checked_in', 'rescheduled'];
+
+        if (Schema::hasTable('booking_rooms')) {
+            return (int) DB::table('booking_rooms')
+                ->join('bookings', 'booking_rooms.booking_id', '=', 'bookings.id')
+                ->join('rooms', 'booking_rooms.room_id', '=', 'rooms.id')
+                ->whereNull('rooms.archived_at')
+                ->whereIn('bookings.status', $activeStatuses)
+                ->whereDate('bookings.check_in_date', '<=', $dateString)
+                ->whereDate('bookings.check_out_date', '>', $dateString)
+                ->distinct('booking_rooms.room_id')
+                ->count('booking_rooms.room_id');
+        }
+
+        return (int) DB::table('bookings')
+            ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
+            ->whereNull('rooms.archived_at')
+            ->whereIn('bookings.status', $activeStatuses)
+            ->whereDate('bookings.check_in_date', '<=', $dateString)
+            ->whereDate('bookings.check_out_date', '>', $dateString)
+            ->distinct('bookings.room_id')
+            ->count('bookings.room_id');
+    }
+
+    private function calculateOccupiedRoomNights(Carbon $periodStart, Carbon $periodEnd): int
+    {
+        $activeStatuses = ['confirmed', 'checked_in', 'checked_out', 'rescheduled'];
+        $periodEndExclusive = $periodEnd->copy()->addDay()->startOfDay();
+        $totalNights = 0;
+
+        if (Schema::hasTable('booking_rooms')) {
+            $bookings = DB::table('booking_rooms')
+                ->join('bookings', 'booking_rooms.booking_id', '=', 'bookings.id')
+                ->join('rooms', 'booking_rooms.room_id', '=', 'rooms.id')
+                ->whereNull('rooms.archived_at')
+                ->whereIn('bookings.status', $activeStatuses)
+                ->whereDate('bookings.check_in_date', '<=', $periodEnd->toDateString())
+                ->whereDate('bookings.check_out_date', '>=', $periodStart->toDateString())
+                ->select('bookings.check_in_date', 'bookings.check_out_date')
+                ->get();
+        } else {
+            $bookings = DB::table('bookings')
+                ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
+                ->whereNull('rooms.archived_at')
+                ->whereIn('bookings.status', $activeStatuses)
+                ->whereDate('bookings.check_in_date', '<=', $periodEnd->toDateString())
+                ->whereDate('bookings.check_out_date', '>=', $periodStart->toDateString())
+                ->select('bookings.check_in_date', 'bookings.check_out_date')
+                ->get();
+        }
+
+        foreach ($bookings as $booking) {
+            $checkIn = Carbon::parse($booking->check_in_date)->startOfDay();
+            $checkOut = Carbon::parse($booking->check_out_date)->startOfDay();
+
+            if ($checkOut->lessThanOrEqualTo($checkIn)) {
+                $checkOut = $checkIn->copy()->addDay();
+            }
+
+            $effectiveStart = $checkIn->greaterThan($periodStart) ? $checkIn : $periodStart;
+            $effectiveEnd = $checkOut->lessThan($periodEndExclusive) ? $checkOut : $periodEndExclusive;
+            $nights = $effectiveStart->diffInDays($effectiveEnd, false);
+
+            if ($nights > 0) {
+                $totalNights += $nights;
+            }
+        }
+
+        return (int) $totalNights;
     }
 }
