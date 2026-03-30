@@ -26,16 +26,9 @@
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Password</label>
-                <input type="password" name="password" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
-                @error('password')
-                <div style="color: var(--danger); font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Confirm Password</label>
-                <input type="password" name="password_confirmation" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                <div style="padding: 0.8rem 0.9rem; border-radius: 8px; background: #fff8e1; color: #7a5a00; border: 1px solid #f0d98f; font-size: 0.9rem;">
+                    New users are created with default password: <strong>password</strong>
+                </div>
             </div>
 
             <div style="margin-bottom: 1.5rem;">
