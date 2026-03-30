@@ -5,7 +5,7 @@
 
 @section('content')
 <div style="margin-bottom: 1.5rem;">
-    <form method="GET" style="display: flex; gap: 1rem;">
+    <form method="GET" class="admin-payments-filter-form" style="display: flex; gap: 1rem;">
         <select name="status" style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-gray); border-radius: 8px;" onchange="this.form.submit()">
             <option value="" {{ request('status', '') === '' ? 'selected' : '' }}>All</option>
             <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending Payments</option>
@@ -26,8 +26,8 @@
         @if(!$booking || !$guest)
             @continue
         @endif
-        <div style="border: 1px solid var(--border-gray); border-radius: 12px; padding: 1.5rem;">
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <div class="admin-payment-card" style="border: 1px solid var(--border-gray); border-radius: 12px; padding: 1.5rem;">
+            <div class="admin-payment-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
                 <!-- Payment Details -->
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
@@ -45,7 +45,7 @@
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                    <div class="admin-payment-meta-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem;">
                         <div>
                             @php
                                 $reservedRooms = $payment->booking->rooms->isNotEmpty() ? $payment->booking->rooms : collect([$payment->booking->room])->filter();
@@ -82,7 +82,7 @@
                     </div>
 
                     @if($payment->payment_status === 'pending')
-                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <div class="admin-payment-action-row" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                         <form method="POST" action="{{ route('admin.payments.verify', $payment) }}" style="flex: 1;" onsubmit="return confirm('Verify this payment?');">
                             @csrf
                             <x-admin.button type="success">✓ Verify Payment</x-admin.button>
@@ -112,7 +112,7 @@
                     <div style="font-weight: 600; margin-bottom: 0.5rem;">Payment Proof</div>
                     @if($payment->proof_of_payment)
                     <a href="{{ asset('storage/' . $payment->proof_of_payment) }}" target="_blank">
-                        <img src="{{ asset('storage/' . $payment->proof_of_payment) }}" alt="Payment Proof" style="width: 100%; border-radius: 8px; border: 2px solid var(--border-gray); cursor: pointer; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        <img src="{{ asset('storage/' . $payment->proof_of_payment) }}" alt="Payment Proof" class="admin-payment-proof-image" style="width: 100%; border-radius: 8px; border: 2px solid var(--border-gray); cursor: pointer; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                     </a>
                     <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center;">Click to enlarge</p>
                     @else
@@ -133,6 +133,49 @@
     <p style="text-align: center; padding: 3rem; color: var(--text-muted);">No payment proofs found</p>
     @endif
 </x-admin.card>
+
+@push('styles')
+<style>
+    @media (max-width: 1024px) {
+        .admin-payment-layout {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+        }
+
+        .admin-payment-meta-grid {
+            grid-template-columns: 1fr 1fr !important;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .admin-payments-filter-form {
+            flex-wrap: wrap;
+        }
+
+        .admin-payments-filter-form > * {
+            flex: 1 1 100%;
+        }
+
+        .admin-payment-card {
+            padding: 1rem !important;
+        }
+
+        .admin-payment-meta-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.65rem !important;
+        }
+
+        .admin-payment-action-row {
+            flex-direction: column;
+        }
+
+        .admin-payment-proof-image {
+            max-height: 320px;
+            object-fit: cover;
+        }
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>
