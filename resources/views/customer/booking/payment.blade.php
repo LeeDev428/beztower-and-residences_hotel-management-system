@@ -488,7 +488,7 @@
                         <div class="qr-code-container">
                             <h3>Scan to Pay</h3>
                             <div class="qr-code-wrapper">
-                                <img src="{{ asset('images/gcash/gcash_v2.jpg') }}" alt="GCash QR Code">
+                                <img src="{{ asset('images/gcash/gcash_v3.jpg') }}" alt="GCash QR Code">
                             </div>
                             <div class="gcash-info">
                                 <p><strong>Account Name:</strong> MICHAEL ANG</p>
