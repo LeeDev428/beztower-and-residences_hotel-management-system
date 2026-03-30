@@ -453,7 +453,9 @@
 
             .content th,
             .content td {
-                word-break: break-word;
+                word-break: normal;
+                overflow-wrap: normal;
+                white-space: nowrap;
             }
 
             #toastContainer {
@@ -528,6 +530,12 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                     </svg>
                     Dashboard
+                </a>
+                <a href="{{ route('admin.profile.edit') }}" class="nav-link {{ request()->routeIs('admin.profile.*') ? 'active' : '' }}">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    My Profile
                 </a>
             </div>
 
@@ -706,13 +714,15 @@
                 </a>
 
                 <div class="user-menu">
-                    <div class="user-avatar">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name">{{ auth()->user()->name }}</div>
-                        <div class="user-role">{{ auth()->user()->role }}</div>
-                    </div>
+                    <a href="{{ route('admin.profile.edit') }}" style="display:flex; align-items:center; gap:0.75rem; text-decoration:none; color:inherit;">
+                        <div class="user-avatar">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name">{{ auth()->user()->name }}</div>
+                            <div class="user-role">{{ auth()->user()->role }}</div>
+                        </div>
+                    </a>
                 </div>
 
                 <form id="adminLogoutForm" action="{{ route('admin.logout') }}" method="POST" style="display: inline;">
