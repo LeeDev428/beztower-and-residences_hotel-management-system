@@ -87,6 +87,44 @@
 
         $initialPerRoomAdditionalTotal = array_sum($roomAdditionalCharges);
         $initialPerRoomDiscountTotal = array_sum($roomDiscountAmounts);
+
+        $existingAdjustmentItems = collect($booking->adjustment_items ?? [])
+            ->map(function ($item) {
+                return [
+                    'amount' => round((float) data_get($item, 'amount', 0), 2),
+                    'note' => trim((string) data_get($item, 'note', '')),
+                ];
+            })
+            ->filter(function ($item) {
+                return abs((float) ($item['amount'] ?? 0)) > 0.00001 || ($item['note'] ?? '') !== '';
+            })
+            ->values();
+
+        if ($existingAdjustmentItems->isEmpty()) {
+            $fallbackManualAmount = $isMultiRoomBilling ? $initialOverallManualAdjustment : $initialManualAdjustment;
+
+            if (abs($fallbackManualAmount) > 0.00001) {
+                $fallbackNote = trim((string) ($booking->adjustment_reason ?? ''));
+                $fallbackNote = preg_replace('/\s*Amenities\s*&\s*Services\s*:\s*.*$/mi', '', $fallbackNote ?? '') ?? '';
+                $fallbackNote = preg_replace('/\s*Billing\s+GCash\s+Reference\s*:\s*.*$/mi', '', $fallbackNote ?? '') ?? '';
+                $fallbackNote = preg_replace('/\s*Itemized\s+Adjustments\s*:\s*.*$/mi', '', $fallbackNote ?? '') ?? '';
+                $fallbackNote = trim((string) $fallbackNote);
+
+                $existingAdjustmentItems = collect([[
+                    'amount' => round((float) $fallbackManualAmount, 2),
+                    'note' => $fallbackNote,
+                ]]);
+            }
+        }
+
+        if ($existingAdjustmentItems->isEmpty()) {
+            $existingAdjustmentItems = collect([[
+                'amount' => 0.0,
+                'note' => '',
+            ]]);
+        }
+
+        $itemizedAdjustmentTotal = (float) $existingAdjustmentItems->sum('amount');
     @endphp
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
 
@@ -166,10 +204,6 @@
                     <span style="color: var(--success); font-weight: 600;">Per-Room Discounts</span>
                     <span style="font-weight: 700; color: var(--success);" id="perRoomDiscountDisplay">-₱{{ number_format($initialPerRoomDiscountTotal, 2) }}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
-                    <span style="color: var(--text-muted);">Overall Total Adjustment</span>
-                    <span style="font-weight: 600;" id="overallManualAdjustmentDisplay">₱{{ number_format($initialOverallManualAdjustment, 2) }}</span>
-                </div>
                 @endif
                 <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border-gray);">
                     <span style="color: var(--text-muted);">Early Check-in</span>
@@ -191,12 +225,27 @@
                     <span style="color: var(--text-muted);">Amenities & Services</span>
                     <span style="font-weight: 600;" id="servicesAdjustmentDisplay">₱0.00</span>
                 </div>
-                @if(!$isMultiRoomBilling)
-                <div style="display: flex; justify-content: space-between; padding: 5px 0;">
-                    <span style="color: var(--text-muted);">Manual Adjustment</span>
-                    <span style="font-weight: 600;" id="manualAdjustmentDisplay">₱{{ number_format($initialManualAdjustment, 2) }}</span>
+                <div id="itemizedAdjustmentsSummaryBlock" style="padding: 8px 0 0;">
+                    <div style="color: var(--text-muted); font-weight: 600; margin-bottom: 0.4rem;">Itemized Adjustments</div>
+                    <div id="itemizedAdjustmentsSummaryList" style="display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem;">
+                        @foreach($existingAdjustmentItems as $adjustmentItem)
+                            @php
+                                $itemAmount = (float) ($adjustmentItem['amount'] ?? 0);
+                                $itemNote = trim((string) ($adjustmentItem['note'] ?? ''));
+                            @endphp
+                            @if(abs($itemAmount) > 0.00001 || $itemNote !== '')
+                                <div style="display:flex; justify-content:space-between; gap:0.7rem; color:#555;">
+                                    <span>{{ $itemNote !== '' ? $itemNote : 'Adjustment item' }}</span>
+                                    <span style="font-weight:700; color: {{ $itemAmount < 0 ? 'var(--success)' : '#2c2c2c' }};">{{ $itemAmount < 0 ? '-₱' : '₱' }}{{ number_format(abs($itemAmount), 2) }}</span>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding-top:0.45rem; margin-top:0.45rem; border-top:1px dashed var(--border-gray);">
+                        <span style="font-weight: 600; color: var(--text-muted);">Adjustment Subtotal</span>
+                        <span style="font-weight: 700;" id="itemizedAdjustmentTotalDisplay">₱{{ number_format($itemizedAdjustmentTotal, 2) }}</span>
+                    </div>
                 </div>
-                @endif
             </div>
         </x-admin.card>
     </div>
