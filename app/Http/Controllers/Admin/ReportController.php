@@ -14,13 +14,27 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class ReportController extends Controller
 {
     public function index()
     {
-        return view('admin.reports.index');
+        $quickOverview = $this->buildQuickOverviewStats();
+        $roomFrequency = $this->buildRoomBookingFrequency();
+        $occupancyTrend = $this->buildRoomOccupancyTrend();
+
+        $mostBookedRooms = $roomFrequency->sortByDesc('booking_count')->take(5)->values();
+        $leastBookedRooms = $roomFrequency->sortBy('booking_count')->take(5)->values();
+
+        return view('admin.reports.index', compact(
+            'quickOverview',
+            'mostBookedRooms',
+            'leastBookedRooms',
+            'roomFrequency',
+            'occupancyTrend'
+        ));
     }
 
     public function generatePdf(Request $request)
