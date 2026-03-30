@@ -179,6 +179,62 @@
                 <x-admin.button type="outline">Send Reschedule Request Email</x-admin.button>
             </form>
 
+            @php
+                $assignedRoomsForTransfer = $booking->rooms->isNotEmpty()
+                    ? $booking->rooms
+                    : collect([$booking->room])->filter();
+                $roomTransferLocked = in_array($booking->status, ['checked_out', 'cancelled', 'rejected_payment'], true);
+                $canTransferRooms = !$roomTransferLocked && $assignedRoomsForTransfer->isNotEmpty() && $availableRooms->isNotEmpty();
+            @endphp
+
+            <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border-gray); border-radius: 8px; background: #fafafa;">
+                <label style="display: block; margin-bottom: 0.65rem; font-weight: 700;">Room Transfer</label>
+
+                @if($canTransferRooms)
+                    <form method="POST" action="{{ route('admin.bookings.assignRoom', $booking) }}">
+                        @csrf
+
+                        @if($booking->rooms->isNotEmpty())
+                            <div style="margin-bottom: 0.75rem;">
+                                <label style="display: block; margin-bottom: 0.4rem; font-size: 0.9rem; color: var(--text-muted);">Current Assigned Room</label>
+                                <select name="current_room_id" id="currentTransferRoomSelect" required style="width: 100%; padding: 0.7rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                                    @foreach($assignedRoomsForTransfer as $assignedRoom)
+                                        <option value="{{ $assignedRoom->id }}" data-room-type-id="{{ $assignedRoom->room_type_id }}">
+                                            Room {{ $assignedRoom->room_number }} - {{ optional($assignedRoom->roomType)->name ?? 'N/A' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+
+                        <div style="margin-bottom: 0.75rem;">
+                            <label style="display: block; margin-bottom: 0.4rem; font-size: 0.9rem; color: var(--text-muted);">Transfer To</label>
+                            <select name="room_id" id="newTransferRoomSelect" required style="width: 100%; padding: 0.7rem; border: 1px solid var(--border-gray); border-radius: 8px;">
+                                @foreach($availableRooms as $availableRoom)
+                                    <option value="{{ $availableRoom->id }}" data-room-type-id="{{ $availableRoom->room_type_id }}">
+                                        Room {{ $availableRoom->room_number }} - {{ optional($availableRoom->roomType)->name ?? 'N/A' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <button type="submit" style="width: 100%; padding: 0.75rem; border: none; border-radius: 8px; background: #17a2b8; color: #fff; font-weight: 700; cursor: pointer;">
+                            Transfer Room
+                        </button>
+                    </form>
+                @else
+                    <small style="display: block; color: #777; line-height: 1.5;">
+                        @if($roomTransferLocked)
+                            Room transfer is disabled for this booking status.
+                        @elseif($assignedRoomsForTransfer->isEmpty())
+                            No assigned room found for this booking.
+                        @else
+                            No available room found under the same room type.
+                        @endif
+                    </small>
+                @endif
+            </div>
+
             <form method="POST" action="{{ route('admin.bookings.updateStatus', $booking) }}">
                 @csrf
                 @method('PUT')
@@ -271,6 +327,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const rescheduleNights = {{ $rescheduleNights ?? 1 }};
     const statusSelect = document.querySelector('form[action="{{ route('admin.bookings.updateStatus', $booking) }}"] select[name="status"]');
     const statusCancelReasonWrap = document.getElementById('statusCancelReasonWrap');
+    const currentTransferRoomSelect = document.getElementById('currentTransferRoomSelect');
+    const newTransferRoomSelect = document.getElementById('newTransferRoomSelect');
 
     function refreshRescheduleCheckoutPreview() {
         if (!rescheduleCheckInInput || !rescheduleCheckoutPreview) {
@@ -303,6 +361,38 @@ document.addEventListener('DOMContentLoaded', function () {
         statusCancelReasonWrap.style.display = statusSelect.value === 'cancelled' ? 'block' : 'none';
     }
 
+    function syncTransferRoomOptions() {
+        if (!newTransferRoomSelect) {
+            return;
+        }
+
+        const selectedCurrent = currentTransferRoomSelect
+            ? currentTransferRoomSelect.options[currentTransferRoomSelect.selectedIndex]
+            : null;
+        const targetRoomTypeId = selectedCurrent ? selectedCurrent.getAttribute('data-room-type-id') : null;
+
+        let firstVisible = null;
+        Array.from(newTransferRoomSelect.options).forEach((option) => {
+            const optionRoomTypeId = option.getAttribute('data-room-type-id');
+            const shouldShow = !targetRoomTypeId || optionRoomTypeId === targetRoomTypeId;
+
+            option.hidden = !shouldShow;
+            option.disabled = !shouldShow;
+
+            if (shouldShow && !firstVisible) {
+                firstVisible = option;
+            }
+        });
+
+        if (firstVisible) {
+            firstVisible.selected = true;
+            newTransferRoomSelect.disabled = false;
+            return;
+        }
+
+        newTransferRoomSelect.disabled = true;
+    }
+
     if (rescheduleCheckInInput) {
         rescheduleCheckInInput.addEventListener('change', refreshRescheduleCheckoutPreview);
         refreshRescheduleCheckoutPreview();
@@ -312,6 +402,12 @@ document.addEventListener('DOMContentLoaded', function () {
         statusSelect.addEventListener('change', toggleCancellationReasonField);
         toggleCancellationReasonField();
     }
+
+    if (currentTransferRoomSelect) {
+        currentTransferRoomSelect.addEventListener('change', syncTransferRoomOptions);
+    }
+
+    syncTransferRoomOptions();
 });
 </script>
 @endsection
