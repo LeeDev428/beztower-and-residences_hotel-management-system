@@ -51,7 +51,12 @@ class RoomManagementController extends Controller
         }
 
         $rooms = $query->paginate(15)->withQueryString();
-        $roomTypes = RoomType::active()->get();
+        $roomTypes = RoomType::active()
+            ->whereHas('rooms', function ($roomQuery) {
+                $roomQuery->whereNull('rooms.archived_at');
+            })
+            ->orderBy('name')
+            ->get();
 
         return view('admin.rooms.index', compact('rooms', 'roomTypes'));
     }
