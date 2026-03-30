@@ -44,22 +44,21 @@ class ReportController extends Controller
             $user = Auth::user();
             $generatedBy = $this->resolveGeneratedByLabel($user?->role, $user?->name);
             $generatedByDisplay = $this->resolveGeneratedByDisplay($user?->name, $user?->role);
+            $activeBookingStatuses = ['pending', 'confirmed', 'checked_in', 'rescheduled'];
 
             // Stats (active rooms only)
             $filteredBookings = $this->applyActiveRoomFilterToBookingQuery(
                 Booking::whereBetween('created_at', [$startDate, $endDate])
             );
 
-            $totalBookings = (clone $filteredBookings)->count();
-            $totalGuests = (clone $filteredBookings)->distinct('guest_id')->count('guest_id');
+            $activeBookingsInRange = (clone $filteredBookings)
+                ->whereIn('status', $activeBookingStatuses);
+
+            $totalBookings = (clone $activeBookingsInRange)->count();
+            $totalGuests = (clone $activeBookingsInRange)->distinct('guest_id')->count('guest_id');
             $totalRooms = Room::query()->whereNull('archived_at')->count();
-            $totalRevenue = Payment::query()
-                ->whereIn('payment_status', ['verified', 'completed'])
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->whereHas('booking', function ($bookingQuery) {
-                    $this->applyActiveRoomFilterToBookingQuery($bookingQuery);
-                })
-                ->sum('amount');
+            $revenueByType = $this->buildRevenueByRoomType($startDate, $endDate);
+            $totalRevenue = (float) round($revenueByType->sum('revenue'), 2);
 
             // Bookings breakdown by status
             $bookingsByStatus = collect();
@@ -96,40 +95,6 @@ class ReportController extends Controller
             }
 
             $recentBookingRows = $this->buildRecentBookingRows($recentBookings);
-
-            // Revenue by room type
-            $revenueByType = collect();
-            try {
-                $revenueByType = Payment::whereIn('payment_status', ['verified', 'completed'])
-                    ->whereBetween('payments.created_at', [$startDate, $endDate])
-                    ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
-                    ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
-                    ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
-                    ->whereNull('rooms.archived_at')
-                    ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
-                    ->groupBy('room_types.name')
-                    ->get();
-            } catch (\Throwable $primaryQueryException) {
-                try {
-                    // Fallback for environments where bookings.room_id is unavailable.
-                    $revenueByType = Payment::whereIn('payments.payment_status', ['verified', 'completed'])
-                        ->whereBetween('payments.created_at', [$startDate, $endDate])
-                        ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
-                        ->join('booking_rooms', 'bookings.id', '=', 'booking_rooms.booking_id')
-                        ->join('rooms', 'booking_rooms.room_id', '=', 'rooms.id')
-                        ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
-                        ->whereNull('rooms.archived_at')
-                        ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
-                        ->groupBy('room_types.name')
-                        ->get();
-                } catch (\Throwable $fallbackQueryException) {
-                    Log::warning('Report PDF: failed to build revenueByType', [
-                        'primary_message' => $primaryQueryException->getMessage(),
-                        'fallback_message' => $fallbackQueryException->getMessage(),
-                        'user_id' => Auth::id(),
-                    ]);
-                }
-            }
 
             // Keep PDF generation working even if activity log write fails.
             try {
@@ -185,15 +150,7 @@ class ReportController extends Controller
             ->get();
 
         // Revenue by room type
-        $revenueByType = Payment::whereBetween('payments.created_at', [$startDate, $endDate])
-            ->whereIn('payment_status', ['verified', 'completed'])
-            ->join('bookings', 'payments.booking_id', '=', 'bookings.id')
-            ->join('rooms', 'bookings.room_id', '=', 'rooms.id')
-            ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
-            ->whereNull('rooms.archived_at')
-            ->select('room_types.name', DB::raw('SUM(payments.amount) as revenue'))
-            ->groupBy('room_types.name')
-            ->get();
+        $revenueByType = $this->buildRevenueByRoomType((string) $startDate, (string) $endDate);
 
         // Summary
         $totalRevenue = $dailyRevenue->sum('revenue');
@@ -211,6 +168,65 @@ class ReportController extends Controller
             'startDate',
             'endDate'
         ));
+    }
+
+    private function buildRevenueByRoomType(string $startDate, string $endDate)
+    {
+        $payments = Payment::query()
+            ->with(['booking.room.roomType', 'booking.rooms.roomType'])
+            ->whereIn('payment_status', ['verified', 'completed'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereHas('booking', function ($bookingQuery) {
+                $this->applyActiveRoomFilterToBookingQuery($bookingQuery);
+            })
+            ->get();
+
+        $revenueTotals = [];
+
+        foreach ($payments as $payment) {
+            $amount = (float) ($payment->amount ?? 0);
+            if ($amount <= 0) {
+                continue;
+            }
+
+            $booking = $payment->booking;
+            if (!$booking) {
+                continue;
+            }
+
+            $activeRooms = collect();
+
+            if ($booking->rooms && $booking->rooms->isNotEmpty()) {
+                $activeRooms = $booking->rooms->filter(function ($room) {
+                    return is_null($room->archived_at);
+                })->values();
+            }
+
+            if ($activeRooms->isEmpty() && $booking->room && is_null($booking->room->archived_at)) {
+                $activeRooms = collect([$booking->room]);
+            }
+
+            if ($activeRooms->isEmpty()) {
+                continue;
+            }
+
+            $share = $amount / max(1, $activeRooms->count());
+
+            foreach ($activeRooms as $room) {
+                $roomTypeName = (string) (optional($room->roomType)->name ?? 'Unknown Room Type');
+                $revenueTotals[$roomTypeName] = ($revenueTotals[$roomTypeName] ?? 0) + $share;
+            }
+        }
+
+        return collect($revenueTotals)
+            ->map(function ($revenue, $roomTypeName) {
+                return (object) [
+                    'name' => (string) $roomTypeName,
+                    'revenue' => (float) round((float) $revenue, 2),
+                ];
+            })
+            ->sortByDesc('revenue')
+            ->values();
     }
 
     public function occupancy(Request $request)
