@@ -651,7 +651,7 @@ class BookingController extends Controller
             ->firstOrFail();
 
         $existingSubmittedPayment = $booking->payments()
-            ->whereIn('payment_status', ['pending', 'verified', 'completed'])
+            ->whereNotNull('proof_of_payment')
             ->latest('id')
             ->first();
 
@@ -681,15 +681,13 @@ class BookingController extends Controller
         $booking = Booking::where('booking_reference', $reference)->firstOrFail();
 
         $existingSubmittedPayment = $booking->payments()
-            ->whereIn('payment_status', ['pending', 'verified', 'completed'])
+            ->whereNotNull('proof_of_payment')
             ->latest('id')
             ->first();
 
-        if ($existingSubmittedPayment) {
+        if ($existingSubmittedPayment && in_array($existingSubmittedPayment->payment_status, ['verified', 'completed'], true)) {
             return redirect()->route('booking.payment', ['reference' => $reference])
-                ->withErrors([
-                    'error' => 'Payment proof was already submitted for this booking. If you already submitted, please wait for verification.',
-                ]);
+                ->with('warning', 'Payment was already verified for this booking. Resubmission is disabled.');
         }
 
         try {
@@ -702,26 +700,62 @@ class BookingController extends Controller
             $paymentPercentage = $booking->payment_option === 'full_payment' ? 100.00 : 30.00;
             $paymentAmount = $booking->total_amount * ($paymentPercentage / 100);
 
-            // Create payment record
-            Payment::create([
-                'booking_id' => $booking->id,
-                'payment_type' => $booking->payment_option,
-                'payment_method' => trim((string) $validated['payment_method']),
-                'payment_reference' => trim((string) $validated['payment_reference']),
-                'amount' => $paymentAmount,
-                'percentage' => $paymentPercentage,
-                'payment_status' => 'pending', // Will be verified by admin
-                'proof_of_payment' => $proofPath,
-                'payment_date' => now(),
-            ]);
+            $isResubmission = $existingSubmittedPayment && in_array($existingSubmittedPayment->payment_status, ['pending', 'failed'], true);
+
+            if ($isResubmission) {
+                $oldProofPath = (string) ($existingSubmittedPayment->proof_of_payment ?? '');
+
+                $existingSubmittedPayment->update([
+                    'payment_type' => $booking->payment_option,
+                    'payment_method' => trim((string) $validated['payment_method']),
+                    'payment_reference' => trim((string) $validated['payment_reference']),
+                    'amount' => $paymentAmount,
+                    'percentage' => $paymentPercentage,
+                    'payment_status' => 'pending',
+                    'proof_of_payment' => $proofPath,
+                    'payment_notes' => null,
+                    'verified_at' => null,
+                    'verified_by' => null,
+                    'payment_date' => now(),
+                ]);
+
+                if ($oldProofPath !== '' && $oldProofPath !== $proofPath) {
+                    Storage::disk('public')->delete($oldProofPath);
+                }
+
+                if ($booking->status === 'rejected_payment') {
+                    $booking->update(['status' => 'pending']);
+                }
+
+                $successMessage = 'Payment proof resubmitted successfully. Your previous proof was replaced and is now pending verification.';
+            } else {
+                // Create payment record
+                Payment::create([
+                    'booking_id' => $booking->id,
+                    'payment_type' => $booking->payment_option,
+                    'payment_method' => trim((string) $validated['payment_method']),
+                    'payment_reference' => trim((string) $validated['payment_reference']),
+                    'amount' => $paymentAmount,
+                    'percentage' => $paymentPercentage,
+                    'payment_status' => 'pending', // Will be verified by admin
+                    'proof_of_payment' => $proofPath,
+                    'payment_date' => now(),
+                ]);
+
+                if ($booking->status === 'rejected_payment') {
+                    $booking->update(['status' => 'pending']);
+                }
+
+                $successMessage = 'Payment proof submitted successfully! We will verify your payment within 24-48 hours.';
+            }
 
             DB::commit();
 
             // Send booking acknowledgement email with payment details
             // Mail::to($booking->guest->email)->send(new BookingAcknowledgement($booking, $payment));
 
-            return redirect()->route('booking.confirmation', ['reference' => $reference])
-                ->with('success', 'Payment proof submitted successfully! We will verify your payment within 24-48 hours.');
+            return redirect()->route('booking.payment', ['reference' => $reference])
+                ->with('success', $successMessage);
 
         } catch (\Exception $e) {
             DB::rollBack();
