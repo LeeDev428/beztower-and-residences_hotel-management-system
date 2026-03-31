@@ -177,10 +177,9 @@ private function buildStayRevenueSummary(string $startDate, string $endDate): ar
     $periodStart = Carbon::parse($startDate)->startOfDay();
     $periodEnd   = Carbon::parse($endDate)->endOfDay();
 
-    // Filter by check_in_date falling within the period (not created_at)
-    // Only checked_in and checked_out statuses, active rooms only
+    // Only checked_in and checked_out, filtered by check_in_date in period
     $bookings = $this->applyActiveRoomFilterToBookingQuery(
-        Booking::with(['room.roomType', 'rooms.roomType', 'payments'])
+        Booking::with(['room.roomType', 'rooms.roomType'])
             ->whereIn('status', ['checked_in', 'checked_out'])
             ->whereDate('check_in_date', '>=', $periodStart->toDateString())
             ->whereDate('check_in_date', '<=', $periodEnd->toDateString())
@@ -199,16 +198,15 @@ private function buildStayRevenueSummary(string $startDate, string $endDate): ar
     }
 
     foreach ($bookings as $booking) {
-        // Sum only verified/completed payments — handles downpayment OR full payment
-        $actualPaid = (float) $booking->payments
-            ->whereIn('payment_status', ['verified', 'completed'])
-            ->sum('amount');
+        // Use the billed total — final_total includes extras/adjustments/discounts
+        // fall back to total_amount if final_total accessor returns 0
+        $billedTotal = (float) ($booking->final_total ?? $booking->total_amount ?? 0);
 
-        if ($actualPaid <= 0) {
+        if ($billedTotal <= 0) {
             continue;
         }
 
-        $totalRevenue += $actualPaid;
+        $totalRevenue += $billedTotal;
 
         // --- Daily revenue spread ---
         $checkInDate  = Carbon::parse($booking->check_in_date)->startOfDay();
@@ -219,7 +217,7 @@ private function buildStayRevenueSummary(string $startDate, string $endDate): ar
         }
 
         $bookingNights = max(1, $checkInDate->diffInDays($checkOutDate));
-        $dailyShare    = $actualPaid / $bookingNights;
+        $dailyShare    = $billedTotal / $bookingNights;
 
         $effectiveStart = $checkInDate->greaterThan($periodStart->copy()->startOfDay())
             ? $checkInDate->copy()
@@ -258,8 +256,8 @@ private function buildStayRevenueSummary(string $startDate, string $endDate): ar
         $roomRevenue       = $perRoomDailyShare * $overlapNights;
 
         foreach ($activeRooms as $room) {
-            $typeName                  = (string) (optional($room->roomType)->name ?? 'Unknown Room Type');
-            $revenueByType[$typeName]  = ($revenueByType[$typeName] ?? 0) + $roomRevenue;
+            $typeName                 = (string) (optional($room->roomType)->name ?? 'Unknown Room Type');
+            $revenueByType[$typeName] = ($revenueByType[$typeName] ?? 0) + $roomRevenue;
         }
     }
 
