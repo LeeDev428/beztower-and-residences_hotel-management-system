@@ -37,102 +37,110 @@ class ReportController extends Controller
         ));
     }
 
-    public function generatePdf(Request $request)
-    {
+   public function generatePdf(Request $request)
+{
+    try {
+        [$startDate, $endDate] = $this->resolveMonthlyPeriod($request);
+        $user                  = Auth::user();
+        $generatedBy           = $this->resolveGeneratedByLabel($user?->role, $user?->name);
+        $generatedByDisplay    = $this->resolveGeneratedByDisplay($user?->name, $user?->role);
+
+        $periodStart = Carbon::parse($startDate)->startOfDay();
+        $periodEnd   = Carbon::parse($endDate)->endOfDay();
+
+        // Stats: checked_in + checked_out only, filtered by check_in_date in range
+        $revenueBookingsQuery = $this->applyActiveRoomFilterToBookingQuery(
+            Booking::whereIn('status', ['checked_in', 'checked_out'])
+                ->whereDate('check_in_date', '>=', $periodStart->toDateString())
+                ->whereDate('check_in_date', '<=', $periodEnd->toDateString())
+        );
+
+        $totalBookings = (clone $revenueBookingsQuery)->count();
+        $totalGuests   = (clone $revenueBookingsQuery)->distinct('guest_id')->count('guest_id');
+        $totalRooms    = Room::query()->whereNull('archived_at')->count();
+
+        $stayRevenueSummary = $this->buildStayRevenueSummary($startDate, $endDate);
+        $revenueByType      = $stayRevenueSummary['revenue_by_type'];
+        $totalRevenue       = $stayRevenueSummary['total_revenue'];
+
+        // Bookings breakdown by status (all statuses, for reference table)
+        $bookingsByStatus = collect();
         try {
-            [$startDate, $endDate] = $this->resolveMonthlyPeriod($request);
-            $user = Auth::user();
-            $generatedBy = $this->resolveGeneratedByLabel($user?->role, $user?->name);
-            $generatedByDisplay = $this->resolveGeneratedByDisplay($user?->name, $user?->role);
-            $activeBookingStatuses = ['pending', 'confirmed', 'checked_in', 'rescheduled'];
-
-            // Stats (active rooms only)
-            $filteredBookings = $this->applyActiveRoomFilterToBookingQuery(
-                Booking::whereBetween('created_at', [$startDate, $endDate])
-            );
-
-            $activeBookingsInRange = (clone $filteredBookings)
-                ->whereIn('status', $activeBookingStatuses);
-
-            $totalBookings = (clone $activeBookingsInRange)->count();
-            $totalGuests = (clone $activeBookingsInRange)->distinct('guest_id')->count('guest_id');
-            $totalRooms = Room::query()->whereNull('archived_at')->count();
-            $stayRevenueSummary = $this->buildStayRevenueSummary($startDate, $endDate);
-            $revenueByType = $stayRevenueSummary['revenue_by_type'];
-            $totalRevenue = $stayRevenueSummary['total_revenue'];
-
-            // Bookings breakdown by status
-            $bookingsByStatus = collect();
-            try {
-                $bookingsByStatus = $this->applyActiveRoomFilterToBookingQuery(
-                    Booking::whereBetween('created_at', [$startDate, $endDate])
-                )
-                    ->select('status', DB::raw('count(*) as count'))
-                    ->groupBy('status')
-                    ->get()
-                    ->keyBy('status');
-            } catch (\Throwable $queryException) {
-                Log::warning('Report PDF: failed to build bookingsByStatus', [
-                    'message' => $queryException->getMessage(),
-                    'user_id' => Auth::id(),
-                ]);
-            }
-
-            // Payments in range
-            $recentBookings = collect();
-            try {
-                $recentBookings = $this->applyActiveRoomFilterToBookingQuery(
-                    Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
-                        ->whereBetween('created_at', [$startDate, $endDate])
-                )
-                    ->latest()
-                    ->take(50)
-                    ->get();
-            } catch (\Throwable $queryException) {
-                Log::warning('Report PDF: failed to load recentBookings', [
-                    'message' => $queryException->getMessage(),
-                    'user_id' => Auth::id(),
-                ]);
-            }
-
-            $recentBookingRows = $this->buildRecentBookingRows($recentBookings);
-
-            // Keep PDF generation working even if activity log write fails.
-            try {
-                ActivityLog::log(
-                    'report_generate',
-                    'Generated PDF report for ' . Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y')
-                );
-            } catch (\Throwable $logException) {
-                Log::warning('Unable to write activity log during report PDF generation', [
-                    'message' => $logException->getMessage(),
-                    'user_id' => Auth::id(),
-                ]);
-            }
-
-            $pdf = Pdf::loadView('admin.reports.pdf', compact(
-                'startDate', 'endDate',
-                'totalBookings', 'totalGuests', 'totalRooms', 'totalRevenue',
-                'bookingsByStatus', 'revenueByType', 'generatedBy', 'generatedByDisplay', 'recentBookingRows'
-            ))->setPaper('a4', 'portrait');
-
-            $filename = 'hotel_report_' . Carbon::parse($startDate)->format('Y_m_d') . '_to_' . Carbon::parse($endDate)->format('Y_m_d') . '.pdf';
-
-            return $pdf->download($filename);
-        } catch (\Throwable $e) {
-            Log::error('Failed generating report PDF', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-                'start_date' => $request->input('start_date'),
-                'end_date' => $request->input('end_date'),
+            $bookingsByStatus = $this->applyActiveRoomFilterToBookingQuery(
+                Booking::whereDate('check_in_date', '>=', $periodStart->toDateString())
+                    ->whereDate('check_in_date', '<=', $periodEnd->toDateString())
+            )
+                ->select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->get()
+                ->keyBy('status');
+        } catch (\Throwable $queryException) {
+            Log::warning('Report PDF: failed to build bookingsByStatus', [
+                'message' => $queryException->getMessage(),
                 'user_id' => Auth::id(),
             ]);
-
-            return back()->with('error', 'Unable to generate PDF report right now. Please try again.');
         }
+
+        // Recent bookings table (all statuses for visibility)
+        $recentBookings = collect();
+        try {
+            $recentBookings = $this->applyActiveRoomFilterToBookingQuery(
+                Booking::with(['guest', 'room', 'roomType', 'rooms.roomType'])
+                    ->whereDate('check_in_date', '>=', $periodStart->toDateString())
+                    ->whereDate('check_in_date', '<=', $periodEnd->toDateString())
+            )
+                ->latest()
+                ->take(50)
+                ->get();
+        } catch (\Throwable $queryException) {
+            Log::warning('Report PDF: failed to load recentBookings', [
+                'message' => $queryException->getMessage(),
+                'user_id' => Auth::id(),
+            ]);
+        }
+
+        $recentBookingRows = $this->buildRecentBookingRows($recentBookings);
+
+        try {
+            ActivityLog::log(
+                'report_generate',
+                'Generated PDF report for ' . Carbon::parse($startDate)->format('M d, Y') . ' to ' . Carbon::parse($endDate)->format('M d, Y')
+            );
+        } catch (\Throwable $logException) {
+            Log::warning('Unable to write activity log during report PDF generation', [
+                'message' => $logException->getMessage(),
+                'user_id' => Auth::id(),
+            ]);
+        }
+
+        $pdf = Pdf::loadView('admin.reports.pdf', compact(
+            'startDate', 'endDate',
+            'totalBookings', 'totalGuests', 'totalRooms', 'totalRevenue',
+            'bookingsByStatus', 'revenueByType', 'generatedBy', 'generatedByDisplay', 'recentBookingRows'
+        ))->setPaper('a4', 'portrait');
+
+        $filename = 'hotel_report_'
+            . Carbon::parse($startDate)->format('Y_m_d')
+            . '_to_'
+            . Carbon::parse($endDate)->format('Y_m_d')
+            . '.pdf';
+
+        return $pdf->download($filename);
+
+    } catch (\Throwable $e) {
+        Log::error('Failed generating report PDF', [
+            'message'    => $e->getMessage(),
+            'file'       => $e->getFile(),
+            'line'       => $e->getLine(),
+            'trace'      => $e->getTraceAsString(),
+            'start_date' => $request->input('start_date'),
+            'end_date'   => $request->input('end_date'),
+            'user_id'    => Auth::id(),
+        ]);
+
+        return back()->with('error', 'Unable to generate PDF report right now. Please try again.');
     }
+}
 
     public function revenue(Request $request)
     {
