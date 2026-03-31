@@ -164,24 +164,26 @@ class ReportController extends Controller
         return $this->buildStayRevenueSummary($startDate, $endDate)['revenue_by_type'];
     }
 
-   private function buildStayRevenueSummary(string $startDate, string $endDate): array
+private function buildStayRevenueSummary(string $startDate, string $endDate): array
 {
     $periodStart = Carbon::parse($startDate)->startOfDay();
     $periodEnd   = Carbon::parse($endDate)->endOfDay();
 
-    // Only checked_in and checked_out bookings (active rooms only)
+    // Filter by check_in_date falling within the period (not created_at)
+    // Only checked_in and checked_out statuses, active rooms only
     $bookings = $this->applyActiveRoomFilterToBookingQuery(
         Booking::with(['room.roomType', 'rooms.roomType', 'payments'])
             ->whereIn('status', ['checked_in', 'checked_out'])
-            ->whereBetween('created_at', [$periodStart, $periodEnd])
+            ->whereDate('check_in_date', '>=', $periodStart->toDateString())
+            ->whereDate('check_in_date', '<=', $periodEnd->toDateString())
     )->get();
 
-    $revenueByType = [];
-    $totalRevenue  = 0.0;
-
-    // Daily revenue map for the period
+    $revenueByType   = [];
+    $totalRevenue    = 0.0;
     $dailyRevenueMap = [];
-    $iterDate = $periodStart->copy()->startOfDay();
+
+    // Build daily map
+    $iterDate      = $periodStart->copy()->startOfDay();
     $periodEndDate = $periodEnd->copy()->startOfDay();
     while ($iterDate <= $periodEndDate) {
         $dailyRevenueMap[$iterDate->toDateString()] = 0.0;
@@ -189,8 +191,8 @@ class ReportController extends Controller
     }
 
     foreach ($bookings as $booking) {
-        // Sum only verified/completed payments for this booking
-        $actualPaid = $booking->payments
+        // Sum only verified/completed payments — handles downpayment OR full payment
+        $actualPaid = (float) $booking->payments
             ->whereIn('payment_status', ['verified', 'completed'])
             ->sum('amount');
 
@@ -215,9 +217,9 @@ class ReportController extends Controller
             ? $checkInDate->copy()
             : $periodStart->copy()->startOfDay();
 
-        $effectiveEnd = $checkOutDate->lessThan($periodEnd->copy()->startOfDay()->addDay())
+        $effectiveEnd = $checkOutDate->lessThan($periodEndDate->copy()->addDay())
             ? $checkOutDate->copy()
-            : $periodEnd->copy()->startOfDay()->addDay();
+            : $periodEndDate->copy()->addDay();
 
         $revenueDate = $effectiveStart->copy();
         while ($revenueDate < $effectiveEnd) {
@@ -231,7 +233,9 @@ class ReportController extends Controller
         // --- Revenue by room type ---
         $activeRooms = collect();
         if ($booking->rooms && $booking->rooms->isNotEmpty()) {
-            $activeRooms = $booking->rooms->filter(fn($r) => is_null($r->archived_at))->values();
+            $activeRooms = $booking->rooms
+                ->filter(fn($r) => is_null($r->archived_at))
+                ->values();
         }
         if ($activeRooms->isEmpty() && $booking->room && is_null($booking->room->archived_at)) {
             $activeRooms = collect([$booking->room]);
@@ -246,8 +250,8 @@ class ReportController extends Controller
         $roomRevenue       = $perRoomDailyShare * $overlapNights;
 
         foreach ($activeRooms as $room) {
-            $typeName = (string) (optional($room->roomType)->name ?? 'Unknown Room Type');
-            $revenueByType[$typeName] = ($revenueByType[$typeName] ?? 0) + $roomRevenue;
+            $typeName                  = (string) (optional($room->roomType)->name ?? 'Unknown Room Type');
+            $revenueByType[$typeName]  = ($revenueByType[$typeName] ?? 0) + $roomRevenue;
         }
     }
 
