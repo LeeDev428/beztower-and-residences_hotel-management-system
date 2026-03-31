@@ -413,6 +413,24 @@
                     </div>
                 @endif
 
+                @if(session('warning'))
+                    <div class="alert" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>{{ session('warning') }}</span>
+                    </div>
+                @endif
+
+                @if($errors->any())
+                    <div class="alert" style="background:#f8d7da; color:#721c24; border:1px solid #f5c6cb;">
+                        <i class="fas fa-times-circle"></i>
+                        <div>
+                            @foreach($errors->all() as $error)
+                                <div>{{ $error }}</div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
                     <div>
@@ -505,6 +523,11 @@
 
                     <!-- Right Column: Payment Instructions & Upload Form -->
                     <div>
+                        @php
+                            $canResubmitProof = !empty($existingSubmittedPayment) && in_array($existingSubmittedPayment->payment_status, ['pending', 'failed'], true);
+                            $proofSubmissionLocked = !empty($existingSubmittedPayment) && in_array($existingSubmittedPayment->payment_status, ['verified', 'completed'], true);
+                        @endphp
+
                         @if(!empty($existingSubmittedPayment))
                             <div class="alert alert-success">
                                 <i class="fas fa-check-circle"></i>
@@ -515,7 +538,11 @@
                                         Status: {{ ucfirst($existingSubmittedPayment->payment_status) }}<br>
                                         Submitted: {{ optional($existingSubmittedPayment->created_at)->format('F d, Y h:i A') }}
                                     </p>
-                                    <p style="margin-top:0.35rem;">You no longer need to submit another payment proof for this booking.</p>
+                                    @if($canResubmitProof)
+                                        <p style="margin-top:0.35rem;">If needed, you can resubmit a clearer proof below. The new upload will replace the old proof.</p>
+                                    @else
+                                        <p style="margin-top:0.35rem;">You no longer need to submit another payment proof for this booking.</p>
+                                    @endif
                                 </div>
                             </div>
                         @endif
@@ -533,22 +560,31 @@
                                 <li data-step="5">Take a screenshot of the payment confirmation</li>
                                 <li data-step="6">Upload the screenshot below and submit</li>
                             </ol>
+
+                            @if($canResubmitProof)
+                                <div style="margin-top: 1rem; text-align: center;">
+                                    <a href="#proofSubmissionForm" class="button" style="margin: 0; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-redo"></i> Resubmit Proof of Payment
+                                    </a>
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Payment Upload Form -->
-                        @if(empty($existingSubmittedPayment))
+                        @if(!$proofSubmissionLocked)
                         <form action="{{ route('booking.processPayment', $booking->booking_reference) }}"
                             method="POST" enctype="multipart/form-data" class="payment-form" id="paymentForm">
                             @csrf
                             
-                            <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">
-                                <i class="fas fa-upload"></i> Submit Payment Proof
+                            <h3 id="proofSubmissionForm" style="margin-bottom: 1.5rem; color: #2c2c2c; scroll-margin-top: 20px;">
+                                <i class="fas fa-upload"></i> {{ $canResubmitProof ? 'Resubmit Payment Proof' : 'Submit Payment Proof' }}
                             </h3>
 
                             <div class="form-group">
                                 <label class="form-label">Payment Method <span class="required">*</span></label>
                                 <input type="text" name="payment_method" class="form-input"
                                        placeholder="Enter payment method (e.g. GCash, Bank Transfer)"
+                                        value="{{ old('payment_method', $existingSubmittedPayment->payment_method ?? '') }}"
                                        maxlength="100"
                                        required>
                             </div>
@@ -586,7 +622,7 @@
                             </div>
 
                             <button type="submit" class="submit-btn" id="submitBtn">
-                                <i class="fas fa-paper-plane"></i> Submit Payment Proof
+                                <i class="fas fa-paper-plane"></i> {{ $canResubmitProof ? 'Resubmit Proof of Payment' : 'Submit Payment Proof' }}
                             </button>
 
                             <p style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.9rem;">
