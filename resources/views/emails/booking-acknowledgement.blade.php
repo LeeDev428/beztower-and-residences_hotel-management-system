@@ -197,7 +197,7 @@
 
             <div class="payment-box">
                 <h3 style="margin:0 0 10px 0; color:#2c2c2c;">Submit Proof of Payment Required</h3>
-                <p style="margin:0 0 12px 0; color:#444;">To confirm your reservation and proceed with check-in, please submit your payment proof using the link below. Once your payment is verified, your booking will be confirmed.<br><strong>If you have already submitted your proof of payment, please disregard this message.</strong></p>
+                <p style="margin:0 0 12px 0; color:#444;">To confirm your reservation and proceed with check-in, please submit your proof of payment using the link below. Once your payment is verified, your booking will be confirmed.<br><strong>If you have already submitted your proof of payment, please disregard this message. However, if you wish to resubmit your proof of payment for better quality or clarity, you may do so using the same link below.</strong></p>
                 <a href="{{ route('booking.payment', ['reference' => $booking->booking_reference]) }}" class="button">Submit Proof of Payment</a>
                 <p style="margin:8px 0 0 0; font-size:12px; color:#666;">If the button does not work, open this link:</p>
                 <p style="margin:3px 0 0 0; font-size:12px; word-break: break-all; color:#444;">{{ route('booking.payment', ['reference' => $booking->booking_reference]) }}</p>
