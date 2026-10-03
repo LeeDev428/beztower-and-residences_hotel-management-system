@@ -18,7 +18,7 @@ class BookingAutoCancelService
     {
         $cacheKey = 'bookings:auto-cancel:running';
 
-        if ($cooldownSeconds > 0 && !Cache::add($cacheKey, true, now()->addSeconds(max($cooldownSeconds, 60)))) {
+        if ($cooldownSeconds > 0 && ! Cache::add($cacheKey, true, now()->addSeconds(max($cooldownSeconds, 60)))) {
             return 0;
         }
 
@@ -60,7 +60,7 @@ class BookingAutoCancelService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$booking || !$this->cancelLockedBookingIfExpired($booking)) {
+            if (! $booking || ! $this->cancelLockedBookingIfExpired($booking)) {
                 return null;
             }
 
@@ -79,11 +79,11 @@ class BookingAutoCancelService
      */
     public function cancelLockedBookingIfExpired(Booking $booking): bool
     {
-        if (!in_array((string) $booking->status, ['pending', 'confirmed'], true)) {
+        if (! in_array((string) $booking->status, ['pending', 'confirmed'], true)) {
             return false;
         }
 
-        if (!$booking->expires_at || $booking->expires_at->isFuture()) {
+        if (! $booking->expires_at || $booking->expires_at->isFuture()) {
             return false;
         }
 
@@ -153,7 +153,7 @@ class BookingAutoCancelService
 
             if ($hasCheckedInOccupant && $room->status !== 'occupied') {
                 $room->update(['status' => 'occupied']);
-            } elseif (!$hasCheckedInOccupant && $room->status === 'occupied') {
+            } elseif (! $hasCheckedInOccupant && $room->status === 'occupied') {
                 $room->update(['status' => 'available']);
             }
         }
@@ -167,7 +167,7 @@ class BookingAutoCancelService
                 'action' => 'booking_auto_decline',
                 'model_type' => Booking::class,
                 'model_id' => $booking->id,
-                'description' => 'Automatically declined booking #' . $booking->booking_reference . ' after the 8-hour payment deadline.',
+                'description' => 'Automatically declined booking #'.$booking->booking_reference.' after the 8-hour payment deadline.',
                 'changes' => [
                     'status' => 'cancelled',
                     'expires_at' => optional($booking->expires_at)?->toIso8601String(),
