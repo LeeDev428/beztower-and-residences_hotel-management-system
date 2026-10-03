@@ -21,7 +21,7 @@ class BookingExpired extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Reservation Automatically Declined - Booking #' . $this->booking->booking_reference,
+            subject: 'Reservation Automatically Declined - Booking #'.$this->booking->booking_reference,
         );
     }
 
