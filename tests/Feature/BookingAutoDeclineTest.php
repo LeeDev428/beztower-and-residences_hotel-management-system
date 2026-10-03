@@ -154,12 +154,12 @@ function createExpiringBooking(array $overrides = []): Booking
     $guest = Guest::create([
         'first_name' => 'Test',
         'last_name' => 'Guest',
-        'email' => 'guest' . random_int(1000, 9999) . '@example.com',
+        'email' => 'guest'.random_int(1000, 9999).'@example.com',
         'phone' => '09171234567',
     ]);
 
     $booking = Booking::create(array_merge([
-        'booking_reference' => 'BEZ-' . strtoupper(bin2hex(random_bytes(4))),
+        'booking_reference' => 'BEZ-'.strtoupper(bin2hex(random_bytes(4))),
         'guest_id' => $guest->id,
         'room_id' => $room->id,
         'check_in_date' => now()->addDay()->toDateString(),
