@@ -3,24 +3,23 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Mail\BookingAcknowledgement;
 use App\Models\AppSetting;
 use App\Models\Booking;
-use App\Models\Guest;
-use App\Models\Room;
 use App\Models\Extra;
+use App\Models\Guest;
 use App\Models\Payment;
-use App\Mail\BookingAcknowledgement;
-use App\Mail\PaymentConfirmation;
+use App\Models\Room;
 use App\Support\BookingAutoCancelService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class BookingController extends Controller
@@ -60,7 +59,7 @@ class BookingController extends Controller
         if ($request->filled('selected_rooms')) {
             $selectedRoomsFromQuery = collect(explode(',', (string) $request->input('selected_rooms')));
             $preselectedRoomIds = $preselectedRoomIds->merge($selectedRoomsFromQuery);
-        } elseif (!empty($bookingContext['selected_rooms']) && is_array($bookingContext['selected_rooms'])) {
+        } elseif (! empty($bookingContext['selected_rooms']) && is_array($bookingContext['selected_rooms'])) {
             $preselectedRoomIds = $preselectedRoomIds->merge($bookingContext['selected_rooms']);
         }
 
@@ -113,7 +112,7 @@ class BookingController extends Controller
             $request->session()->put('booking_room_flow', $bookingContext);
 
             return redirect()->route('rooms.index')
-                ->with('warning', 'Please select ' . $remainingRooms . ' more room(s) before checkout.');
+                ->with('warning', 'Please select '.$remainingRooms.' more room(s) before checkout.');
         }
 
         $maxGuestCapacity = (int) $preselectedRooms->sum(fn ($selectedRoom) => (int) ($selectedRoom->roomType?->max_guests ?? 0));
@@ -176,7 +175,7 @@ class BookingController extends Controller
 
         $submissionKey = trim((string) ($validated['submission_key'] ?? ''));
         $dedupeRoomIds = array_map('intval', $validated['room_ids'] ?? []);
-        if (empty($dedupeRoomIds) && !empty($validated['room_id'])) {
+        if (empty($dedupeRoomIds) && ! empty($validated['room_id'])) {
             $dedupeRoomIds = [(int) $validated['room_id']];
         }
         $dedupePayload = [
@@ -189,13 +188,13 @@ class BookingController extends Controller
             'submission_key' => $submissionKey,
         ];
         sort($dedupePayload['rooms']);
-        $dedupeKey = 'booking:submit:' . hash('sha256', json_encode($dedupePayload));
+        $dedupeKey = 'booking:submit:'.hash('sha256', json_encode($dedupePayload));
 
         $selectedRoomIds = collect($validated['room_ids'] ?? [])
             ->map(fn ($id) => (int) $id)
             ->values();
 
-        if ($selectedRoomIds->isEmpty() && !empty($validated['room_id'])) {
+        if ($selectedRoomIds->isEmpty() && ! empty($validated['room_id'])) {
             $selectedRoomIds = collect([(int) $validated['room_id']]);
         }
 
@@ -223,12 +222,12 @@ class BookingController extends Controller
                 ->count();
             if ($activeCount >= 3) {
                 return back()->withErrors([
-                    'error' => 'You already have 3 active bookings under this email address. You cannot make more than 3 bookings at a time. Please contact us if you need further assistance.'
+                    'error' => 'You already have 3 active bookings under this email address. You cannot make more than 3 bookings at a time. Please contact us if you need further assistance.',
                 ])->withInput();
             }
         }
 
-        if (!Cache::add($dedupeKey, true, now()->addMinutes(2))) {
+        if (! Cache::add($dedupeKey, true, now()->addMinutes(2))) {
             return back()->withErrors([
                 'error' => 'Your reservation is already being processed. Please wait a moment and avoid submitting multiple times.',
             ])->withInput();
@@ -252,7 +251,7 @@ class BookingController extends Controller
                     'phone' => $validated['phone'],
                     'country' => $validated['country'],
                     'address' => $validated['address'],
-                    'id_photo' => $idPhotoPath ?? $existingGuest?->id_photo
+                    'id_photo' => $idPhotoPath ?? $existingGuest?->id_photo,
                 ]
             );
 
@@ -279,6 +278,7 @@ class BookingController extends Controller
 
             if ($selectedRooms->count() !== $selectedRoomIds->count()) {
                 DB::rollBack();
+
                 return back()->withErrors([
                     'room_ids' => 'One or more selected rooms are unavailable.',
                 ])->withInput();
@@ -297,6 +297,7 @@ class BookingController extends Controller
 
             if ($hasConflict) {
                 DB::rollBack();
+
                 return back()->withErrors([
                     'room_ids' => 'One or more selected rooms are already booked for the selected dates.',
                 ])->withInput();
@@ -305,8 +306,9 @@ class BookingController extends Controller
             $totalCapacity = (int) $selectedRooms->sum(fn ($room) => (int) ($room->roomType?->max_guests ?? 0));
             if ($validated['number_of_guests'] > $totalCapacity) {
                 DB::rollBack();
+
                 return back()->withErrors([
-                    'number_of_guests' => 'Selected rooms can only accommodate up to ' . $totalCapacity . ' guests.',
+                    'number_of_guests' => 'Selected rooms can only accommodate up to '.$totalCapacity.' guests.',
                 ])->withInput();
             }
 
@@ -318,7 +320,7 @@ class BookingController extends Controller
 
             // Get selected extras with quantities
             $selectedExtras = [];
-            if (!empty($validated['extras'])) {
+            if (! empty($validated['extras'])) {
                 $extras = Extra::whereIn('id', $validated['extras'])->get();
                 foreach ($extras as $extra) {
                     $quantity = $validated['extra_quantities'][$extra->id] ?? 1;
@@ -327,7 +329,7 @@ class BookingController extends Controller
                     $selectedExtras[] = [
                         'extra_id' => $extra->id,
                         'quantity' => $quantity,
-                        'price_at_booking' => $extra->price
+                        'price_at_booking' => $extra->price,
                     ];
                 }
             }
@@ -336,7 +338,7 @@ class BookingController extends Controller
             $totalAmount = $subtotal + $extrasTotal;
 
             // Generate unique booking reference
-            $bookingReference = 'BEZ-' . strtoupper(Str::random(8));
+            $bookingReference = 'BEZ-'.strtoupper(Str::random(8));
 
             // Create booking
             $booking = Booking::create([
@@ -354,7 +356,7 @@ class BookingController extends Controller
                 'payment_option' => $validated['payment_option'],
                 'status' => 'pending',
                 'expires_at' => now()->addHours(8),
-                'special_requests' => $validated['special_requests']
+                'special_requests' => $validated['special_requests'],
             ]);
 
             foreach ($selectedRooms as $selectedRoom) {
@@ -364,7 +366,7 @@ class BookingController extends Controller
             }
 
             // Attach extras to booking if any
-            if (!empty($selectedExtras)) {
+            if (! empty($selectedExtras)) {
                 foreach ($selectedExtras as $extra) {
                     DB::table('booking_extras')->insert([
                         'booking_id' => $booking->id,
@@ -372,7 +374,7 @@ class BookingController extends Controller
                         'quantity' => $extra['quantity'],
                         'price_at_booking' => $extra['price_at_booking'],
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]);
                 }
             }
@@ -384,7 +386,7 @@ class BookingController extends Controller
                 Mail::to($guest->email)->send(new BookingAcknowledgement($booking));
             } catch (\Exception $e) {
                 // Log email error but don't fail the booking
-                Log::error('Failed to send booking acknowledgement email: ' . $e->getMessage());
+                Log::error('Failed to send booking acknowledgement email: '.$e->getMessage());
             }
 
             // Redirect to payment page
@@ -394,9 +396,9 @@ class BookingController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Cache::forget($dedupeKey);
-            
+
             return back()->withErrors([
-                'error' => 'An error occurred while processing your booking. Please try again.'
+                'error' => 'An error occurred while processing your booking. Please try again.',
             ])->withInput();
         }
     }
@@ -614,6 +616,7 @@ class BookingController extends Controller
                     'excess' => $currentCapacity - $requestedGuests,
                 ];
             }
+
             return;
         }
 
@@ -702,7 +705,7 @@ class BookingController extends Controller
                     ->with('error', 'The 8-hour payment deadline has passed. This reservation was automatically declined.');
             }
 
-            if (!in_array((string) $booking->status, ['pending', 'confirmed', 'rejected_payment'], true)) {
+            if (! in_array((string) $booking->status, ['pending', 'confirmed', 'rejected_payment'], true)) {
                 DB::rollBack();
 
                 return redirect()->route('booking.payment', ['reference' => $reference])
@@ -798,9 +801,9 @@ class BookingController extends Controller
                 'booking_reference' => $reference,
                 'message' => $e->getMessage(),
             ]);
-            
+
             return back()->withErrors([
-                'error' => 'Failed to process payment. Please try again.'
+                'error' => 'Failed to process payment. Please try again.',
             ])->withInput();
         }
     }
@@ -818,11 +821,11 @@ class BookingController extends Controller
     {
         // Implementation for checking room availability
         // This can be used for AJAX requests to check if room is available
-        
+
         $validated = $request->validate([
             'room_id' => 'required|exists:rooms,id',
             'check_in_date' => 'required|date',
-            'check_out_date' => 'required|date|after:check_in_date'
+            'check_out_date' => 'required|date|after:check_in_date',
         ]);
 
         // Check if room is already booked for these dates
@@ -838,8 +841,8 @@ class BookingController extends Controller
             ->exists();
 
         return response()->json([
-            'available' => !$isBooked,
-            'message' => $isBooked ? 'Room is not available for selected dates.' : 'Room is available!'
+            'available' => ! $isBooked,
+            'message' => $isBooked ? 'Room is not available for selected dates.' : 'Room is available!',
         ]);
     }
 
@@ -850,7 +853,7 @@ class BookingController extends Controller
             ->firstOrFail();
 
         $pdf = Pdf::loadView('customer.booking.pdf', compact('booking'));
-        
+
         return $pdf->download('booking-'.$reference.'.pdf');
     }
 
@@ -887,7 +890,7 @@ class BookingController extends Controller
                 ->values()
                 ->all();
 
-            if (empty($existingRoomIds) && !empty($recentBooking->room_id)) {
+            if (empty($existingRoomIds) && ! empty($recentBooking->room_id)) {
                 $existingRoomIds = [(int) $recentBooking->room_id];
             }
 
