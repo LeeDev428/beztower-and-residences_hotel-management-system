@@ -406,6 +406,18 @@
             </div>
 
             <div class="payment-body">
+                @php
+                    $isAutomaticallyDeclined = $booking->status === 'cancelled'
+                        && str_contains((string) $booking->cancellation_reason, 'payment proof was not received within 8 hours');
+                    $isPaymentWindowClosed = in_array($booking->status, ['cancelled', 'checked_out'], true);
+                    $hasSubmittedProof = !empty($existingSubmittedPayment?->proof_of_payment);
+                    $canResubmitProof = !$isPaymentWindowClosed
+                        && !empty($existingSubmittedPayment)
+                        && in_array($existingSubmittedPayment->payment_status, ['pending', 'failed'], true);
+                    $proofSubmissionLocked = $isPaymentWindowClosed
+                        || (!empty($existingSubmittedPayment) && in_array($existingSubmittedPayment->payment_status, ['verified', 'completed'], true));
+                @endphp
+
                 @if(session('success'))
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle"></i>
@@ -420,6 +432,13 @@
                     </div>
                 @endif
 
+                @if(session('error'))
+                    <div class="alert" style="background:#f8d7da; color:#721c24; border:1px solid #f5c6cb;">
+                        <i class="fas fa-times-circle"></i>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                @endif
+
                 @if($errors->any())
                     <div class="alert" style="background:#f8d7da; color:#721c24; border:1px solid #f5c6cb;">
                         <i class="fas fa-times-circle"></i>
@@ -431,13 +450,27 @@
                     </div>
                 @endif
 
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <div>
-                        <strong>Payment Instructions</strong>
-                        <p>Please complete the 30% down payment within 8 hours to confirm your booking. Your reservation will be cancelled if payment is not received within the deadline.</p>
+                @if($isPaymentWindowClosed)
+                    <div class="alert" style="background:#f8d7da; color:#721c24; border:1px solid #f5c6cb;">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <strong>{{ $isAutomaticallyDeclined ? 'Reservation Automatically Declined' : 'Payment Unavailable' }}</strong>
+                            <p>
+                                {{ $isAutomaticallyDeclined
+                                    ? 'No payment proof was received within the 8-hour window. The reservation and its room allocation have been released.'
+                                    : 'Payment can no longer be submitted for this reservation.' }}
+                            </p>
+                        </div>
                     </div>
-                </div>
+                @else
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong>Payment Instructions</strong>
+                            <p>Please submit proof of the required payment within 8 hours. Your reservation will be automatically declined if proof is not received before the deadline.</p>
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Payment Summary -->
                 <div class="payment-summary">
@@ -517,17 +550,21 @@
 
                         <div class="deadline-notice">
                             <strong><i class="fas fa-clock"></i> Payment Deadline</strong>
-                            <p>Payment must be made within 8 hours or booking will be cancelled.</p>
+                            @if($hasSubmittedProof)
+                                <p>Your payment proof was submitted and the automatic-decline timer has stopped.</p>
+                            @elseif($isPaymentWindowClosed)
+                                <p>This payment window is closed.</p>
+                            @elseif($booking->expires_at)
+                                <p>Submit proof by {{ $booking->expires_at->format('F d, Y h:i A') }}.</p>
+                                <p id="paymentDeadlineCountdown" data-deadline="{{ $booking->expires_at->toIso8601String() }}" style="font-weight:700; font-size:1.05rem;">Calculating time remaining...</p>
+                            @else
+                                <p>Payment proof must be submitted within 8 hours of booking.</p>
+                            @endif
                         </div>
                     </div>
 
                     <!-- Right Column: Payment Instructions & Upload Form -->
                     <div>
-                        @php
-                            $canResubmitProof = !empty($existingSubmittedPayment) && in_array($existingSubmittedPayment->payment_status, ['pending', 'failed'], true);
-                            $proofSubmissionLocked = !empty($existingSubmittedPayment) && in_array($existingSubmittedPayment->payment_status, ['verified', 'completed'], true);
-                        @endphp
-
                         @if(!empty($existingSubmittedPayment))
                             <div class="alert alert-success">
                                 <i class="fas fa-check-circle"></i>
@@ -676,6 +713,34 @@
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             });
+        }
+
+        const deadlineCountdown = document.getElementById('paymentDeadlineCountdown');
+        if (deadlineCountdown) {
+            const deadline = new Date(deadlineCountdown.dataset.deadline).getTime();
+            let reloadTriggered = false;
+
+            const updateDeadlineCountdown = () => {
+                const remaining = deadline - Date.now();
+
+                if (remaining <= 0) {
+                    deadlineCountdown.textContent = 'Payment window expired. Updating reservation status...';
+
+                    if (!reloadTriggered) {
+                        reloadTriggered = true;
+                        window.setTimeout(() => window.location.reload(), 800);
+                    }
+                    return;
+                }
+
+                const hours = Math.floor(remaining / 3600000);
+                const minutes = Math.floor((remaining % 3600000) / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+                deadlineCountdown.textContent = `${hours}h ${minutes}m ${seconds}s remaining`;
+            };
+
+            updateDeadlineCountdown();
+            window.setInterval(updateDeadlineCountdown, 1000);
         }
     </script>
 </body>
