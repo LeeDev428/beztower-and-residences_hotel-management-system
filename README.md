@@ -177,6 +177,29 @@ php artisan serve
 
 Visit `http://localhost:8000` in your browser.
 
+### 9. Run the Scheduler
+
+The eight-hour reservation payment deadline and the automated check-in/check-out reminders require Laravel's scheduler.
+
+For local development, run:
+
+```bash
+php artisan schedule:work
+```
+
+For production, configure one cron entry that runs every minute (replace the path with the actual deployment path):
+
+```cron
+* * * * * cd /home/USERNAME/beztower && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Verify the production schedule after deployment:
+
+```bash
+php artisan schedule:list
+php artisan bookings:auto-cancel-expired
+```
+
 ## ⚙️ Configuration
 
 ### Mail Configuration
