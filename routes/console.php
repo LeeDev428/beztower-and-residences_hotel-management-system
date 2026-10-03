@@ -9,7 +9,9 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Run frequently to enforce the 8-hour payment deadline with minimal delay.
-Schedule::command('bookings:auto-cancel-expired')->everyMinute();
+Schedule::command('bookings:auto-cancel-expired')
+    ->everyMinute()
+    ->withoutOverlapping(10);
 
 // Schedule checkout reminders to be sent every day at 8:00 AM
 Schedule::command('bookings:send-checkout-reminders')->dailyAt('08:00');
