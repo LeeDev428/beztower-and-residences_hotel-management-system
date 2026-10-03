@@ -529,6 +529,7 @@
                 </div>
 
                 <!-- Two Column Layout -->
+                @if(!$isPaymentWindowClosed)
                 <div class="two-column-layout">
                     <!-- Left Column: QR Code -->
                     <div>
@@ -669,6 +670,7 @@
                         @endif
                     </div>
                 </div>
+                @endif
 
                 <!-- Hotel Contact -->
                 <div style="margin-top: 3rem; padding: 1.5rem; background: #f8f8f8; border-radius: 8px;">
