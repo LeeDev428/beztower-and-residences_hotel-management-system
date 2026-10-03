@@ -127,8 +127,8 @@
 
             <div class="warning-box">
                 <h3 style="margin:0 0 10px 0; color:#ff6b00;">⏰ Important: Reservation Expiry</h3>
-                <p style="margin:0; font-size:16px;"><strong>You have 8 hours to complete your payment before this reservation expires.</strong></p>
-                <p style="margin:10px 0 0 0; font-size:14px;">Expiry Time: <strong>{{ \Carbon\Carbon::parse($booking->created_at)->addHours(8)->format('F d, Y - h:i A') }}</strong></p>
+                <p style="margin:0; font-size:16px;"><strong>You have 8 hours to submit your payment proof before this reservation expires.</strong></p>
+                <p style="margin:10px 0 0 0; font-size:14px;">Payment Deadline: <strong>{{ optional($booking->expires_at)->format('F d, Y - h:i A') }}</strong></p>
             </div>
             
             <div class="info-box">
