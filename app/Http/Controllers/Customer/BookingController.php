@@ -644,11 +644,13 @@ class BookingController extends Controller
 
     public function payment($reference)
     {
-        app(BookingAutoCancelService::class)->cancelExpiredWithoutProofIfDue();
-
-        $booking = Booking::with(['guest', 'room.roomType', 'rooms.roomType', 'extras'])
+        $booking = Booking::query()
             ->where('booking_reference', $reference)
             ->firstOrFail();
+
+        app(BookingAutoCancelService::class)->cancelBookingIfExpired((int) $booking->id);
+
+        $booking->refresh()->load(['guest', 'room.roomType', 'rooms.roomType', 'extras']);
 
         $existingSubmittedPayment = $booking->payments()
             ->whereNotNull('proof_of_payment')
@@ -678,23 +680,49 @@ class BookingController extends Controller
             'payment_reference.max' => 'Payment reference must not exceed 60 characters.',
         ]);
 
-        $booking = Booking::where('booking_reference', $reference)->firstOrFail();
-
-        $existingSubmittedPayment = $booking->payments()
-            ->whereNotNull('proof_of_payment')
-            ->latest('id')
-            ->first();
-
-        if ($existingSubmittedPayment && in_array($existingSubmittedPayment->payment_status, ['verified', 'completed'], true)) {
-            return redirect()->route('booking.payment', ['reference' => $reference])
-                ->with('warning', 'Payment was already verified for this booking. Resubmission is disabled.');
-        }
+        $newProofPath = null;
+        $oldProofPathToDelete = null;
+        $expiredBooking = null;
 
         try {
             DB::beginTransaction();
 
+            $booking = Booking::query()
+                ->where('booking_reference', $reference)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $autoCancelService = app(BookingAutoCancelService::class);
+            if ($autoCancelService->cancelLockedBookingIfExpired($booking)) {
+                $expiredBooking = $booking;
+                DB::commit();
+                $autoCancelService->notifyExpiredBooking($expiredBooking);
+
+                return redirect()->route('booking.payment', ['reference' => $reference])
+                    ->with('error', 'The 8-hour payment deadline has passed. This reservation was automatically declined.');
+            }
+
+            if (!in_array((string) $booking->status, ['pending', 'confirmed', 'rejected_payment'], true)) {
+                DB::rollBack();
+
+                return redirect()->route('booking.payment', ['reference' => $reference])
+                    ->with('error', 'Payment can no longer be submitted for this reservation.');
+            }
+
+            $existingSubmittedPayment = $booking->payments()
+                ->whereNotNull('proof_of_payment')
+                ->latest('id')
+                ->first();
+
+            if ($existingSubmittedPayment && in_array($existingSubmittedPayment->payment_status, ['verified', 'completed'], true)) {
+                DB::rollBack();
+
+                return redirect()->route('booking.payment', ['reference' => $reference])
+                    ->with('warning', 'Payment was already verified for this booking. Resubmission is disabled.');
+            }
+
             // Store proof of payment
-            $proofPath = $request->file('proof_of_payment')->store('payments/proofs', 'public');
+            $newProofPath = $request->file('proof_of_payment')->store('payments/proofs', 'public');
 
             // Calculate payment amount based on option
             $paymentPercentage = $booking->payment_option === 'full_payment' ? 100.00 : 30.00;
@@ -703,7 +731,7 @@ class BookingController extends Controller
             $isResubmission = $existingSubmittedPayment && in_array($existingSubmittedPayment->payment_status, ['pending', 'failed'], true);
 
             if ($isResubmission) {
-                $oldProofPath = (string) ($existingSubmittedPayment->proof_of_payment ?? '');
+                $oldProofPathToDelete = (string) ($existingSubmittedPayment->proof_of_payment ?? '');
 
                 $existingSubmittedPayment->update([
                     'payment_type' => $booking->payment_option,
@@ -712,16 +740,12 @@ class BookingController extends Controller
                     'amount' => $paymentAmount,
                     'percentage' => $paymentPercentage,
                     'payment_status' => 'pending',
-                    'proof_of_payment' => $proofPath,
+                    'proof_of_payment' => $newProofPath,
                     'payment_notes' => null,
                     'verified_at' => null,
                     'verified_by' => null,
                     'payment_date' => now(),
                 ]);
-
-                if ($oldProofPath !== '' && $oldProofPath !== $proofPath) {
-                    Storage::disk('public')->delete($oldProofPath);
-                }
 
                 if ($booking->status === 'rejected_payment') {
                     $booking->update(['status' => 'pending']);
@@ -738,7 +762,7 @@ class BookingController extends Controller
                     'amount' => $paymentAmount,
                     'percentage' => $paymentPercentage,
                     'payment_status' => 'pending', // Will be verified by admin
-                    'proof_of_payment' => $proofPath,
+                    'proof_of_payment' => $newProofPath,
                     'payment_date' => now(),
                 ]);
 
@@ -751,6 +775,10 @@ class BookingController extends Controller
 
             DB::commit();
 
+            if ($oldProofPathToDelete !== null && $oldProofPathToDelete !== '' && $oldProofPathToDelete !== $newProofPath) {
+                Storage::disk('public')->delete($oldProofPathToDelete);
+            }
+
             // Send booking acknowledgement email with payment details
             // Mail::to($booking->guest->email)->send(new BookingAcknowledgement($booking, $payment));
 
@@ -758,7 +786,18 @@ class BookingController extends Controller
                 ->with('success', $successMessage);
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
+            if ($newProofPath) {
+                Storage::disk('public')->delete($newProofPath);
+            }
+
+            Log::error('Failed to process booking payment proof.', [
+                'booking_reference' => $reference,
+                'message' => $e->getMessage(),
+            ]);
             
             return back()->withErrors([
                 'error' => 'Failed to process payment. Please try again.'
