@@ -141,7 +141,7 @@ class BookingAutoCancelService
 
         foreach ($rooms as $room) {
             $hasCheckedInOccupant = Booking::query()
-                ->whereKeyNot($booking->id)
+                ->where('id', '!=', $booking->id)
                 ->where('status', 'checked_in')
                 ->where(function ($query) use ($room) {
                     $query->where('room_id', $room->id)
