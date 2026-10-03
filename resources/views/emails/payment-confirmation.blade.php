@@ -36,8 +36,8 @@
         <div class="content">
             <p>Dear {{ $guestName }},</p>
             <p>Thank you for choosing Bez Tower and Residences!</p>
-            <p>Your booking has been successfully confirmed, and the room is currently reserved for you for the next 8 hours. Please ensure that you send your proof of payment within this time frame to secure your reservation.</p>
-            <p>If we do not receive your proof of payment within 8 hours, the reservation will be cancelled. However, if you have already submitted your proof of payment, kindly disregard this message.</p>
+            <p>Your booking has been successfully confirmed. We have received the required payment information, and your room reservation is now secured for the dates shown below.</p>
+            <p>Please keep your booking reference available and present a valid ID when you arrive.</p>
 
             <p>Here are your booking details:</p>
             <div class="details">
