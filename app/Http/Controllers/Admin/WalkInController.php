@@ -3,17 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\AppSetting;
 use App\Models\Booking;
 use App\Models\Extra;
 use App\Models\Guest;
 use App\Models\Payment;
 use App\Models\Room;
-use App\Models\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -55,13 +56,14 @@ class WalkInController extends Controller
             ->map(function ($room) {
                 $roomTypeName = $room->roomType?->name ?? 'Room';
                 $basePrice = (float) ($room->roomType?->base_price ?? 0);
+
                 return [
                     'id' => $room->id,
                     'room_number' => $room->room_number,
                     'room_type' => $roomTypeName,
                     'capacity' => (int) ($room->roomType?->max_guests ?? 0),
                     'price' => (float) ($room->effective_price ?? $basePrice),
-                    'label' => $roomTypeName . ' - Room ' . $room->room_number . ' (PHP ' . number_format((float) ($room->effective_price ?? $basePrice), 2) . '/night)',
+                    'label' => $roomTypeName.' - Room '.$room->room_number.' (PHP '.number_format((float) ($room->effective_price ?? $basePrice), 2).'/night)',
                 ];
             })
             ->values();
@@ -72,40 +74,40 @@ class WalkInController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'first_name'      => "required|string|max:100|regex:/^[A-Za-z][A-Za-z\\s'-]*$/",
-            'last_name'       => "required|string|max:100|regex:/^[A-Za-z][A-Za-z\\s'-]*$/",
-            'email'           => 'nullable|email|max:255',
-            'phone'           => 'required|string|max:11',
-            'address'         => 'nullable|string|max:500',
-            'id_photo'        => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
-            'check_in_date'   => 'required|date|date_equals:today',
-            'check_out_date'  => 'required|date|after:check_in_date',
+            'first_name' => "required|string|max:100|regex:/^[A-Za-z][A-Za-z\\s'-]*$/",
+            'last_name' => "required|string|max:100|regex:/^[A-Za-z][A-Za-z\\s'-]*$/",
+            'email' => 'nullable|email|max:255',
+            'phone' => 'required|string|max:11',
+            'address' => 'nullable|string|max:500',
+            'id_photo' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:5120',
+            'check_in_date' => 'required|date|date_equals:today',
+            'check_out_date' => 'required|date|after:check_in_date',
             'number_of_rooms' => 'required|integer|min:1|max:5',
-            'room_ids'        => 'required|array|min:1',
-            'room_ids.*'      => 'required|distinct|exists:rooms,id',
-            'number_of_guests'=> 'nullable|integer|min:1|max:30',
-            'adults'          => 'nullable|integer|min:1|max:30',
-            'children'        => 'nullable|integer|min:0|max:30',
-            'payment_method'  => 'required|in:cash,gcash',
+            'room_ids' => 'required|array|min:1',
+            'room_ids.*' => 'required|distinct|exists:rooms,id',
+            'number_of_guests' => 'nullable|integer|min:1|max:30',
+            'adults' => 'nullable|integer|min:1|max:30',
+            'children' => 'nullable|integer|min:0|max:30',
+            'payment_method' => 'required|in:cash,gcash',
             'payment_reference' => 'nullable|required_if:payment_method,gcash|regex:/^\d{1,13}$/',
-            'payment_type'    => 'required|in:full_payment',
-            'extras'          => 'nullable|array',
-            'extras.*'        => 'exists:extras,id',
+            'payment_type' => 'required|in:full_payment',
+            'extras' => 'nullable|array',
+            'extras.*' => 'exists:extras,id',
             'extra_quantities' => 'nullable|array',
-            'special_requests'=> 'nullable|string|max:1000',
+            'special_requests' => 'nullable|string|max:1000',
         ]);
 
         $effectiveAdults = $this->resolveEffectiveAdults($validated);
 
-        $checkIn  = Carbon::parse($validated['check_in_date']);
+        $checkIn = Carbon::parse($validated['check_in_date']);
         $checkOut = Carbon::parse($validated['check_out_date']);
-        $nights   = max(1, $checkIn->diffInDays($checkOut));
+        $nights = max(1, $checkIn->diffInDays($checkOut));
 
         if ((int) $validated['number_of_rooms'] !== count($validated['room_ids'])) {
-            return back()->withErrors(['room_ids' => 'Please select exactly ' . $validated['number_of_rooms'] . ' room(s).'])->withInput();
+            return back()->withErrors(['room_ids' => 'Please select exactly '.$validated['number_of_rooms'].' room(s).'])->withInput();
         }
 
-        $selectedRoomIds = collect($validated['room_ids'])->map(fn($id) => (int) $id)->values();
+        $selectedRoomIds = collect($validated['room_ids'])->map(fn ($id) => (int) $id)->values();
         $availableRoomIds = $this->availableRoomsQuery($validated['check_in_date'], $validated['check_out_date'])
             ->whereIn('id', $selectedRoomIds)
             ->pluck('id');
@@ -119,13 +121,13 @@ class WalkInController extends Controller
 
         if ($totalCapacity < $effectiveAdults) {
             return back()->withErrors([
-                'number_of_guests' => 'Selected room(s) can only accommodate up to ' . $totalCapacity . ' effective adult(s).',
+                'number_of_guests' => 'Selected room(s) can only accommodate up to '.$totalCapacity.' effective adult(s).',
             ])->withInput();
         }
 
         $selectedExtras = [];
         $extrasTotal = 0;
-        if (!empty($validated['extras'])) {
+        if (! empty($validated['extras'])) {
             $extras = Extra::whereIn('id', $validated['extras'])
                 ->where('is_active', true)
                 ->whereNotIn('name', self::EXCLUDED_WALKIN_EXTRA_NAMES)
@@ -144,118 +146,141 @@ class WalkInController extends Controller
 
         $paymentType = 'full_payment';
 
-        // Handle ID photo upload
         $idPhotoPath = null;
-        if ($request->hasFile('id_photo')) {
-            $idPhotoPath = $request->file('id_photo')->store('guests/id_photos', 'public');
-        }
 
-        // Always update guest info with what admin entered (match by phone)
-        $guestData = [
-            'first_name' => $validated['first_name'],
-            'last_name'  => $validated['last_name'],
-            'email'      => $validated['email'] ?? null,
-            'address'    => $validated['address'] ?? null,
-        ];
-        if ($idPhotoPath) {
-            $guestData['id_photo'] = $idPhotoPath;
-        }
-        $guest = Guest::updateOrCreate(['phone' => $validated['phone']], $guestData);
-
-        DB::beginTransaction();
         try {
-            $overallTotal = 0;
-            $verifiedBy = Auth::id();
-            $nightlySubtotal = (float) $selectedRooms->sum(fn ($room) => (float) ($room->effective_price ?? 0));
-            $overallSubtotal = $nightlySubtotal * $nights;
-            $overallTotal = round($overallSubtotal + $extrasTotal, 2);
-            $taxAmount = round($overallSubtotal * AppSetting::getVatFractionFromInclusive(), 2);
-            $reference = 'WI-' . strtoupper(Str::random(8));
-
-            // Create one reservation (walk-ins are immediately checked-in)
-            $booking = Booking::create([
-                'booking_reference' => $reference,
-                'guest_id' => $guest->id,
-                'room_id' => (int) $selectedRoomIds->first(),
-                'check_in_date' => $validated['check_in_date'],
-                'check_out_date' => $validated['check_out_date'],
-                'number_of_guests' => $effectiveAdults,
-                'total_nights' => $nights,
-                'subtotal' => $overallSubtotal,
-                'extras_total' => $extrasTotal,
-                'tax_amount' => $taxAmount,
-                'total_amount' => $overallTotal,
-                'payment_option' => $paymentType,
-                'status' => 'checked_in',
-                'special_requests' => $validated['special_requests'] ?? null,
-            ]);
-
-            /** @var \App\Models\Room $selectedRoom */
-            foreach ($selectedRooms as $selectedRoom) {
-                $booking->rooms()->attach($selectedRoom->id, [
-                    'nightly_rate' => (float) ($selectedRoom->effective_price ?? 0),
-                ]);
-                $selectedRoom->update(['status' => 'occupied']);
+            if ($request->hasFile('id_photo')) {
+                $idPhotoPath = $request->file('id_photo')->store('guests/id_photos', 'public');
             }
 
-            if (!empty($selectedExtras)) {
+            [$guest, $booking, $overallTotal] = DB::transaction(function () use (
+                $validated,
+                $idPhotoPath,
+                $selectedRooms,
+                $selectedRoomIds,
+                $selectedExtras,
+                $extrasTotal,
+                $effectiveAdults,
+                $nights,
+                $paymentType
+            ) {
+                $guestData = [
+                    'first_name' => $validated['first_name'],
+                    'last_name' => $validated['last_name'],
+                    'email' => $validated['email'] ?? null,
+                    'address' => $validated['address'] ?? null,
+                ];
+
+                if ($idPhotoPath) {
+                    $guestData['id_photo'] = $idPhotoPath;
+                }
+
+                // Guest and reservation must succeed or roll back together.
+                $guest = Guest::updateOrCreate(['phone' => $validated['phone']], $guestData);
+                $verifiedBy = Auth::id();
+                $nightlySubtotal = (float) $selectedRooms->sum(fn ($room) => (float) ($room->effective_price ?? 0));
+                $overallSubtotal = $nightlySubtotal * $nights;
+                $overallTotal = round($overallSubtotal + $extrasTotal, 2);
+                $taxAmount = round($overallSubtotal * AppSetting::getVatFractionFromInclusive(), 2);
+                $reference = 'WI-'.strtoupper(Str::random(8));
+
+                $booking = Booking::create([
+                    'booking_reference' => $reference,
+                    'guest_id' => $guest->id,
+                    'room_id' => (int) $selectedRoomIds->first(),
+                    'check_in_date' => $validated['check_in_date'],
+                    'check_out_date' => $validated['check_out_date'],
+                    'number_of_guests' => $effectiveAdults,
+                    'total_nights' => $nights,
+                    'subtotal' => $overallSubtotal,
+                    'extras_total' => $extrasTotal,
+                    'tax_amount' => $taxAmount,
+                    'total_amount' => $overallTotal,
+                    'payment_option' => $paymentType,
+                    'status' => 'checked_in',
+                    'special_requests' => $validated['special_requests'] ?? null,
+                ]);
+
+                /** @var \App\Models\Room $selectedRoom */
+                foreach ($selectedRooms as $selectedRoom) {
+                    $booking->rooms()->attach($selectedRoom->id, [
+                        'nightly_rate' => (float) ($selectedRoom->effective_price ?? 0),
+                    ]);
+                    $selectedRoom->update(['status' => 'occupied']);
+                }
+
                 foreach ($selectedExtras as $extra) {
                     $booking->extras()->attach($extra['id'], [
                         'quantity' => $extra['quantity'],
                         'price_at_booking' => $extra['price_at_booking'],
                     ]);
                 }
+
+                Payment::create([
+                    'booking_id' => $booking->id,
+                    'payment_type' => $paymentType,
+                    'payment_method' => $validated['payment_method'],
+                    'payment_reference' => ($validated['payment_reference'] ?? null) ?: $reference,
+                    'amount' => $overallTotal,
+                    'percentage' => 100.00,
+                    'payment_status' => 'completed',
+                    'payment_date' => now(),
+                    'payment_notes' => 'Walk-in booking. Recorded by admin.',
+                    'verified_at' => now(),
+                    'verified_by' => $verifiedBy,
+                ]);
+
+                if (($validated['payment_method'] ?? '') === 'gcash' && ! empty($validated['payment_reference'])) {
+                    $booking->update([
+                        'adjustment_reason' => 'Billing GCash Reference: '.trim((string) $validated['payment_reference']),
+                    ]);
+                }
+
+                return [$guest, $booking, $overallTotal];
+            }, 3);
+        } catch (\Throwable $e) {
+            if ($idPhotoPath) {
+                Storage::disk('public')->delete($idPhotoPath);
             }
 
-            // Record one payment for the whole reservation
-            Payment::create([
-                'booking_id' => $booking->id,
-                'payment_type' => $paymentType,
-                'payment_method' => $validated['payment_method'],
-                'payment_reference' => ($validated['payment_reference'] ?? null) ?: $reference,
-                'amount' => $overallTotal,
-                'percentage' => 100.00,
-                'payment_status' => 'completed',
-                'payment_date' => now(),
-                'payment_notes' => 'Walk-in booking. Recorded by admin.',
-                'verified_at' => now(),
-                'verified_by' => $verifiedBy,
+            Log::error('Failed to create walk-in booking.', [
+                'phone' => $validated['phone'],
+                'room_ids' => $selectedRoomIds->all(),
+                'message' => $e->getMessage(),
             ]);
 
-            if (($validated['payment_method'] ?? '') === 'gcash' && !empty($validated['payment_reference'])) {
-                $booking->update([
-                    'adjustment_reason' => 'Billing GCash Reference: ' . trim((string) $validated['payment_reference']),
-                ]);
-            }
-
-            DB::commit();
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->withErrors(['error' => 'Failed to create walk-in booking: ' . $e->getMessage()])->withInput();
+            return back()->withErrors([
+                'error' => 'Unable to create the walk-in booking. No booking or payment was saved. Please try again.',
+            ])->withInput();
         }
 
         $roomSummary = Room::whereIn('id', $selectedRoomIds)->orderBy('room_number')->pluck('room_number')->implode(', ');
 
-        // Log activity
-        ActivityLog::log(
-            'walk_in_booking',
-            'Walk-in booking created for ' . $guest->name . ' — Rooms ' . $roomSummary,
-            'App\Models\Booking',
-            $booking->id,
-            [
-                'guest'          => $guest->name,
-                'rooms'          => $roomSummary,
-                'check_in'       => $validated['check_in_date'],
-                'check_out'      => $validated['check_out_date'],
-                'bookings_count' => 1,
-                'total_amount'   => round($overallTotal, 2),
-                'payment_method' => $validated['payment_method'],
-            ]
-        );
+        try {
+            ActivityLog::log(
+                'walk_in_booking',
+                'Walk-in booking created for '.$guest->name.' — Rooms '.$roomSummary,
+                'App\Models\Booking',
+                $booking->id,
+                [
+                    'guest' => $guest->name,
+                    'rooms' => $roomSummary,
+                    'check_in' => $validated['check_in_date'],
+                    'check_out' => $validated['check_out_date'],
+                    'bookings_count' => 1,
+                    'total_amount' => round($overallTotal, 2),
+                    'payment_method' => $validated['payment_method'],
+                ]
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Walk-in booking was created but its activity log could not be recorded.', [
+                'booking_id' => $booking->id,
+                'message' => $e->getMessage(),
+            ]);
+        }
 
         return redirect()->route('admin.bookings.show', $booking)
-            ->with('success', 'Walk-in booking created successfully for ' . $guest->name . '. Reservation includes ' . count($selectedRoomIds) . ' room(s).');
+            ->with('success', 'Walk-in booking created successfully for '.$guest->name.'. Reservation includes '.count($selectedRoomIds).' room(s).');
     }
 
     private function availableRoomsQuery(string $checkInDate, string $checkOutDate)
